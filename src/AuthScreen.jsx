@@ -61,9 +61,10 @@ export default function AuthScreen() {
       display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <div style={{ width: "100%", maxWidth: 420 }}>
         {/* Brand */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 11, marginBottom: 22 }}>
-          <div style={{ width: 42, height: 42, borderRadius: 12, background: C.orange, display: "flex", alignItems: "center", justifyContent: "center", ...display, fontWeight: 700, color: "#fff", fontSize: 14, letterSpacing: -0.5 }}>360</div>
-          <div style={{ ...display, color: "#fff", fontWeight: 700, fontSize: 22, letterSpacing: -0.3 }}>Atleta360</div>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 22 }}>
+          <div style={{ background: "#fff", borderRadius: 12, padding: "12px 18px", display: "inline-flex", boxShadow: "0 10px 30px rgba(0,0,0,0.22)" }}>
+            <img src="/logo-oasivolley.png" alt="Oasi Volley Viareggio" style={{ height: 44, width: "auto", display: "block" }} />
+          </div>
         </div>
 
         <div style={{ background: C.card, borderRadius: 18, padding: 26, boxShadow: "0 20px 60px rgba(0,0,0,0.28)" }}>
@@ -202,9 +203,10 @@ export function ResetPasswordScreen() {
   return (
     <div style={shell}>
       <div style={{ width: "100%", maxWidth: 420 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 11, marginBottom: 22 }}>
-          <div style={{ width: 42, height: 42, borderRadius: 12, background: C.orange, display: "flex", alignItems: "center", justifyContent: "center", ...display, fontWeight: 700, color: "#fff", fontSize: 14, letterSpacing: -0.5 }}>360</div>
-          <div style={{ ...display, color: "#fff", fontWeight: 700, fontSize: 22, letterSpacing: -0.3 }}>Atleta360</div>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 22 }}>
+          <div style={{ background: "#fff", borderRadius: 12, padding: "12px 18px", display: "inline-flex", boxShadow: "0 10px 30px rgba(0,0,0,0.22)" }}>
+            <img src="/logo-oasivolley.png" alt="Oasi Volley Viareggio" style={{ height: 44, width: "auto", display: "block" }} />
+          </div>
         </div>
         <div style={{ background: C.card, borderRadius: 18, padding: 26, boxShadow: "0 20px 60px rgba(0,0,0,0.28)" }}>
           <div style={{ ...display, fontSize: 17, fontWeight: 700, color: C.ink, marginBottom: 4 }}>Imposta una nuova password</div>
