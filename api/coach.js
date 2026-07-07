@@ -6,7 +6,9 @@
  * d'ambiente su Vercel — mai nel frontend né nel repository.
  * Crea la chiave gratis su https://aistudio.google.com/apikey
  */
-const MODEL = "gemini-2.0-flash"; // gratuito e veloce
+// Alias sempre valido sulla versione flash corrente (non si "rompe" quando
+// Google dismette una versione specifica). Gratuito e veloce.
+const MODEL = "gemini-flash-latest";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -62,7 +64,9 @@ Regole:
       body: JSON.stringify({
         system_instruction: { parts: [{ text: system }] },
         contents,
-        generationConfig: { maxOutputTokens: 800, temperature: 0.7 },
+        // thinkingBudget: 0 → niente token di "ragionamento": risposte complete,
+        // rapide ed economiche (adatte a una chat di consigli brevi).
+        generationConfig: { maxOutputTokens: 800, temperature: 0.7, thinkingConfig: { thinkingBudget: 0 } },
       }),
     });
 
