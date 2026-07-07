@@ -743,12 +743,12 @@ function Dashboard() {
   } else if (errore) {
     content = (
       <StatusBox tone="error" title="Non riesco a leggere i dati"
-        message="Controlla che il Foglio Google sia pubblicato sul web come CSV e che l'URL in CONFIG sia corretto. Dettaglio tecnico in console." />
+        message="C'è stato un problema nel caricare i dati. Riprova tra poco; se persiste, verifica la connessione. Dettaglio tecnico in console." />
     );
   } else if (!model) {
-    content = <StatusBox title="Carico i dati della squadra…" message="Sto leggendo il Foglio Google pubblicato." />;
+    content = <StatusBox title="Carico i dati della squadra…" message="Un attimo, sto caricando atlete, focus e rilevamenti." />;
   } else if (model.NOMI.length === 0) {
-    content = <StatusBox title="Nessun rilevamento ancora" message="Chiedi al mister di compilare il modulo: appena arriva il primo rilevamento, la dashboard si popola da sola." />;
+    content = <StatusBox title="Nessun rilevamento ancora" message="Appena il mister inserisce il primo rilevamento dalla pagina “Nuovo rilevamento”, la dashboard si popola da sola." />;
   } else {
     content = <ViewComp d={model} auth={viewCtx} />;
   }
