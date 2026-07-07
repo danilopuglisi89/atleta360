@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   LineChart, Line, ResponsiveContainer,
 } from "recharts";
-import { Home, User, Users, TrendingUp, Info, Menu, X } from "lucide-react";
+import { Home, User, Users, TrendingUp, Info, Menu, X, MessageCircle } from "lucide-react";
 import Papa from "papaparse";
 
 /* ============================================================
@@ -208,6 +208,28 @@ function StatusBox({ title, message, tone = "info" }) {
       <div style={{ ...display, fontSize: 16, fontWeight: 600, color: C.ink }}>{title}</div>
       <div style={{ ...font, fontSize: 14, color: C.muted, marginTop: 8, lineHeight: 1.6 }}>{message}</div>
     </div>
+  );
+}
+
+function Footer() {
+  const year = new Date().getFullYear();
+  const sep = <span aria-hidden style={{ color: C.grid }}>·</span>;
+  return (
+    <footer style={{ marginTop: "auto", width: "100%", padding: "0 clamp(18px, 4vw, 34px) clamp(18px, 4vw, 28px)" }}>
+      <div style={{ maxWidth: 1180, margin: "0 auto", borderTop: `1px solid ${C.grid}`, paddingTop: 18,
+        display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: "6px 14px",
+        textAlign: "center", ...font, fontSize: 12.5, color: C.muted }}>
+        <span>© {year} <b style={{ color: C.ink, fontWeight: 600 }}>Danilo Puglisi</b> — Consulente e Formatore</span>
+        {sep}
+        <a href="https://www.danilopuglisi.com" target="_blank" rel="noopener noreferrer"
+          style={{ color: C.navy2, textDecoration: "none", fontWeight: 500 }}>www.danilopuglisi.com</a>
+        {sep}
+        <a href="https://wa.me/393770870217" target="_blank" rel="noopener noreferrer"
+          style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "#1FA855", textDecoration: "none", fontWeight: 600 }}>
+          <MessageCircle size={15} /> WhatsApp
+        </a>
+      </div>
+    </footer>
   );
 }
 
@@ -599,6 +621,7 @@ export default function App() {
           </div>
           {content}
         </main>
+        <Footer />
       </div>
     </div>
   );
