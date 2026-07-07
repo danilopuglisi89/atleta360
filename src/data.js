@@ -14,7 +14,7 @@ export function buildModel(skills, athletes, assessments) {
   const idToIdentifier = Object.fromEntries(athletes.map((a) => [a.id, a.identifier]));
   const roster = athletes
     .filter((a) => a.active !== false)
-    .map((a) => ({ id: a.id, identifier: a.identifier }))
+    .map((a) => ({ id: a.id, identifier: a.identifier, position: a.position || "" }))
     .sort((x, y) => x.identifier.localeCompare(y.identifier, "it"));
 
   // Raggruppa i rilevamenti per atleta (identificatore), ordinati nel tempo.
@@ -37,9 +37,11 @@ export function buildModel(skills, athletes, assessments) {
   const atleti = {}, storico = {};
   Object.entries(byId).forEach(([identifier, entries]) => {
     const last = entries[entries.length - 1];
+    const ath = athletes.find((a) => a.identifier === identifier);
     atleti[identifier] = {
       id: identifier,
-      athleteId: athletes.find((a) => a.identifier === identifier)?.id,
+      athleteId: ath?.id,
+      position: ath?.position || "",
       scores: last.scores,
       nota: last.nota,
     };

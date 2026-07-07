@@ -57,6 +57,13 @@ export default function AdminPanel({ onChange }) {
   const setCategory = (id, category) => guard(() => supabase.from("profiles").update({ category }).eq("id", id));
   const setAthleteLink = (id, athlete_id) => guard(() => supabase.from("profiles").update({ athlete_id: athlete_id || null }).eq("id", id));
   const setAssess = (id, can_assess) => guard(() => supabase.from("profiles").update({ can_assess }).eq("id", id));
+  const delUser = async (r) => {
+    if (!window.confirm(`Eliminare DEFINITIVAMENTE l'account di ${fullName(r)}? L'operazione non è reversibile.`)) return;
+    setError(null);
+    const { error } = await supabase.rpc("admin_delete_user", { target: r.id });
+    if (error) { setError(error.message); return; }
+    await after();
+  };
 
   // --- atlete ---
   const addAthlete = async () => {
@@ -64,6 +71,7 @@ export default function AdminPanel({ onChange }) {
     if (await guard(() => supabase.from("athletes").insert({ identifier: id }))) setNewAthlete("");
   };
   const renameAthlete = (a, identifier) => { const v = identifier.trim(); if (v && v !== a.identifier) guard(() => supabase.from("athletes").update({ identifier: v }).eq("id", a.id)); };
+  const setPosition = (a, position) => { const v = position.trim(); if (v !== (a.position || "")) guard(() => supabase.from("athletes").update({ position: v || null }).eq("id", a.id)); };
   const toggleAthlete = (a) => guard(() => supabase.from("athletes").update({ active: !a.active }).eq("id", a.id));
   const delAthlete = (a) => { if (window.confirm(`Eliminare "${a.identifier}"? Verranno rimossi anche i suoi rilevamenti.`)) guard(() => supabase.from("athletes").delete().eq("id", a.id)); };
 
@@ -111,6 +119,11 @@ export default function AdminPanel({ onChange }) {
                   </div>
                   <div style={{ ...font, fontSize: 12.5, color: C.muted, marginTop: 2 }}>{r.email} · {fmtDate(r.created_at)}</div>
                 </div>
+                <button onClick={() => setAssess(r.id, !r.can_assess)} title="Permesso di inserire rilevamenti (mister)"
+                  style={{ ...font, fontSize: 12, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 99, cursor: "pointer",
+                    border: `1px solid ${r.can_assess ? "#0F7A4E" : C.grid}`, background: r.can_assess ? "#DDF3E7" : "#fff", color: r.can_assess ? "#0F7A4E" : C.muted }}>
+                  {r.can_assess ? "✓ Rilevamenti" : "Rilevamenti"}
+                </button>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button onClick={() => setStatus(r.id, "approved")} style={btn("#0F7A4E")}><Check size={16} /> Approva</button>
                   <button onClick={() => setStatus(r.id, "rejected")} style={btn("#B4232A", true)}><X size={16} /> Rifiuta</button>
@@ -157,6 +170,11 @@ export default function AdminPanel({ onChange }) {
                   <button onClick={() => setStatus(r.id, r.status === "approved" ? "rejected" : "approved")} style={{ ...font, fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 5, background: "none", border: `1px solid ${C.grid}`, borderRadius: 9, padding: "6px 10px", color: C.muted, cursor: "pointer" }}>
                     <RotateCcw size={13} /> {r.status === "approved" ? "Revoca" : "Approva"}
                   </button>
+                  {r.status === "rejected" && (
+                    <button onClick={() => delUser(r)} title="Elimina definitivamente l'account" style={iconBtn("#B4232A")}>
+                      <Trash2 size={15} />
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -174,7 +192,8 @@ export default function AdminPanel({ onChange }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {athletes.map((a) => (
             <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", borderBottom: `1px solid ${C.grid}`, padding: "8px 2px", opacity: a.active ? 1 : 0.55 }}>
-              <input defaultValue={a.identifier} onBlur={(e) => renameAthlete(a, e.target.value)} style={{ ...inp, flex: "1 1 200px" }} />
+              <input defaultValue={a.identifier} onBlur={(e) => renameAthlete(a, e.target.value)} style={{ ...inp, flex: "1 1 160px" }} />
+              <input defaultValue={a.position || ""} onBlur={(e) => setPosition(a, e.target.value)} placeholder="Ruolo in campo" style={{ ...inp, flex: "1 1 140px", fontSize: 12.5 }} />
               <span style={{ ...font, fontSize: 12, color: a.active ? "#0F7A4E" : C.muted }}>{a.active ? "attiva" : "disattivata"}</span>
               <button onClick={() => toggleAthlete(a)} title={a.active ? "Disattiva" : "Riattiva"} style={iconBtn(C.muted)}><Power size={15} /></button>
               <button onClick={() => delAthlete(a)} title="Elimina" style={iconBtn("#B4232A")}><Trash2 size={15} /></button>
