@@ -126,7 +126,13 @@ export default function AdminPanel({ athletes = [] }) {
                 <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
                   borderBottom: `1px solid ${C.grid}`, padding: "10px 2px" }}>
                   <div style={{ flex: "1 1 180px", minWidth: 0 }}>
-                    <div style={{ ...font, fontSize: 14, color: C.ink }}>{fullName(r)}</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span style={{ ...font, fontSize: 14, color: C.ink }}>{fullName(r)}</span>
+                      {r.status === "approved" && r.category === "atleta" && !r.athlete_id && (
+                        <span title="Collega questa atleta a una riga del Foglio, altrimenti non vedrà il suo profilo"
+                          style={{ ...font, fontSize: 11, fontWeight: 600, color: "#B4520A", background: "#FFE9D5", padding: "2px 8px", borderRadius: 99 }}>⚠️ da collegare</span>
+                      )}
+                    </div>
                     <div style={{ ...font, fontSize: 12, color: C.muted, marginTop: 2 }}>{r.email}</div>
                   </div>
                   <select value={r.category || "atleta"} onChange={(e) => setCategory(r.id, e.target.value)} disabled={busyId === r.id}
