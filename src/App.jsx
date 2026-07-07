@@ -295,13 +295,14 @@ function ProfiloView({ d, auth }) {
   const { NOMI, atleti, overall } = d;
   const restricted = !!auth?.restricted;
   const myId = auth?.athleteId;
+  const firstName = auth?.firstName || "";
   const [n, setN] = useState(restricted ? myId : NOMI[0]);
 
   // Atleta "semplice": vede sempre e solo il proprio profilo.
   if (restricted && (!myId || !atleti[myId])) {
     return (
       <StatusBox
-        title="Profilo non ancora disponibile"
+        title={firstName ? `Ciao ${firstName}!` : "Profilo non ancora disponibile"}
         message={myId
           ? "Non risultano ancora rilevamenti per il tuo profilo: chiedi al mister di compilare il modulo."
           : "Il tuo profilo non è ancora stato collegato dallo staff. Riprova più tardi o contatta lo staff."}
@@ -319,6 +320,11 @@ function ProfiloView({ d, auth }) {
 
   return (
     <div className="a360-print-area">
+      {restricted && firstName && (
+        <div style={{ ...display, fontSize: 18, fontWeight: 700, color: C.ink, marginBottom: 14 }}>
+          Ciao {firstName}! 👋 <span style={{ ...font, fontSize: 14, fontWeight: 400, color: C.muted }}>Ecco il tuo profilo.</span>
+        </div>
+      )}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
         <span style={{ ...font, fontSize: 13, color: C.muted }}>Atleta</span>
         {restricted
@@ -466,13 +472,32 @@ function AndamentoView({ d }) {
   const sel = storico[n] ? n : NOMI[0];
   const data = storico[sel];
   const single = data.length < 2;
+  const lastI = data.length - 1;
 
-  // Variazioni rispetto al rilevamento precedente (ultimo vs penultimo).
+  // Confronto tra due rilevamenti scelti (default: penultimo → ultimo).
+  const [fromI, setFromI] = useState(Math.max(0, lastI - 1));
+  const [toI, setToI] = useState(lastI);
+  const fi = Math.min(fromI, lastI);
+  const ti = Math.min(toI, lastI);
   const deltas = single ? [] : CORE.map((k) => ({
     k, short: SHORT[k],
-    diff: Math.round(((data[data.length - 1][k] ?? 0) - (data[data.length - 2][k] ?? 0)) * 10) / 10,
+    diff: Math.round(((data[ti][k] ?? 0) - (data[fi][k] ?? 0)) * 10) / 10,
   }));
+
   const note = data.filter((e) => e.nota).map((e) => ({ periodo: e.periodo, nota: e.nota }));
+
+  // Chi è cresciuto di più: variazione della media dal primo all'ultimo rilevamento.
+  const overallOf = (e) => {
+    const vals = SKILLS.map((k) => e[k]).filter((v) => typeof v === "number");
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+  };
+  const growth = NOMI.map((name) => {
+    const h = storico[name];
+    if (!h || h.length < 2) return null;
+    return { name, g: Math.round((overallOf(h[h.length - 1]) - overallOf(h[0])) * 10) / 10 };
+  }).filter(Boolean).sort((a, b) => b.g - a.g);
+
+  const selStyle = { ...font, fontSize: 13, color: C.ink, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 9, padding: "7px 10px", cursor: "pointer" };
 
   return (
     <div>
@@ -482,7 +507,17 @@ function AndamentoView({ d }) {
       </div>
 
       {!single && (
-        <Card title="Variazione dall'ultimo rilevamento" subtitle="Confronto tra le ultime due compilazioni" style={{ marginBottom: 20 }}>
+        <Card title="Confronto tra due rilevamenti" subtitle="Scegli due date e osserva la variazione competenza per competenza" style={{ marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
+            <span style={{ ...font, fontSize: 13, color: C.muted }}>Dal</span>
+            <select value={fi} onChange={(e) => setFromI(+e.target.value)} style={selStyle}>
+              {data.map((e, i) => <option key={i} value={i}>{e.periodo || `#${i + 1}`}</option>)}
+            </select>
+            <span style={{ ...font, fontSize: 13, color: C.muted }}>al</span>
+            <select value={ti} onChange={(e) => setToI(+e.target.value)} style={selStyle}>
+              {data.map((e, i) => <option key={i} value={i}>{e.periodo || `#${i + 1}`}</option>)}
+            </select>
+          </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {deltas.map(({ k, short, diff }) => {
               const up = diff > 0, down = diff < 0;
@@ -519,6 +554,27 @@ function AndamentoView({ d }) {
           </LineChart>
         </ResponsiveContainer>
       </Card>
+
+      {growth.length > 0 && (
+        <Card title="Chi è cresciuto di più" subtitle="Variazione del punteggio medio dal primo all'ultimo rilevamento" style={{ marginTop: 20 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {growth.slice(0, 6).map(({ name, g }, i) => {
+              const up = g > 0, down = g < 0;
+              const col = up ? "#0F7A4E" : down ? "#B4232A" : C.muted;
+              const bg = up ? "#DDF3E7" : down ? "#FDECEC" : C.surface;
+              return (
+                <div key={name} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ ...display, fontWeight: 700, fontSize: 14, width: 22, color: i < 3 ? C.orange : C.muted }}>{i + 1}</div>
+                  <span style={{ ...font, fontSize: 14, color: C.ink, flex: 1 }}>{name}</span>
+                  <span style={{ ...font, fontSize: 13, fontWeight: 600, color: col, background: bg, borderRadius: 99, padding: "5px 12px" }}>
+                    {up ? "▲" : down ? "▼" : "="} {g > 0 ? `+${g}` : g}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
 
       {note.length > 0 && (
         <Card title="Note del mister" subtitle="Commenti rilevamento per rilevamento" style={{ marginTop: 20 }}>
@@ -620,6 +676,17 @@ function StaffView({ d }) {
 
   return (
     <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
+        <div>
+          <div style={{ ...display, fontSize: 16, fontWeight: 700, color: C.ink }}>Report squadra — Oasi Volley U18</div>
+          <div style={{ ...font, fontSize: 12.5, color: C.muted }}>Aggiornato al {lastPeriod}</div>
+        </div>
+        <button className="a360-noprint" onClick={() => window.print()}
+          style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500, padding: "9px 13px", borderRadius: 10, border: `1px solid ${C.grid}`, background: "#fff", color: C.ink, cursor: "pointer" }}>
+          <Printer size={16} /> Stampa / PDF
+        </button>
+      </div>
+
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
         {[
           { l: "Atlete monitorate", v: NOMI.length },
@@ -675,7 +742,7 @@ function StaffView({ d }) {
         </div>
 
         <div style={{ marginTop: 16, borderTop: `1px solid ${C.grid}`, paddingTop: 16 }}>
-          <button onClick={genReport} disabled={repBusy}
+          <button onClick={genReport} disabled={repBusy} className="a360-noprint"
             style={{ ...font, display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px", borderRadius: 10, border: "none", background: C.orange, color: "#fff", fontSize: 14, fontWeight: 600, cursor: repBusy ? "default" : "pointer", opacity: repBusy ? 0.7 : 1 }}>
             <Sparkles size={16} /> {repBusy ? "Genero l'analisi…" : "Genera analisi con IA"}
           </button>
@@ -721,6 +788,7 @@ function Dashboard() {
   const viewCtx = {
     restricted: !isStaff && profile?.category === "atleta",
     athleteId: profile?.athlete_id || null,
+    firstName: profile?.first_name || "",
   };
   const NAV = [
     ...BASE_NAV,
