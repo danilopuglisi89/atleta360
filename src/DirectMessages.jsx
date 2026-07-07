@@ -46,7 +46,7 @@ export default function DirectMessages() {
 
   useEffect(() => {
     supabase.rpc("chat_roster").then(({ data }) => {
-      setMates((data || []).filter((r) => r.id && r.id !== uid));
+      setMates((data || []).filter((r) => r.category === "atleta" && r.id !== uid));
     });
   }, [uid]);
 
