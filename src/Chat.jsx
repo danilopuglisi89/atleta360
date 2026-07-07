@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Send, Trash2, MessagesSquare } from "lucide-react";
+import { Send, Trash2, ImagePlus, X } from "lucide-react";
 import { C, font, display } from "./theme";
 import { supabase } from "./supabaseClient";
 import { useAuth } from "./auth";
+import { fileToResizedDataUrl } from "./imageUtils";
 
 function Card({ title, subtitle, children, style }) {
   return (
@@ -22,6 +23,15 @@ const timeLabel = (iso) => {
   return d.toDateString() === now.toDateString() ? t : `${d.toLocaleDateString("it-IT", { day: "2-digit", month: "short" })} ${t}`;
 };
 
+function MiniAvatar({ url, name, size = 30 }) {
+  if (url) return <img src={url} alt={name} style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />;
+  return (
+    <div style={{ width: size, height: size, borderRadius: "50%", background: C.navy2, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", ...display, fontWeight: 700, fontSize: size * 0.4, flexShrink: 0 }}>
+      {initials(name)}
+    </div>
+  );
+}
+
 export default function Chat() {
   const { profile, session } = useAuth();
   const uid = session?.user?.id;
@@ -29,10 +39,14 @@ export default function Chat() {
   const isAdmin = profile?.role === "admin";
 
   const [messages, setMessages] = useState([]);
+  const [roster, setRoster] = useState({});
   const [text, setText] = useState("");
+  const [pendingImage, setPendingImage] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  const [lightbox, setLightbox] = useState(null);
   const listRef = useRef(null);
+  const fileRef = useRef(null);
   const atBottom = useRef(true);
 
   const load = useCallback(async () => {
@@ -43,8 +57,11 @@ export default function Chat() {
   }, []);
 
   useEffect(() => {
+    supabase.rpc("chat_roster").then(({ data }) => {
+      setRoster(Object.fromEntries((data || []).map((r) => [r.id, r])));
+    });
     load();
-    const t = setInterval(load, 4000);   // aggiornamento periodico
+    const t = setInterval(load, 4000);
     return () => clearInterval(t);
   }, [load]);
 
@@ -57,14 +74,22 @@ export default function Chat() {
     atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
   };
 
+  const pickImage = async (e) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    setError(null);
+    try { setPendingImage(await fileToResizedDataUrl(file)); }
+    catch (err) { setError(err.message); }
+    e.target.value = "";
+  };
+
   const send = async () => {
-    const b = text.trim(); if (!b || busy) return;
+    const b = text.trim();
+    if ((!b && !pendingImage) || busy) return;
     setBusy(true); setError(null);
-    const { error } = await supabase.from("chat_messages").insert({ user_id: uid, author: authorName, body: b });
+    const { error } = await supabase.from("chat_messages").insert({ user_id: uid, author: authorName, body: b || null, image: pendingImage || null });
     setBusy(false);
     if (error) { setError(error.message); return; }
-    setText("");
-    atBottom.current = true;
+    setText(""); setPendingImage(null); atBottom.current = true;
     await load();
   };
 
@@ -76,36 +101,33 @@ export default function Chat() {
   };
 
   return (
-    <Card title="Chat di squadra" subtitle="Bacheca riservata alle atlete e allo staff (admin)">
+    <Card title="Chat di squadra" subtitle="Chat disponibile e visualizzabile solo dalle atlete.">
       <div ref={listRef} onScroll={onScroll} style={{ height: "min(52vh, 460px)", overflowY: "auto", display: "flex", flexDirection: "column", gap: 12, paddingRight: 4 }}>
         {messages.length === 0 && (
-          <div style={{ ...font, fontSize: 13.5, color: C.muted, textAlign: "center", margin: "auto" }}>
-            Ancora nessun messaggio. Scrivi il primo qui sotto!
-          </div>
+          <div style={{ ...font, fontSize: 13.5, color: C.muted, textAlign: "center", margin: "auto" }}>Ancora nessun messaggio. Scrivi il primo qui sotto!</div>
         )}
         {messages.map((m) => {
           const mine = m.user_id && m.user_id === uid;
+          const av = roster[m.user_id];
           return (
             <div key={m.id} style={{ display: "flex", flexDirection: "column", alignItems: mine ? "flex-end" : "flex-start" }}>
               <div style={{ display: "flex", alignItems: "flex-end", gap: 8, maxWidth: "85%", flexDirection: mine ? "row-reverse" : "row" }}>
-                {!mine && (
-                  <div style={{ width: 30, height: 30, borderRadius: "50%", background: C.navy2, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", ...display, fontWeight: 700, fontSize: 12, flexShrink: 0 }}>
-                    {initials(m.author)}
-                  </div>
-                )}
+                {!mine && <MiniAvatar url={av?.avatar_url} name={m.author} />}
                 <div>
                   {!mine && <div style={{ ...font, fontSize: 11.5, color: C.muted, marginBottom: 3, marginLeft: 2 }}>{m.author || "—"}</div>}
-                  <div style={{ ...font, fontSize: 13.5, lineHeight: 1.5, padding: "9px 13px", borderRadius: 14, whiteSpace: "pre-wrap", wordBreak: "break-word",
+                  <div style={{ ...font, fontSize: 13.5, lineHeight: 1.5, padding: m.image ? 4 : "9px 13px", borderRadius: 14, whiteSpace: "pre-wrap", wordBreak: "break-word",
                     background: mine ? C.navy : C.surface, color: mine ? "#fff" : C.ink,
                     borderBottomRightRadius: mine ? 4 : 14, borderBottomLeftRadius: mine ? 14 : 4 }}>
-                    {m.body}
+                    {m.image && (
+                      <img src={m.image} alt="allegato" onClick={() => setLightbox(m.image)}
+                        style={{ display: "block", maxWidth: "min(260px, 60vw)", maxHeight: 260, borderRadius: 11, cursor: "pointer", marginBottom: m.body ? 6 : 0 }} />
+                    )}
+                    {m.body && <span style={{ display: "block", padding: m.image ? "2px 8px 6px" : 0 }}>{m.body}</span>}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: mine ? "flex-end" : "flex-start", marginTop: 3 }}>
                     <span style={{ ...font, fontSize: 10.5, color: C.muted }}>{timeLabel(m.created_at)}</span>
                     {(mine || isAdmin) && (
-                      <button onClick={() => del(m)} title="Elimina" style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", padding: 0, display: "inline-flex" }}>
-                        <Trash2 size={12} />
-                      </button>
+                      <button onClick={() => del(m)} title="Elimina" style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", padding: 0, display: "inline-flex" }}><Trash2 size={12} /></button>
                     )}
                   </div>
                 </div>
@@ -117,14 +139,32 @@ export default function Chat() {
 
       {error && <div style={{ ...font, fontSize: 12.5, color: "#B4232A", marginTop: 10 }}>{error}</div>}
 
+      {pendingImage && (
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 12, background: C.surface, borderRadius: 10, padding: 6 }}>
+          <img src={pendingImage} alt="anteprima" style={{ height: 44, borderRadius: 7, display: "block" }} />
+          <button onClick={() => setPendingImage(null)} title="Rimuovi" style={{ background: "none", border: "none", color: C.muted, cursor: "pointer" }}><X size={16} /></button>
+        </div>
+      )}
+
       <form onSubmit={(e) => { e.preventDefault(); send(); }} style={{ display: "flex", gap: 8, marginTop: 14 }}>
+        <input ref={fileRef} type="file" accept="image/*" onChange={pickImage} style={{ display: "none" }} />
+        <button type="button" onClick={() => fileRef.current?.click()} title="Allega immagine"
+          style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, borderRadius: 10, border: `1px solid ${C.grid}`, background: "#fff", color: C.navy2, cursor: "pointer", flexShrink: 0 }}>
+          <ImagePlus size={18} />
+        </button>
         <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Scrivi un messaggio…"
           style={{ ...font, flex: 1, fontSize: 14, color: C.ink, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 10, padding: "11px 13px", outline: "none" }} />
-        <button type="submit" disabled={busy || !text.trim()}
-          style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, padding: "0 16px", borderRadius: 10, border: "none", background: C.orange, color: "#fff", fontSize: 14, fontWeight: 600, cursor: busy || !text.trim() ? "default" : "pointer", opacity: busy || !text.trim() ? 0.6 : 1 }}>
+        <button type="submit" disabled={busy || (!text.trim() && !pendingImage)}
+          style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, padding: "0 16px", borderRadius: 10, border: "none", background: C.orange, color: "#fff", fontSize: 14, fontWeight: 600, cursor: busy ? "default" : "pointer", opacity: busy || (!text.trim() && !pendingImage) ? 0.6 : 1 }}>
           <Send size={16} /> Invia
         </button>
       </form>
+
+      {lightbox && (
+        <div onClick={() => setLightbox(null)} style={{ position: "fixed", inset: 0, zIndex: 70, background: "rgba(10,19,48,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, cursor: "zoom-out" }}>
+          <img src={lightbox} alt="immagine" style={{ maxWidth: "94vw", maxHeight: "90vh", borderRadius: 12 }} />
+        </div>
+      )}
     </Card>
   );
 }

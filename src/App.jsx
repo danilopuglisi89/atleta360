@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   LineChart, Line, ResponsiveContainer,
 } from "recharts";
-import { Home, User, Users, TrendingUp, Info, Menu, X, MessageCircle, ShieldCheck, LogOut, RefreshCw, Printer, ClipboardList, Sparkles, ClipboardPlus, UserCircle, MessagesSquare } from "lucide-react";
+import { Home, User, Users, TrendingUp, Info, Menu, X, MessageCircle, ShieldCheck, LogOut, RefreshCw, Printer, ClipboardList, Sparkles, ClipboardPlus, UserCircle, MessagesSquare, ScrollText } from "lucide-react";
 import { C, font, display } from "./theme";
 import { AuthProvider, useAuth } from "./auth";
 import { supabaseConfigured } from "./supabaseClient";
@@ -15,6 +15,8 @@ import CoachChat from "./CoachChat";
 import NewAssessment from "./NewAssessment";
 import PersonalArea, { Avatar } from "./PersonalArea";
 import Chat from "./Chat";
+import DirectMessages from "./DirectMessages";
+import AdminChatLog from "./AdminChatLog";
 
 const SERIES = ["#FF7A18", "#17297A", "#16A6A6"];              // confronto atlete
 const CORE_COLORS = ["#FF7A18", "#17297A", "#16A6A6", "#8B5CF6", "#E11D74", "#0EA5E9"]; // andamento
@@ -651,7 +653,8 @@ function Dashboard() {
   const isAdmin = profile?.role === "admin";
   const isStaff = isAdmin || ["direzione", "staff"].includes(profile?.category);
   const canAssess = isAdmin || !!profile?.can_assess;   // può inserire rilevamenti (mister)
-  const isChatMember = isAdmin || profile?.category === "atleta";  // chat: atlete + admin
+  const isChatMember = isAdmin || profile?.category === "atleta";  // chat di squadra: atlete + admin
+  const isAthlete = profile?.category === "atleta";                // messaggi privati tra atlete
   // Un'atleta "semplice" (non staff/admin) vede solo il proprio profilo.
   const viewCtx = {
     restricted: !isStaff && profile?.category === "atleta",
@@ -664,7 +667,9 @@ function Dashboard() {
     ...(canAssess ? [{ id: "rilevamento", label: "Nuovo rilevamento", icon: ClipboardPlus, comp: NewAssessment }] : []),
     { id: "personale", label: "Area personale", icon: UserCircle, comp: PersonalArea },
     ...(isChatMember ? [{ id: "chat", label: "Chat squadra", icon: MessagesSquare, comp: Chat }] : []),
+    ...(isAthlete ? [{ id: "messaggi", label: "Messaggi privati", icon: MessageCircle, comp: DirectMessages }] : []),
     ...(isAdmin ? [{ id: "admin", label: "Richieste accesso", icon: ShieldCheck, comp: AdminPanel }] : []),
+    ...(isAdmin ? [{ id: "logchat", label: "Log chat private", icon: ScrollText, comp: AdminChatLog }] : []),
   ];
 
   const [view, setView] = useState("home");
@@ -756,6 +761,10 @@ function Dashboard() {
     content = <PersonalArea />;
   } else if (active.id === "chat") {
     content = <Chat />;
+  } else if (active.id === "messaggi") {
+    content = <DirectMessages />;
+  } else if (active.id === "logchat") {
+    content = <AdminChatLog />;
   } else if (errore) {
     content = (
       <StatusBox tone="error" title="Non riesco a leggere i dati"
