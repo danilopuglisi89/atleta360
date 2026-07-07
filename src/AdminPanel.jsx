@@ -31,7 +31,7 @@ function Card({ title, subtitle, children, style }) {
   );
 }
 
-export default function AdminPanel() {
+export default function AdminPanel({ athletes = [] }) {
   const [rows, setRows] = useState(null);
   const [error, setError] = useState(null);
   const [busyId, setBusyId] = useState(null);
@@ -62,6 +62,14 @@ export default function AdminPanel() {
     setBusyId(null);
     if (error) { setError(error.message); return; }
     setRows((rs) => rs.map((r) => (r.id === id ? { ...r, category } : r)));
+  };
+
+  const setAthleteLink = async (id, athlete_id) => {
+    setBusyId(id);
+    const { error } = await supabase.from("profiles").update({ athlete_id: athlete_id || null }).eq("id", id);
+    setBusyId(null);
+    if (error) { setError(error.message); return; }
+    setRows((rs) => rs.map((r) => (r.id === id ? { ...r, athlete_id: athlete_id || null } : r)));
   };
 
   if (error) {
@@ -126,6 +134,12 @@ export default function AdminPanel() {
                     <option value="atleta">Atleta</option>
                     <option value="staff">Staff</option>
                     <option value="direzione">Direzione</option>
+                  </select>
+                  <select value={r.athlete_id || ""} onChange={(e) => setAthleteLink(r.id, e.target.value)} disabled={busyId === r.id}
+                    title="Collega all'atleta del Foglio (per mostrarle solo il suo profilo)"
+                    style={{ ...font, fontSize: 12.5, color: r.athlete_id ? C.ink : C.muted, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 9, padding: "6px 9px", cursor: "pointer", maxWidth: 150 }}>
+                    <option value="">Foglio: —</option>
+                    {athletes.map((a) => <option key={a} value={a}>{a}</option>)}
                   </select>
                   <span style={{ ...font, fontSize: 12, fontWeight: 600, color: s.color, background: s.bg, padding: "4px 10px", borderRadius: 99 }}>{s.label}</span>
                   <button

@@ -291,10 +291,25 @@ function HomeView({ d }) {
   );
 }
 
-function ProfiloView({ d }) {
+function ProfiloView({ d, auth }) {
   const { NOMI, atleti, overall } = d;
-  const [n, setN] = useState(NOMI[0]);
-  const sel = atleti[n] ? n : NOMI[0];
+  const restricted = !!auth?.restricted;
+  const myId = auth?.athleteId;
+  const [n, setN] = useState(restricted ? myId : NOMI[0]);
+
+  // Atleta "semplice": vede sempre e solo il proprio profilo.
+  if (restricted && (!myId || !atleti[myId])) {
+    return (
+      <StatusBox
+        title="Profilo non ancora disponibile"
+        message={myId
+          ? "Non risultano ancora rilevamenti per il tuo profilo: chiedi al mister di compilare il modulo."
+          : "Il tuo profilo non è ancora stato collegato dallo staff. Riprova più tardi o contatta lo staff."}
+      />
+    );
+  }
+
+  const sel = restricted ? myId : (atleti[n] ? n : NOMI[0]);
   const scores = atleti[sel].scores;
   const nota = atleti[sel].nota;
   const teamAvg = (k) => Math.round((NOMI.reduce((a, m) => a + (atleti[m].scores[k] ?? 0), 0) / Math.max(NOMI.length, 1)) * 10) / 10;
@@ -306,7 +321,9 @@ function ProfiloView({ d }) {
     <div className="a360-print-area">
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
         <span style={{ ...font, fontSize: 13, color: C.muted }}>Atleta</span>
-        <Select value={sel} onChange={setN} options={NOMI} />
+        {restricted
+          ? <span style={{ ...display, fontSize: 15, fontWeight: 600, color: C.ink }}>{sel}</span>
+          : <Select value={sel} onChange={setN} options={NOMI} />}
         <button className="a360-noprint" onClick={() => window.print()}
           style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500,
             padding: "9px 13px", borderRadius: 10, border: `1px solid ${C.grid}`, background: "#fff", color: C.ink, cursor: "pointer" }}>
@@ -700,6 +717,11 @@ function Dashboard() {
   const { profile, signOut } = useAuth();
   const isAdmin = profile?.role === "admin";
   const isStaff = isAdmin || ["direzione", "staff"].includes(profile?.category);
+  // Un'atleta "semplice" (non staff/admin) vede solo il proprio profilo.
+  const viewCtx = {
+    restricted: !isStaff && profile?.category === "atleta",
+    athleteId: profile?.athlete_id || null,
+  };
   const NAV = [
     ...BASE_NAV,
     ...(isStaff ? [{ id: "staff", label: "Area Staff", icon: ClipboardList, comp: StaffView }] : []),
@@ -801,7 +823,7 @@ function Dashboard() {
   // Contenuto dell'area principale in base allo stato dei dati.
   let content;
   if (active.id === "admin") {
-    content = <AdminPanel />;
+    content = <AdminPanel athletes={model?.NOMI || []} />;
   } else if (errore) {
     content = (
       <StatusBox tone="error" title="Non riesco a leggere i dati"
@@ -812,7 +834,7 @@ function Dashboard() {
   } else if (model.NOMI.length === 0) {
     content = <StatusBox title="Nessun rilevamento ancora" message="Chiedi al mister di compilare il modulo: appena arriva il primo rilevamento, la dashboard si popola da sola." />;
   } else {
-    content = <ViewComp d={model} />;
+    content = <ViewComp d={model} auth={viewCtx} />;
   }
 
   return (

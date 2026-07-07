@@ -22,6 +22,11 @@ alter table public.profiles
   add column if not exists category text not null default 'atleta'
   check (category in ('direzione', 'staff', 'atleta'));
 
+-- Collegamento account atleta → identificatore nel Foglio (es. "Beatrice V.").
+-- Lo imposta l'admin dal pannello: serve per mostrare all'atleta solo il SUO profilo.
+alter table public.profiles
+  add column if not exists athlete_id text;
+
 alter table public.profiles enable row level security;
 
 -- Funzione di comodo: l'utente corrente è admin?
