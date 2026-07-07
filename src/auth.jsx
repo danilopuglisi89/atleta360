@@ -39,11 +39,11 @@ export function AuthProvider({ children }) {
     return () => { active = false; sub.subscription.unsubscribe(); };
   }, [loadProfile]);
 
-  const signUp = async ({ firstName, lastName, email, password }) => {
+  const signUp = async ({ firstName, lastName, email, password, category }) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { first_name: firstName, last_name: lastName } },
+      options: { data: { first_name: firstName, last_name: lastName, category } },
     });
     return error;
   };

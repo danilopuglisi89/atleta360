@@ -9,10 +9,18 @@ create table if not exists public.profiles (
   first_name text,
   last_name  text,
   email      text,
+  -- permesso: 'athlete' (default) o 'admin' (assegnato SOLO a mano, vedi in fondo).
   role       text not null default 'athlete' check (role in ('athlete', 'admin')),
+  -- categoria dichiarata in registrazione (informativa, non dà permessi).
+  category   text not null default 'atleta' check (category in ('direzione', 'staff', 'atleta')),
   status     text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
   created_at timestamptz not null default now()
 );
+
+-- Se la tabella esisteva già senza la colonna categoria, la aggiunge senza errori.
+alter table public.profiles
+  add column if not exists category text not null default 'atleta'
+  check (category in ('direzione', 'staff', 'atleta'));
 
 alter table public.profiles enable row level security;
 
@@ -46,12 +54,13 @@ language plpgsql
 security definer
 as $$
 begin
-  insert into public.profiles (id, first_name, last_name, email)
+  insert into public.profiles (id, first_name, last_name, email, category)
   values (
     new.id,
     new.raw_user_meta_data ->> 'first_name',
     new.raw_user_meta_data ->> 'last_name',
-    new.email
+    new.email,
+    coalesce(new.raw_user_meta_data ->> 'category', 'atleta')
   );
   return new;
 end;

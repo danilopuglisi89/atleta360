@@ -22,7 +22,7 @@ function Field({ label, ...props }) {
 export default function AuthScreen() {
   const { signIn, signUp } = useAuth();
   const [mode, setMode] = useState("login"); // "login" | "register"
-  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", password: "" });
+  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", password: "", category: "atleta" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [done, setDone] = useState(false);
@@ -98,6 +98,14 @@ export default function AuthScreen() {
                   <>
                     <Field label="Nome" value={form.firstName} onChange={upd("firstName")} autoComplete="given-name" />
                     <Field label="Cognome" value={form.lastName} onChange={upd("lastName")} autoComplete="family-name" />
+                    <div style={{ marginBottom: 14 }}>
+                      <label style={labelStyle}>Ruolo</label>
+                      <select value={form.category} onChange={upd("category")} style={{ ...inputStyle, cursor: "pointer" }}>
+                        <option value="atleta">Atleta</option>
+                        <option value="staff">Staff</option>
+                        <option value="direzione">Direzione</option>
+                      </select>
+                    </div>
                   </>
                 )}
                 <Field label="Email" type="email" value={form.email} onChange={upd("email")} autoComplete="email" required />

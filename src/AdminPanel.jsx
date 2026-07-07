@@ -9,6 +9,17 @@ const STATUS_META = {
   rejected: { label: "Rifiutata", color: "#B4232A", bg: "#FDECEC" },
 };
 
+const CATEGORY_LABEL = { direzione: "Direzione", staff: "Staff", atleta: "Atleta" };
+
+function CategoryTag({ value }) {
+  return (
+    <span style={{ ...font, fontSize: 11.5, fontWeight: 600, color: C.navy2, background: C.surface,
+      border: `1px solid ${C.grid}`, padding: "3px 9px", borderRadius: 99 }}>
+      {CATEGORY_LABEL[value] || "Atleta"}
+    </span>
+  );
+}
+
 function Card({ title, subtitle, children, style }) {
   return (
     <div style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.grid}`, boxShadow: "0 1px 2px rgba(12,19,48,0.04)", padding: 20, ...style }}>
@@ -68,8 +79,11 @@ export default function AdminPanel() {
               <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
                 border: `1px solid ${C.grid}`, borderRadius: 12, padding: "12px 14px" }}>
                 <div style={{ flex: "1 1 200px", minWidth: 0 }}>
-                  <div style={{ ...font, fontSize: 14.5, color: C.ink, fontWeight: 600 }}>{fullName(r)}</div>
-                  <div style={{ ...font, fontSize: 12.5, color: C.muted }}>{r.email} · {fmtDate(r.created_at)}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <span style={{ ...font, fontSize: 14.5, color: C.ink, fontWeight: 600 }}>{fullName(r)}</span>
+                    <CategoryTag value={r.category} />
+                  </div>
+                  <div style={{ ...font, fontSize: 12.5, color: C.muted, marginTop: 2 }}>{r.email} · {fmtDate(r.created_at)}</div>
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button onClick={() => setStatus(r.id, "approved")} disabled={busyId === r.id} style={btn("#0F7A4E")}>
@@ -96,8 +110,11 @@ export default function AdminPanel() {
                 <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
                   borderBottom: `1px solid ${C.grid}`, padding: "10px 2px" }}>
                   <div style={{ flex: "1 1 200px", minWidth: 0 }}>
-                    <div style={{ ...font, fontSize: 14, color: C.ink }}>{fullName(r)}</div>
-                    <div style={{ ...font, fontSize: 12, color: C.muted }}>{r.email}</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span style={{ ...font, fontSize: 14, color: C.ink }}>{fullName(r)}</span>
+                      <CategoryTag value={r.category} />
+                    </div>
+                    <div style={{ ...font, fontSize: 12, color: C.muted, marginTop: 2 }}>{r.email}</div>
                   </div>
                   <span style={{ ...font, fontSize: 12, fontWeight: 600, color: s.color, background: s.bg, padding: "4px 10px", borderRadius: 99 }}>{s.label}</span>
                   <button
