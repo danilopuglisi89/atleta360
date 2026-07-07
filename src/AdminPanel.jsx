@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
-import { Check, X, Clock, RotateCcw, Plus, Trash2, ArrowUp, ArrowDown, Power } from "lucide-react";
+import { Check, X, Clock, RotateCcw, Plus, Trash2, ArrowUp, ArrowDown, Power, Save } from "lucide-react";
 import { C, font, display } from "./theme";
 import { supabase } from "./supabaseClient";
+import { Avatar } from "./PersonalArea";
 
 const STATUS_META = {
   pending: { label: "In attesa", color: "#B4520A", bg: "#FFE9D5" },
@@ -37,6 +38,8 @@ export default function AdminPanel({ onChange }) {
   const [busyId, setBusyId] = useState(null);
   const [newAthlete, setNewAthlete] = useState("");
   const [newSkill, setNewSkill] = useState({ title: "", short: "", description: "" });
+  const [detail, setDetail] = useState(null);   // scheda utente aperta
+  const [dform, setDform] = useState({});
 
   const load = useCallback(async () => {
     const [p, a, s] = await Promise.all([
@@ -62,6 +65,29 @@ export default function AdminPanel({ onChange }) {
     setError(null);
     const { error } = await supabase.rpc("admin_delete_user", { target: r.id });
     if (error) { setError(error.message); return; }
+    await after();
+  };
+
+  const openDetail = (r) => {
+    setDetail(r);
+    setDform({
+      first_name: r.first_name || "", last_name: r.last_name || "", category: r.category || "atleta",
+      status: r.status, can_assess: !!r.can_assess, athlete_id: r.athlete_id || "",
+      phone: r.phone || "", facebook: r.facebook || "", instagram: r.instagram || "",
+      jersey_number: r.jersey_number || "", ruolo: r.ruolo || "",
+    });
+  };
+  const df = (k) => (e) => setDform((v) => ({ ...v, [k]: e.target.value }));
+  const saveDetail = async () => {
+    const { error } = await supabase.from("profiles").update({
+      first_name: dform.first_name.trim() || null, last_name: dform.last_name.trim() || null,
+      category: dform.category, status: dform.status, can_assess: dform.can_assess,
+      athlete_id: dform.athlete_id || null, phone: dform.phone.trim() || null,
+      facebook: dform.facebook.trim() || null, instagram: dform.instagram.trim() || null,
+      jersey_number: dform.jersey_number.trim() || null, ruolo: dform.ruolo.trim() || null,
+    }).eq("id", detail.id);
+    if (error) { setError(error.message); return; }
+    setDetail(null);
     await after();
   };
 
@@ -114,7 +140,7 @@ export default function AdminPanel({ onChange }) {
               <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", border: `1px solid ${C.grid}`, borderRadius: 12, padding: "12px 14px" }}>
                 <div style={{ flex: "1 1 200px", minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                    <span style={{ ...font, fontSize: 14.5, color: C.ink, fontWeight: 600 }}>{fullName(r)}</span>
+                    <span onClick={() => openDetail(r)} title="Apri scheda" style={{ ...font, fontSize: 14.5, color: C.navy2, fontWeight: 600, cursor: "pointer", textDecoration: "underline", textDecorationColor: C.grid }}>{fullName(r)}</span>
                     <span style={{ ...font, fontSize: 11.5, fontWeight: 600, color: C.navy2, background: C.surface, border: `1px solid ${C.grid}`, padding: "3px 9px", borderRadius: 99 }}>{CATEGORY_LABEL[r.category] || "Atleta"}</span>
                   </div>
                   <div style={{ ...font, fontSize: 12.5, color: C.muted, marginTop: 2 }}>{r.email} · {fmtDate(r.created_at)}</div>
@@ -146,7 +172,7 @@ export default function AdminPanel({ onChange }) {
                 <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", borderBottom: `1px solid ${C.grid}`, padding: "10px 2px" }}>
                   <div style={{ flex: "1 1 170px", minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                      <span style={{ ...font, fontSize: 14, color: C.ink }}>{fullName(r)}</span>
+                      <span onClick={() => openDetail(r)} title="Apri scheda" style={{ ...font, fontSize: 14, color: C.navy2, cursor: "pointer", textDecoration: "underline", textDecorationColor: C.grid }}>{fullName(r)}</span>
                       {r.status === "approved" && r.category === "atleta" && !r.athlete_id && (
                         <span title="Collega questa atleta a una scheda, altrimenti non vedrà il suo profilo" style={{ ...font, fontSize: 11, fontWeight: 600, color: "#B4520A", background: "#FFE9D5", padding: "2px 8px", borderRadius: 99 }}>⚠️ da collegare</span>
                       )}
@@ -235,6 +261,47 @@ export default function AdminPanel({ onChange }) {
           {skills.length === 0 && <div style={{ ...font, fontSize: 13, color: C.muted }}>Nessun focus. Aggiungine uno qui sopra.</div>}
         </div>
       </Card>
+
+      {detail && (
+        <div onClick={() => setDetail(null)} style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(10,19,48,0.5)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "5vh 16px", overflowY: "auto" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 560, background: C.card, borderRadius: 16, border: `1px solid ${C.grid}`, padding: 22, boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
+              <Avatar url={detail.avatar_url} name={fullName(detail)} size={48} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ ...display, fontSize: 16, fontWeight: 700, color: C.ink }}>{fullName(detail)}</div>
+                <div style={{ ...font, fontSize: 12.5, color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{detail.email}</div>
+              </div>
+              <button onClick={() => setDetail(null)} style={iconBtn(C.muted)}><X size={16} /></button>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+              <L label="Nome"><input value={dform.first_name} onChange={df("first_name")} style={inp} /></L>
+              <L label="Cognome"><input value={dform.last_name} onChange={df("last_name")} style={inp} /></L>
+              <L label="Categoria"><select value={dform.category} onChange={df("category")} style={{ ...inp, cursor: "pointer" }}><option value="atleta">Atleta</option><option value="staff">Staff</option><option value="direzione">Direzione</option></select></L>
+              <L label="Stato"><select value={dform.status} onChange={df("status")} style={{ ...inp, cursor: "pointer" }}><option value="pending">In attesa</option><option value="approved">Approvata</option><option value="rejected">Rifiutata</option></select></L>
+              <L label="Collega ad atleta"><select value={dform.athlete_id} onChange={df("athlete_id")} style={{ ...inp, cursor: "pointer" }}><option value="">—</option>{athleteOptions.map((a) => <option key={a} value={a}>{a}</option>)}</select></L>
+              <L label="Permesso rilevamenti"><button type="button" onClick={() => setDform((v) => ({ ...v, can_assess: !v.can_assess }))} style={{ ...inp, cursor: "pointer", textAlign: "left", fontWeight: 600, color: dform.can_assess ? "#0F7A4E" : C.muted }}>{dform.can_assess ? "✓ Abilitato" : "Non abilitato"}</button></L>
+              <L label="Telefono"><input value={dform.phone} onChange={df("phone")} style={inp} /></L>
+              <L label="Numero di maglia"><input value={dform.jersey_number} onChange={df("jersey_number")} style={inp} /></L>
+              <L label="Ruolo in campo"><input value={dform.ruolo} onChange={df("ruolo")} style={inp} /></L>
+              <L label="Facebook"><input value={dform.facebook} onChange={df("facebook")} style={inp} /></L>
+              <L label="Instagram"><input value={dform.instagram} onChange={df("instagram")} style={inp} /></L>
+            </div>
+            <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+              <button onClick={saveDetail} style={btn(C.orange)}><Save size={16} /> Salva</button>
+              <button onClick={() => setDetail(null)} style={{ ...font, padding: "8px 14px", borderRadius: 10, border: `1px solid ${C.grid}`, background: "#fff", color: C.muted, cursor: "pointer", fontSize: 13 }}>Chiudi</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function L({ label, children }) {
+  return (
+    <div>
+      <label style={{ ...font, fontSize: 11.5, color: C.muted, fontWeight: 500, marginBottom: 4, display: "block" }}>{label}</label>
+      {children}
     </div>
   );
 }

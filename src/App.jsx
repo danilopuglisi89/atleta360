@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   LineChart, Line, ResponsiveContainer,
 } from "recharts";
-import { Home, User, Users, TrendingUp, Info, Menu, X, MessageCircle, ShieldCheck, LogOut, RefreshCw, Printer, ClipboardList, Sparkles, ClipboardPlus } from "lucide-react";
+import { Home, User, Users, TrendingUp, Info, Menu, X, MessageCircle, ShieldCheck, LogOut, RefreshCw, Printer, ClipboardList, Sparkles, ClipboardPlus, UserCircle } from "lucide-react";
 import { C, font, display } from "./theme";
 import { AuthProvider, useAuth } from "./auth";
 import { supabaseConfigured } from "./supabaseClient";
@@ -13,6 +13,7 @@ import AuthScreen, { ResetPasswordScreen } from "./AuthScreen";
 import AdminPanel from "./AdminPanel";
 import CoachChat from "./CoachChat";
 import NewAssessment from "./NewAssessment";
+import PersonalArea, { Avatar } from "./PersonalArea";
 
 const SERIES = ["#FF7A18", "#17297A", "#16A6A6"];              // confronto atlete
 const CORE_COLORS = ["#FF7A18", "#17297A", "#16A6A6", "#8B5CF6", "#E11D74", "#0EA5E9"]; // andamento
@@ -642,6 +643,7 @@ const BASE_NAV = [
   { id: "confronto", label: "Confronto", icon: Users, comp: ConfrontoView },
   { id: "andamento", label: "Andamento", icon: TrendingUp, comp: AndamentoView },
   { id: "info", label: "Info & Legenda", icon: Info, comp: InfoView },
+  { id: "personale", label: "Area personale", icon: UserCircle, comp: PersonalArea },
 ];
 
 function Dashboard() {
@@ -720,13 +722,18 @@ function Dashboard() {
   const ellipsis = { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" };
   const UserFooter = () => (
     <div style={{ marginTop: "auto", padding: 16, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-      <div style={{ ...display, fontSize: 13, color: "#fff", fontWeight: 600, ...ellipsis }}>
-        {[profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.email}
-      </div>
-      <div style={{ ...font, fontSize: 11, color: "rgba(255,255,255,0.45)", marginBottom: 10, ...ellipsis }}>
-        {isAdmin ? "Amministratore"
-          : profile?.category === "direzione" ? "Direzione"
-          : profile?.category === "staff" ? "Staff" : "Atleta"}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+        <Avatar url={profile?.avatar_url} name={[profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.email} size={34} />
+        <div style={{ minWidth: 0 }}>
+          <div style={{ ...display, fontSize: 13, color: "#fff", fontWeight: 600, ...ellipsis }}>
+            {[profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.email}
+          </div>
+          <div style={{ ...font, fontSize: 11, color: "rgba(255,255,255,0.45)", ...ellipsis }}>
+            {isAdmin ? "Amministratore"
+              : profile?.category === "direzione" ? "Direzione"
+              : profile?.category === "staff" ? "Staff" : "Atleta"}
+          </div>
+        </div>
       </div>
       <button onClick={signOut} style={{ ...font, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
         width: "100%", padding: "9px 12px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.15)",
@@ -742,6 +749,8 @@ function Dashboard() {
     content = <AdminPanel onChange={reload} />;
   } else if (active.id === "rilevamento") {
     content = <NewAssessment onSaved={reload} />;
+  } else if (active.id === "personale") {
+    content = <PersonalArea />;
   } else if (errore) {
     content = (
       <StatusBox tone="error" title="Non riesco a leggere i dati"
