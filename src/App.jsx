@@ -4,168 +4,37 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   LineChart, Line, ResponsiveContainer,
 } from "recharts";
-import { Home, User, Users, TrendingUp, Info, Menu, X, MessageCircle, ShieldCheck, LogOut, RefreshCw, Printer, ClipboardList, Sparkles } from "lucide-react";
-import Papa from "papaparse";
+import { Home, User, Users, TrendingUp, Info, Menu, X, MessageCircle, ShieldCheck, LogOut, RefreshCw, Printer, ClipboardList, Sparkles, ClipboardPlus } from "lucide-react";
 import { C, font, display } from "./theme";
 import { AuthProvider, useAuth } from "./auth";
 import { supabaseConfigured } from "./supabaseClient";
+import { fetchModel } from "./data";
 import AuthScreen, { ResetPasswordScreen } from "./AuthScreen";
 import AdminPanel from "./AdminPanel";
 import CoachChat from "./CoachChat";
+import NewAssessment from "./NewAssessment";
 
 const SERIES = ["#FF7A18", "#17297A", "#16A6A6"];              // confronto atlete
 const CORE_COLORS = ["#FF7A18", "#17297A", "#16A6A6", "#8B5CF6", "#E11D74", "#0EA5E9"]; // andamento
 
 /* ============================================================
-   ⭐ LIVELLO DATI REALE — legge il CSV pubblicato del Foglio Google.
-   Ogni compilazione del modulo del mister = una riga/uno snapshot.
-
-   SKILL_META è la tabella delle competenze. Per ognuna:
-   - key   : identificatore interno (chiave dei punteggi + dataKey dei grafici)
-   - short : etichetta corta usata sugli assi dei grafici
-   - title : titolo esteso mostrato nella legenda
-   - desc  : descrizione della competenza
-   - col   : nome ESATTO della colonna nel CSV (deve combaciare al 100%;
-             gli spazi in coda vengono ripuliti da transformHeader).
-
-   Le competenze non sono ancora definitive: si possono aggiungere o
-   rimuovere qui (e la relativa colonna sul Foglio) e la dashboard si
-   adatta in automatico.
+   FOCUS / COMPETENZE — ora arrivano da Supabase (tabella skills).
+   Questi riferimenti a livello di modulo vengono popolati dal modello
+   caricato in Dashboard, prima che le viste vengano renderizzate.
    ============================================================ */
-const CORE_META = [
-  {
-    key: "Resilienza all'Errore",
-    short: "Reset",
-    title: "Resilienza all'Errore (Mental Reset)",
-    col: "Resilienza all'Errore (Mental Reset): Capacità di resettare la mente dopo un errore punto (es. una battuta sbagliata o una ricezione fallita) senza farsi condizionare nei punti successivi.",
-    desc: "Capacità di resettare la mente dopo un errore punto (es. una battuta sbagliata o una ricezione fallita) senza farsi condizionare nei punti successivi.",
-  },
-  {
-    key: "Focus sotto Pressione",
-    short: "Focus",
-    title: "Focus sotto Pressione (Clutch Performance)",
-    col: "Focus sotto Pressione (Clutch Performance): Livello di attenzione e lucidità nei momenti caldi del match (es. i vantaggi o i punti decisivi dal 20 in poi).",
-    desc: "Livello di attenzione e lucidità nei momenti caldi del match (es. i vantaggi o i punti decisivi dal 20 in poi).",
-  },
-  {
-    key: "Body Language",
-    short: "Body Lang.",
-    title: "Body Language e Atteggiamento",
-    col: "Body Language e Atteggiamento: La gestione della frustrazione. Presenza visiva in campo, postura positiva ed evitamento di gesti di stizza che scoraggiano la squadra.",
-    desc: "La gestione della frustrazione. Presenza visiva in campo, postura positiva ed evitamento di gesti di stizza che scoraggiano la squadra.",
-  },
-  {
-    key: "Comunicazione e Sostegno",
-    short: "Comunic.",
-    title: "Comunicazione e Sostegno",
-    col: "Comunicazione e Sostegno: Capacità di chiamare la palla ad alta voce, dare indicazioni tattiche chiare e sostenere attivamente le compagne nei momenti di difficoltà (spirito di spogliatoio in campo).",
-    desc: "Capacità di chiamare la palla ad alta voce, dare indicazioni tattiche chiare e sostenere attivamente le compagne nei momenti di difficoltà (spirito di spogliatoio in campo).",
-  },
-  {
-    key: "Coachability",
-    short: "Coachab.",
-    title: "Coachability (Ascolto Attivo)",
-    col: "Coachability (Ascolto Attivo): Apertura mentale nell'accettare le correzioni tecniche/tattiche del Mister durante i timeout o gli allenamenti, applicandole subito senza protestare.",
-    desc: "Apertura mentale nell'accettare le correzioni tecniche/tattiche del Mister durante i timeout o gli allenamenti, applicandole subito senza protestare.",
-  },
-  {
-    key: "Intelligenza Tattica",
-    short: "Tattica",
-    title: "Intelligenza Tattica (Problem Solving)",
-    col: "Intelligenza Tattica (Problem Solving): Capacità di leggere il gioco avversario (es. posizionamento del muro o della difesa) e variare i colpi d'attacco di conseguenza, uscendo dagli schemi fissi.",
-    desc: "Capacità di leggere il gioco avversario (es. posizionamento del muro o della difesa) e variare i colpi d'attacco di conseguenza, uscendo dagli schemi fissi.",
-  },
-];
+let CORE = [];        // chiavi dei focus attivi (ordinati)
+let SKILLS = [];      // alias di CORE (compatibilità viste)
+let SHORT = {};       // key -> etichetta breve
+let TITLE = {};       // key -> titolo esteso
+let SKILL_META = [];  // [{ key, title, short, description }]
+const ADDON = [];     // non più usato (focus tutti uguali)
 
-// Le 4 add-on non sono ancora definite. Aggiungile qui con lo stesso
-// formato di CORE_META (e una colonna corrispondente sul Foglio) quando pronte.
-const ADDON_META = [];
-
-const CONFIG = {
-  // URL del CSV pubblicato del Foglio Google (colonna "Nome dell'atleta" = iniziali, per privacy Under 18).
-  // In alternativa, da Google Fogli: File → Condividi → Pubblica sul web → CSV.
-  csvUrl:
-    "https://docs.google.com/spreadsheets/d/1GY4R6m0TXdo4izgfbhVScQAovWJGLk6p4x_lTRVLJX8/export?format=csv",
-
-  // Header di default dei Moduli in italiano.
-  colTimestamp: "Informazioni cronologiche",
-  // Identificatore dell'atleta: iniziali o numero di maglia (mai il nome completo).
-  colAtleta: "Nome dell'atleta",
-  // Nota qualitativa del mister (facoltativa). Se assente sul Foglio, viene ignorata.
-  colNote: "Note del mister",
-
-  coreSkills: CORE_META,
-  addonSkills: ADDON_META,
-};
-/* ================================================== */
-
-const META = [...CONFIG.coreSkills, ...CONFIG.addonSkills];
-const CORE = CONFIG.coreSkills.map((s) => s.key);
-const ADDON = CONFIG.addonSkills.map((s) => s.key);
-const SKILLS = [...CORE, ...ADDON];
-const SHORT = Object.fromEntries(META.map((s) => [s.key, s.short]));
-const TITLE = Object.fromEntries(META.map((s) => [s.key, s.title || s.key]));
-
-// Converte una cella in numero (gestisce virgola decimale e spazi). null se non valido.
-function toNum(v) {
-  const n = Number(String(v ?? "").replace(",", ".").trim());
-  return Number.isNaN(n) ? null : n;
-}
-
-// Interpreta il timestamp (formato Moduli IT "gg/mm/aaaa hh.mm.ss" oppure ISO).
-function toTs(s) {
-  if (!s) return 0;
-  const m = String(s).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})[ ,]+(\d{1,2})[.:](\d{2})(?:[.:](\d{2}))?/);
-  if (m) {
-    const [, d, mo, y, h, mi, se] = m;
-    return new Date(+y, +mo - 1, +d, +h, +mi, +(se || 0)).getTime();
-  }
-  const t = Date.parse(s);
-  return Number.isNaN(t) ? 0 : t;
-}
-
-// Trasforma le righe grezze del CSV in { atleti, storico, lastPeriod }.
-// - atleti[id]  = { id, scores: {skill: valore} }  (ULTIMO rilevamento)
-// - storico[id] = [ { periodo, ...scores } ]        (TUTTI i rilevamenti, ordinati)
-// Legge ogni colonna tramite meta.col e memorizza il punteggio sotto meta.key.
-function transform(rows) {
-  const byId = {};
-  const allTs = [];
-
-  rows.forEach((r) => {
-    const id = String(r[CONFIG.colAtleta] ?? "").trim();
-    if (!id) return;
-    const scores = {};
-    let hasAny = false;
-    META.forEach((s) => {
-      const v = toNum(r[s.col]);
-      if (v !== null) { scores[s.key] = v; hasAny = true; }
-    });
-    if (!hasAny) return;
-    const ts = toTs(r[CONFIG.colTimestamp]);
-    const nota = String(r[CONFIG.colNote] ?? "").trim();
-    allTs.push(ts);
-    (byId[id] ||= []).push({ ts, scores, nota });
-  });
-
-  const atleti = {}, storico = {};
-  Object.entries(byId).forEach(([id, entries]) => {
-    entries.sort((a, b) => a.ts - b.ts);
-    const last = entries[entries.length - 1];
-    atleti[id] = { id, scores: last.scores, nota: last.nota };
-    storico[id] = entries.map((e) => ({
-      periodo: e.ts ? new Date(e.ts).toLocaleDateString("it-IT", { day: "2-digit", month: "short" }) : "",
-      nota: e.nota,
-      ...e.scores,
-    }));
-  });
-
-  const maxTs = allTs.length ? Math.max(...allTs) : 0;
-  const lastPeriod = maxTs
-    ? new Date(maxTs).toLocaleDateString("it-IT", { day: "2-digit", month: "short" })
-    : "—";
-
-  return { atleti, storico, lastPeriod };
+function bindSkills(model) {
+  CORE = model.keys;
+  SKILLS = model.keys;
+  SHORT = model.SHORT;
+  TITLE = model.TITLE;
+  SKILL_META = model.skills;
 }
 
 /* ============================================================
@@ -244,8 +113,8 @@ function HomeView({ d }) {
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
         {[
           { l: "Atlete monitorate", v: NOMI.length },
-          { l: "Skill core", v: CORE.length },
-          { l: "Add-on attive", v: ADDON.length },
+          { l: "Focus allenati", v: CORE.length },
+          { l: "Media squadra", v: (NOMI.reduce((a, n) => a + overall(n), 0) / Math.max(NOMI.length, 1)).toFixed(1) },
           { l: "Ultimo rilevamento", v: lastPeriod },
         ].map((s) => (
           <div key={s.l} style={{ flex: "1 1 140px", background: C.card, border: `1px solid ${C.grid}`, borderRadius: 14, padding: "16px 18px" }}>
@@ -380,7 +249,7 @@ function ProfiloView({ d, auth }) {
           "Dammi un esercizio per resettare dopo un errore.",
           "Una routine mentale prima del servizio nei punti caldi?",
         ]}
-        payload={{ athlete: { id: sel, scores }, skills: CONFIG.coreSkills.map((s) => ({ title: s.title, desc: s.desc })) }}
+        payload={{ athlete: { id: sel, scores }, skills: SKILL_META.map((s) => ({ title: s.title, desc: s.description })) }}
       />
     </div>
   );
@@ -595,26 +464,19 @@ function AndamentoView({ d }) {
 function InfoView() {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
-      <Card title="Le competenze core" subtitle="Il cuore del profilo, monitorate a ogni rilevamento">
-        {CONFIG.coreSkills.map((s) => (
+      <Card title="I focus allenati" subtitle="Le competenze monitorate a ogni rilevamento">
+        {SKILL_META.map((s) => (
           <div key={s.key} style={{ paddingBottom: 12, marginBottom: 12, borderBottom: `1px solid ${C.grid}` }}>
             <div style={{ ...display, fontSize: 14, fontWeight: 600, color: C.navy }}>{s.title}</div>
-            <div style={{ ...font, fontSize: 13, color: C.muted, marginTop: 3, lineHeight: 1.5 }}>{s.desc}</div>
+            {s.description && <div style={{ ...font, fontSize: 13, color: C.muted, marginTop: 3, lineHeight: 1.5 }}>{s.description}</div>}
           </div>
         ))}
       </Card>
-      <Card title="Le add-on (opzionali)" subtitle="Competenze aggiuntive personalizzabili per squadra">
-        {ADDON.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
-            {CONFIG.addonSkills.map((s) => (
-              <span key={s.key} style={{ ...font, fontSize: 13, padding: "7px 13px", borderRadius: 99, background: C.orangeSoft, color: "#B4520A", fontWeight: 500 }}>{s.title}</span>
-            ))}
-          </div>
-        )}
-        <div style={{ ...font, fontSize: 13, color: C.muted, lineHeight: 1.6, background: C.surface, borderRadius: 12, padding: 14 }}>
-          {ADDON.length > 0
-            ? "Queste competenze aggiuntive vengono lette automaticamente dal Foglio."
-            : "Nessuna add-on ancora definita. Per aggiungerne, inserisci una nuova voce in ADDON_META (con lo stesso formato delle core) e una colonna corrispondente sul Foglio, con valore 1–10: la dashboard la legge in automatico."}
+      <Card title="Come funziona" subtitle="Gestione dei focus e dei rilevamenti">
+        <div style={{ ...font, fontSize: 13.5, color: C.muted, lineHeight: 1.6, background: C.surface, borderRadius: 12, padding: 14 }}>
+          I focus sono personalizzabili dallo staff dal pannello di amministrazione (Richieste accesso → Focus):
+          si possono aggiungere, rinominare o disattivare. Il mister inserisce i rilevamenti dalla pagina
+          “Nuovo rilevamento”, con un valore da 1 a 10 per ogni focus. La dashboard si aggiorna in automatico.
         </div>
       </Card>
     </div>
@@ -656,7 +518,7 @@ function StaffView({ d }) {
     averages: CORE.map((k) => ({ title: TITLE[k], value: teamAvg(k) })),
     roster: RANK.map((n) => ({ id: n, overall: overall(n).toFixed(1) })),
   };
-  const skills = CONFIG.coreSkills.map((s) => ({ title: s.title, desc: s.desc }));
+  const skills = SKILL_META.map((s) => ({ title: s.title, desc: s.description }));
 
   const genReport = async () => {
     setRepBusy(true); setRepErr(null);
@@ -792,6 +654,7 @@ function Dashboard() {
   };
   const NAV = [
     ...BASE_NAV,
+    ...(isStaff ? [{ id: "rilevamento", label: "Nuovo rilevamento", icon: ClipboardPlus, comp: NewAssessment }] : []),
     ...(isStaff ? [{ id: "staff", label: "Area Staff", icon: ClipboardList, comp: StaffView }] : []),
     ...(isAdmin ? [{ id: "admin", label: "Richieste accesso", icon: ShieldCheck, comp: AdminPanel }] : []),
   ];
@@ -799,42 +662,22 @@ function Dashboard() {
   const [view, setView] = useState("home");
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const [dati, setDati] = useState(null);   // { atleti, storico, lastPeriod }
+  const [model, setModel] = useState(null);
   const [errore, setErrore] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const reload = () => setReloadKey((k) => k + 1);
 
   useEffect(() => {
-    Papa.parse(CONFIG.csvUrl, {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      transformHeader: (h) => h.trim(),     // evita bug da spazi negli header
-      complete: (res) => {
-        const headers = res.meta?.fields || [];
-        const missing = META.filter((s) => !headers.includes(s.col)).map((s) => s.key);
-        if (missing.length) {
-          console.warn("[Atleta360] Colonne skill attese ma non trovate nel CSV:", missing);
-          console.warn("[Atleta360] Header presenti nel CSV:", headers);
-        }
-        setDati(transform(res.data));
-      },
-      error: (e) => setErrore(e.message),
-    });
-  }, []);
+    let active = true;
+    setModel(null); setErrore(null);
+    fetchModel()
+      .then((m) => { if (active) setModel(m); })
+      .catch((e) => { if (active) setErrore(e.message); });
+    return () => { active = false; };
+  }, [reloadKey]);
 
-  // Ricalcola i derivati dai dati reali (1:1 con le vecchie costanti del prototipo).
-  const model = useMemo(() => {
-    if (!dati) return null;
-    const { atleti, storico, lastPeriod } = dati;
-    const NOMI = Object.keys(atleti);
-    const overall = (n) =>
-      Math.round((SKILLS.reduce((a, k) => a + (atleti[n].scores[k] ?? 0), 0) / SKILLS.length) * 10) / 10;
-    const RANK = [...NOMI].sort((a, b) => overall(b) - overall(a));
-    const TEAM_AVG = SKILLS.map((k) => ({
-      skill: SHORT[k], full: 10,
-      valore: Math.round((NOMI.reduce((a, n) => a + (atleti[n].scores[k] ?? 0), 0) / Math.max(NOMI.length, 1)) * 10) / 10,
-    }));
-    return { atleti, storico, lastPeriod, NOMI, overall, RANK, TEAM_AVG };
-  }, [dati]);
+  // Rende disponibili i focus (da Supabase) alle viste, prima del render dei figli.
+  if (model) bindSkills(model);
 
   const active = NAV.find((x) => x.id === view) || NAV[0];
   const ViewComp = active.comp;
@@ -878,7 +721,9 @@ function Dashboard() {
         {[profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.email}
       </div>
       <div style={{ ...font, fontSize: 11, color: "rgba(255,255,255,0.45)", marginBottom: 10, ...ellipsis }}>
-        {isAdmin ? "Amministratore" : "Atleta"}
+        {isAdmin ? "Amministratore"
+          : profile?.category === "direzione" ? "Direzione"
+          : profile?.category === "staff" ? "Staff" : "Atleta"}
       </div>
       <button onClick={signOut} style={{ ...font, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
         width: "100%", padding: "9px 12px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.15)",
@@ -891,7 +736,9 @@ function Dashboard() {
   // Contenuto dell'area principale in base allo stato dei dati.
   let content;
   if (active.id === "admin") {
-    content = <AdminPanel athletes={model?.NOMI || []} />;
+    content = <AdminPanel onChange={reload} />;
+  } else if (active.id === "rilevamento") {
+    content = <NewAssessment onSaved={reload} />;
   } else if (errore) {
     content = (
       <StatusBox tone="error" title="Non riesco a leggere i dati"
