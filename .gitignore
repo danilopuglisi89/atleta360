@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Variabili d'ambiente (contengono la config Supabase — non vanno su GitHub)
+.env
+.env.*
+!.env.example
+
 # Editor / OS
 .vscode/*
 !.vscode/extensions.json

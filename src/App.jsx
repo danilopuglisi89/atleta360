@@ -4,23 +4,14 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   LineChart, Line, ResponsiveContainer,
 } from "recharts";
-import { Home, User, Users, TrendingUp, Info, Menu, X, MessageCircle } from "lucide-react";
+import { Home, User, Users, TrendingUp, Info, Menu, X, MessageCircle, ShieldCheck, LogOut, RefreshCw } from "lucide-react";
 import Papa from "papaparse";
+import { C, font, display } from "./theme";
+import { AuthProvider, useAuth } from "./auth";
+import { supabaseConfigured } from "./supabaseClient";
+import AuthScreen from "./AuthScreen";
+import AdminPanel from "./AdminPanel";
 
-/* ============================================================
-   BRAND — sostituisci con gli hex esatti del brand Atleta360
-   ============================================================ */
-const C = {
-  navy: "#0A1650",
-  navy2: "#17297A",
-  orange: "#FF7A18",
-  orangeSoft: "#FFE9D5",
-  ink: "#0C1330",
-  muted: "#64708F",
-  surface: "#F6F7FB",
-  card: "#FFFFFF",
-  grid: "#E6E9F2",
-};
 const SERIES = ["#FF7A18", "#17297A", "#16A6A6"];              // confronto atlete
 const CORE_COLORS = ["#FF7A18", "#17297A", "#16A6A6", "#8B5CF6", "#E11D74", "#0EA5E9"]; // andamento
 
@@ -173,9 +164,6 @@ function transform(rows) {
 /* ============================================================
    PICCOLI COMPONENTI
    ============================================================ */
-const font = { fontFamily: "'Inter', system-ui, sans-serif" };
-const display = { fontFamily: "'Space Grotesk', system-ui, sans-serif" };
-
 function Card({ title, subtitle, children, style }) {
   return (
     <div style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.grid}`, boxShadow: "0 1px 2px rgba(12,19,48,0.04)", padding: 20, ...style }}>
@@ -488,7 +476,7 @@ function InfoView() {
 /* ============================================================
    APP + LAYOUT RESPONSIVE
    ============================================================ */
-const NAV = [
+const BASE_NAV = [
   { id: "home", label: "Home", icon: Home, comp: HomeView },
   { id: "profilo", label: "Profilo Atleta", icon: User, comp: ProfiloView },
   { id: "confronto", label: "Confronto", icon: Users, comp: ConfrontoView },
@@ -496,7 +484,13 @@ const NAV = [
   { id: "info", label: "Info & Legenda", icon: Info, comp: InfoView },
 ];
 
-export default function App() {
+function Dashboard() {
+  const { profile, signOut } = useAuth();
+  const isAdmin = profile?.role === "admin";
+  const NAV = isAdmin
+    ? [...BASE_NAV, { id: "admin", label: "Richieste accesso", icon: ShieldCheck, comp: AdminPanel }]
+    : BASE_NAV;
+
   const [view, setView] = useState("home");
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -537,7 +531,7 @@ export default function App() {
     return { atleti, storico, lastPeriod, NOMI, overall, RANK, TEAM_AVG };
   }, [dati]);
 
-  const active = NAV.find((x) => x.id === view);
+  const active = NAV.find((x) => x.id === view) || NAV[0];
   const ViewComp = active.comp;
 
   const NavList = () => (
@@ -572,9 +566,28 @@ export default function App() {
     </div>
   );
 
+  const ellipsis = { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" };
+  const UserFooter = () => (
+    <div style={{ marginTop: "auto", padding: 16, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+      <div style={{ ...display, fontSize: 13, color: "#fff", fontWeight: 600, ...ellipsis }}>
+        {[profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.email}
+      </div>
+      <div style={{ ...font, fontSize: 11, color: "rgba(255,255,255,0.45)", marginBottom: 10, ...ellipsis }}>
+        {isAdmin ? "Amministratore" : "Atleta"}
+      </div>
+      <button onClick={signOut} style={{ ...font, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+        width: "100%", padding: "9px 12px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.15)",
+        background: "transparent", color: "rgba(255,255,255,0.85)", cursor: "pointer", fontSize: 13 }}>
+        <LogOut size={16} /> Esci
+      </button>
+    </div>
+  );
+
   // Contenuto dell'area principale in base allo stato dei dati.
   let content;
-  if (errore) {
+  if (active.id === "admin") {
+    content = <AdminPanel />;
+  } else if (errore) {
     content = (
       <StatusBox tone="error" title="Non riesco a leggere i dati"
         message="Controlla che il Foglio Google sia pubblicato sul web come CSV e che l'URL in CONFIG sia corretto. Dettaglio tecnico in console." />
@@ -593,7 +606,7 @@ export default function App() {
       <aside style={{ width: 250, background: C.navy, flexShrink: 0, position: "sticky", top: 0, height: "100vh", display: "none", flexDirection: "column" }} className="a360-sidebar">
         <Brand />
         <NavList />
-        <div style={{ marginTop: "auto", padding: 18, ...font, fontSize: 11, color: "rgba(255,255,255,0.35)" }}>Dati dal Foglio Google · Atleta360</div>
+        <UserFooter />
       </aside>
       <style>{`@media (min-width: 900px){ .a360-sidebar{ display:flex !important; } .a360-mobilebar{ display:none !important; } }`}</style>
 
@@ -607,6 +620,7 @@ export default function App() {
               <button onClick={() => setMobileOpen(false)} aria-label="Chiudi menu" style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", padding: 22 }}><X size={22} /></button>
             </div>
             <NavList />
+            <UserFooter />
           </aside>
         </div>
       )}
@@ -627,6 +641,94 @@ export default function App() {
           {content}
         </main>
         <Footer />
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   CANCELLO DI ACCESSO — decide cosa mostrare in base all'utente
+   ============================================================ */
+export default function App() {
+  return (
+    <AuthProvider>
+      <Root />
+    </AuthProvider>
+  );
+}
+
+function Root() {
+  const { loading, session, profile, signOut, refreshProfile } = useAuth();
+
+  if (!supabaseConfigured) return <SetupNotice />;
+  if (loading) return <GateScreen title="Un attimo…" message="Sto verificando il tuo accesso." />;
+  if (!session) return <AuthScreen />;
+
+  const status = profile?.status;
+  if (!profile || status === "pending") {
+    return (
+      <GateScreen
+        title="Richiesta in valutazione"
+        message="La tua registrazione è in attesa di approvazione da parte dello staff. Appena viene approvata potrai accedere alla dashboard: riprova più tardi."
+        onLogout={signOut}
+        onRefresh={refreshProfile}
+      />
+    );
+  }
+  if (status === "rejected") {
+    return (
+      <GateScreen
+        title="Accesso non approvato"
+        message="La tua richiesta di accesso non è stata approvata. Se pensi sia un errore, contatta lo staff."
+        onLogout={signOut}
+      />
+    );
+  }
+  return <Dashboard />;
+}
+
+// Schermata a tutto schermo per gli stati del cancello (attesa / rifiuto / caricamento).
+function GateScreen({ title, message, onLogout, onRefresh }) {
+  return (
+    <div style={{ ...font, minHeight: "100vh", background: `linear-gradient(160deg, ${C.navy} 0%, ${C.navy2} 100%)`,
+      display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ width: "100%", maxWidth: 440, textAlign: "center" }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 11, marginBottom: 22 }}>
+          <div style={{ width: 42, height: 42, borderRadius: 12, background: C.orange, display: "flex", alignItems: "center", justifyContent: "center", ...display, fontWeight: 700, color: "#fff", fontSize: 14, letterSpacing: -0.5 }}>360</div>
+          <div style={{ ...display, color: "#fff", fontWeight: 700, fontSize: 22, letterSpacing: -0.3 }}>Atleta360</div>
+        </div>
+        <div style={{ background: C.card, borderRadius: 18, padding: 28, boxShadow: "0 20px 60px rgba(0,0,0,0.28)" }}>
+          <div style={{ ...display, fontSize: 18, fontWeight: 700, color: C.ink }}>{title}</div>
+          <p style={{ ...font, fontSize: 14, color: C.muted, lineHeight: 1.6, marginTop: 10 }}>{message}</p>
+          <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 18, flexWrap: "wrap" }}>
+            {onRefresh && (
+              <button onClick={onRefresh} style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, padding: "10px 16px", borderRadius: 11, border: "none", background: C.orange, color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                <RefreshCw size={16} /> Controlla di nuovo
+              </button>
+            )}
+            {onLogout && (
+              <button onClick={onLogout} style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, padding: "10px 16px", borderRadius: 11, border: `1px solid ${C.grid}`, background: "#fff", color: C.muted, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
+                <LogOut size={16} /> Esci
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Mostrata se le variabili d'ambiente di Supabase non sono configurate.
+function SetupNotice() {
+  return (
+    <div style={{ ...font, minHeight: "100vh", background: C.surface, color: C.ink, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ maxWidth: 560, background: C.card, border: `1px solid ${C.grid}`, borderLeft: `4px solid ${C.orange}`, borderRadius: 16, padding: "26px 24px" }}>
+        <div style={{ ...display, fontSize: 17, fontWeight: 700, color: C.ink }}>Accesso non ancora configurato</div>
+        <p style={{ ...font, fontSize: 14, color: C.muted, lineHeight: 1.6, marginTop: 10 }}>
+          Mancano le credenziali di Supabase. Crea un file <code>.env</code> (vedi <code>.env.example</code>)
+          con <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code>, poi riavvia l'app.
+          Le istruzioni complete sono nel <b>README</b>.
+        </p>
       </div>
     </div>
   );

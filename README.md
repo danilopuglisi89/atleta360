@@ -48,6 +48,47 @@ e incolla quell'URL in `CONFIG.csvUrl`.
 Le atlete sono Under 18 e il link è pubblico: nella colonna dell'atleta si usano
 **iniziali o numero di maglia**, mai il nome completo.
 
+## Accesso con approvazione (Supabase)
+
+La dashboard è protetta da un accesso: le atlete si registrano (nome, cognome, email,
+password), tu approvi/rifiuti dal pannello admin, e solo chi è approvato entra.
+Il backend è **Supabase** (gratis). Configurazione una tantum:
+
+### 1. Crea il progetto Supabase
+1. Vai su [supabase.com](https://supabase.com) → **Start your project** → accedi (anche con GitHub).
+2. **New project**: dai un nome (es. `atleta360`), scegli una password per il database
+   (salvala) e la region (Europe). Attendi ~2 minuti che il progetto sia pronto.
+
+### 2. Crea le tabelle
+1. Nel menu a sinistra: **SQL Editor** → **New query**.
+2. Copia **tutto** il contenuto di [`supabase/schema.sql`](supabase/schema.sql), incollalo e premi **Run**.
+   Deve dire *Success*.
+
+### 3. Disattiva la conferma email (consigliato)
+Così le atlete non devono confermare un'email: tanto sei tu ad approvarle.
+- **Authentication → Sign In / Providers → Email** → disattiva **Confirm email** → **Save**.
+
+### 4. Collega l'app a Supabase
+1. **Project Settings → API**: copia **Project URL** e la chiave **anon public**.
+2. In locale: copia `.env.example` in `.env` e incolla i due valori. Poi `npm run dev`.
+3. Su **Vercel**: progetto → **Settings → Environment Variables** → aggiungi
+   `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` con gli stessi valori → **Redeploy**.
+
+> La chiave *anon public* è pensata per stare nel frontend: è sicura da esporre.
+> La protezione dei dati è garantita dalle regole (Row Level Security) nello schema.
+
+### 5. Crea il tuo utente admin
+1. Apri l'app, vai su **Registrati** e iscriviti con la **tua** email e una password a tua scelta.
+2. Torna su Supabase → **SQL Editor** ed esegui (con la tua email):
+   ```sql
+   update public.profiles set role = 'admin', status = 'approved'
+   where email = 'info@danilopuglisi.com';
+   ```
+3. Ricarica l'app: ora entri e vedi la voce **“Richieste accesso”** per approvare/rifiutare.
+
+> ⚠️ Niente `admin/admin`: il tuo accesso admin usa la tua email e una password vera che
+> scegli tu. È l'unico modo per proteggere davvero l'accesso ai dati di atlete minorenni.
+
 ## Deploy su Vercel
 
 **Percorso A — GitHub (consigliato):**
