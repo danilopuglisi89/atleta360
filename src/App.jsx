@@ -214,20 +214,25 @@ function StatusBox({ title, message, tone = "info" }) {
 function Footer() {
   const year = new Date().getFullYear();
   const sep = <span aria-hidden style={{ color: C.grid }}>·</span>;
+  const waText = encodeURIComponent("Ciao Danilo, ti scrivo dalla dashboard Atleta360 di Oasi Volley.");
   return (
     <footer style={{ marginTop: "auto", width: "100%", padding: "0 clamp(18px, 4vw, 34px) clamp(18px, 4vw, 28px)" }}>
-      <div style={{ maxWidth: 1180, margin: "0 auto", borderTop: `1px solid ${C.grid}`, paddingTop: 18,
-        display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: "6px 14px",
-        textAlign: "center", ...font, fontSize: 12.5, color: C.muted }}>
-        <span>© {year} <b style={{ color: C.ink, fontWeight: 600 }}>Danilo Puglisi</b> — Consulente e Formatore</span>
-        {sep}
-        <a href="https://www.danilopuglisi.com" target="_blank" rel="noopener noreferrer"
-          style={{ color: C.navy2, textDecoration: "none", fontWeight: 500 }}>www.danilopuglisi.com</a>
-        {sep}
-        <a href="https://wa.me/393770870217" target="_blank" rel="noopener noreferrer"
-          style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "#1FA855", textDecoration: "none", fontWeight: 600 }}>
-          <MessageCircle size={15} /> WhatsApp
-        </a>
+      <div style={{ maxWidth: 1180, margin: "0 auto", borderTop: `1px solid ${C.grid}`, paddingTop: 18 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: "6px 14px",
+          textAlign: "center", ...font, fontSize: 12.5, color: C.muted }}>
+          <span>© {year} <b style={{ color: C.ink, fontWeight: 600 }}>Danilo Puglisi</b> — Consulente e Formatore</span>
+          {sep}
+          <a href="https://www.danilopuglisi.com" target="_blank" rel="noopener noreferrer"
+            style={{ color: C.navy2, textDecoration: "none", fontWeight: 500 }}>www.danilopuglisi.com</a>
+          {sep}
+          <a href={`https://wa.me/393770870217?text=${waText}`} target="_blank" rel="noopener noreferrer"
+            style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "#1FA855", textDecoration: "none", fontWeight: 600 }}>
+            <MessageCircle size={15} /> WhatsApp
+          </a>
+        </div>
+        <div style={{ textAlign: "center", ...font, fontSize: 11.5, color: C.muted, opacity: 0.75, marginTop: 8 }}>
+          Dashboard realizzata per Oasi Volley
+        </div>
       </div>
     </footer>
   );
