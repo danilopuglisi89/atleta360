@@ -14,8 +14,7 @@ import AdminPanel from "./AdminPanel";
 import CoachChat from "./CoachChat";
 import NewAssessment from "./NewAssessment";
 import PersonalArea, { Avatar } from "./PersonalArea";
-import Chat from "./Chat";
-import DirectMessages from "./DirectMessages";
+import ChatPage from "./ChatPage";
 import AdminChatLog from "./AdminChatLog";
 
 const SERIES = ["#FF7A18", "#17297A", "#16A6A6"];              // confronto atlete
@@ -666,10 +665,8 @@ function Dashboard() {
     ...(isStaff ? [{ id: "staff", label: "Area Staff", icon: ClipboardList, comp: StaffView }] : []),
     ...(canAssess ? [{ id: "rilevamento", label: "Nuovo rilevamento", icon: ClipboardPlus, comp: NewAssessment }] : []),
     { id: "personale", label: "Area personale", icon: UserCircle, comp: PersonalArea },
-    ...(isChatMember ? [{ id: "chat", label: "Chat squadra", icon: MessagesSquare, comp: Chat }] : []),
-    ...(isAthlete ? [{ id: "messaggi", label: "Messaggi privati", icon: MessageCircle, comp: DirectMessages }] : []),
-    ...(isAdmin ? [{ id: "admin", label: "Richieste accesso", icon: ShieldCheck, comp: AdminPanel }] : []),
-    ...(isAdmin ? [{ id: "logchat", label: "Log chat private", icon: ScrollText, comp: AdminChatLog }] : []),
+    ...(isChatMember ? [{ id: "chat", label: "Chat", icon: MessagesSquare, comp: ChatPage }] : []),
+    ...(isAdmin ? [{ id: "admin", label: "Admin", icon: ShieldCheck, comp: AdminPanel }] : []),
   ];
 
   const [view, setView] = useState("home");
@@ -754,17 +751,18 @@ function Dashboard() {
   // Contenuto dell'area principale in base allo stato dei dati.
   let content;
   if (active.id === "admin") {
-    content = <AdminPanel onChange={reload} />;
+    content = (
+      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <AdminPanel onChange={reload} />
+        <AdminChatLog />
+      </div>
+    );
   } else if (active.id === "rilevamento") {
     content = <NewAssessment onSaved={reload} />;
   } else if (active.id === "personale") {
     content = <PersonalArea />;
   } else if (active.id === "chat") {
-    content = <Chat />;
-  } else if (active.id === "messaggi") {
-    content = <DirectMessages />;
-  } else if (active.id === "logchat") {
-    content = <AdminChatLog />;
+    content = <ChatPage />;
   } else if (errore) {
     content = (
       <StatusBox tone="error" title="Non riesco a leggere i dati"

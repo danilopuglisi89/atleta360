@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Send, ImagePlus, X, Trash2 } from "lucide-react";
+import { Send, ImagePlus, X, Trash2, Plus } from "lucide-react";
 import { C, font, display } from "./theme";
 import { supabase } from "./supabaseClient";
 import { useAuth } from "./auth";
@@ -34,6 +34,7 @@ export default function DirectMessages() {
 
   const [mates, setMates] = useState([]);          // altre atlete
   const [toId, setToId] = useState("");            // destinataria selezionata
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [pendingImage, setPendingImage] = useState(null);
@@ -99,23 +100,17 @@ export default function DirectMessages() {
 
   return (
     <Card title="Messaggi privati" subtitle="Chat privata 1-a-1 tra atlete. Le conversazioni sono visibili allo staff per la sicurezza delle Under 18.">
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
-        {mates.length === 0 && <span style={{ ...font, fontSize: 13, color: C.muted }}>Nessun'altra atleta disponibile.</span>}
-        {mates.map((m) => {
-          const on = m.id === toId;
-          return (
-            <button key={m.id} onClick={() => setToId(m.id)}
-              style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, padding: "6px 12px 6px 6px", borderRadius: 99, cursor: "pointer",
-                border: `1.5px solid ${on ? C.orange : C.grid}`, background: on ? "rgba(255,122,24,0.1)" : "#fff", color: on ? C.orange : C.ink, fontWeight: on ? 600 : 400 }}>
-              <MiniAvatar url={m.avatar_url} name={m.name} size={24} /> {m.name || "—"}
-            </button>
-          );
-        })}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
+        <button onClick={() => setPickerOpen(true)}
+          style={{ ...font, display: "inline-flex", alignItems: "center", gap: 8, padding: "11px 16px", borderRadius: 11, border: "none", background: C.orange, color: "#fff", fontSize: 14.5, fontWeight: 600, cursor: "pointer" }}>
+          <Plus size={17} /> Nuovo messaggio privato
+        </button>
+        {to && <span style={{ ...font, fontSize: 13.5, color: C.muted }}>Conversazione con <b style={{ color: C.ink }}>{to.name}</b></span>}
       </div>
 
       {!toId ? (
         <div style={{ ...font, fontSize: 13.5, color: C.muted, background: C.surface, borderRadius: 12, padding: 16, textAlign: "center" }}>
-          Scegli un'atleta qui sopra per aprire la conversazione.
+          Premi “Nuovo messaggio privato” e scegli un'atleta per iniziare a scrivere.
         </div>
       ) : (
         <>
@@ -158,6 +153,27 @@ export default function DirectMessages() {
             <button type="submit" disabled={busy || (!text.trim() && !pendingImage)} style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, padding: "0 16px", borderRadius: 10, border: "none", background: C.orange, color: "#fff", fontSize: 14, fontWeight: 600, cursor: busy ? "default" : "pointer", opacity: busy || (!text.trim() && !pendingImage) ? 0.6 : 1 }}><Send size={16} /> Invia</button>
           </form>
         </>
+      )}
+
+      {pickerOpen && (
+        <div onClick={() => setPickerOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 65, background: "rgba(10,19,48,0.5)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "8vh 16px", overflowY: "auto" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 420, background: C.card, borderRadius: 16, border: `1px solid ${C.grid}`, padding: 20, boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+              <div style={{ ...display, fontSize: 16, fontWeight: 700, color: C.ink }}>A chi vuoi scrivere?</div>
+              <button onClick={() => setPickerOpen(false)} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer" }}><X size={18} /></button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, maxHeight: "60vh", overflowY: "auto" }}>
+              {mates.length === 0 && <div style={{ ...font, fontSize: 13, color: C.muted }}>Nessun'altra atleta disponibile.</div>}
+              {mates.map((m) => (
+                <button key={m.id} onClick={() => { setToId(m.id); setPickerOpen(false); }}
+                  style={{ ...font, display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 10, border: "none", background: m.id === toId ? C.surface : "transparent", cursor: "pointer", textAlign: "left" }}>
+                  <MiniAvatar url={m.avatar_url} name={m.name} size={32} />
+                  <span style={{ ...font, fontSize: 14, color: C.ink }}>{m.name || "—"}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
 
       {lightbox && (
