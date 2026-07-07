@@ -56,6 +56,7 @@ export default function AdminPanel({ onChange }) {
   const setStatus = (id, status) => guard(() => supabase.from("profiles").update({ status }).eq("id", id));
   const setCategory = (id, category) => guard(() => supabase.from("profiles").update({ category }).eq("id", id));
   const setAthleteLink = (id, athlete_id) => guard(() => supabase.from("profiles").update({ athlete_id: athlete_id || null }).eq("id", id));
+  const setAssess = (id, can_assess) => guard(() => supabase.from("profiles").update({ can_assess }).eq("id", id));
 
   // --- atlete ---
   const addAthlete = async () => {
@@ -147,6 +148,11 @@ export default function AdminPanel({ onChange }) {
                     <option value="">Atleta: —</option>
                     {athleteOptions.map((a) => <option key={a} value={a}>{a}</option>)}
                   </select>
+                  <button onClick={() => setAssess(r.id, !r.can_assess)} title="Permesso di inserire rilevamenti (mister)"
+                    style={{ ...font, fontSize: 12, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 99, cursor: "pointer",
+                      border: `1px solid ${r.can_assess ? "#0F7A4E" : C.grid}`, background: r.can_assess ? "#DDF3E7" : "#fff", color: r.can_assess ? "#0F7A4E" : C.muted }}>
+                    {r.can_assess ? "✓ Rilevamenti" : "Rilevamenti"}
+                  </button>
                   <span style={{ ...font, fontSize: 12, fontWeight: 600, color: s.color, background: s.bg, padding: "4px 10px", borderRadius: 99 }}>{s.label}</span>
                   <button onClick={() => setStatus(r.id, r.status === "approved" ? "rejected" : "approved")} style={{ ...font, fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 5, background: "none", border: `1px solid ${C.grid}`, borderRadius: 9, padding: "6px 10px", color: C.muted, cursor: "pointer" }}>
                     <RotateCcw size={13} /> {r.status === "approved" ? "Revoca" : "Approva"}

@@ -646,6 +646,7 @@ function Dashboard() {
   const { profile, signOut } = useAuth();
   const isAdmin = profile?.role === "admin";
   const isStaff = isAdmin || ["direzione", "staff"].includes(profile?.category);
+  const canAssess = isAdmin || !!profile?.can_assess;   // può inserire rilevamenti (mister)
   // Un'atleta "semplice" (non staff/admin) vede solo il proprio profilo.
   const viewCtx = {
     restricted: !isStaff && profile?.category === "atleta",
@@ -654,7 +655,7 @@ function Dashboard() {
   };
   const NAV = [
     ...BASE_NAV,
-    ...(isStaff ? [{ id: "rilevamento", label: "Nuovo rilevamento", icon: ClipboardPlus, comp: NewAssessment }] : []),
+    ...(canAssess ? [{ id: "rilevamento", label: "Nuovo rilevamento", icon: ClipboardPlus, comp: NewAssessment }] : []),
     ...(isStaff ? [{ id: "staff", label: "Area Staff", icon: ClipboardList, comp: StaffView }] : []),
     ...(isAdmin ? [{ id: "admin", label: "Richieste accesso", icon: ShieldCheck, comp: AdminPanel }] : []),
   ];
