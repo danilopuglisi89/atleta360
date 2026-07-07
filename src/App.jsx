@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   LineChart, Line, ResponsiveContainer,
 } from "recharts";
-import { Home, User, Users, TrendingUp, Info, Menu, X, MessageCircle, ShieldCheck, LogOut, RefreshCw, Printer } from "lucide-react";
+import { Home, User, Users, TrendingUp, Info, Menu, X, MessageCircle, ShieldCheck, LogOut, RefreshCw, Printer, ClipboardList, Sparkles } from "lucide-react";
 import Papa from "papaparse";
 import { C, font, display } from "./theme";
 import { AuthProvider, useAuth } from "./auth";
@@ -104,6 +104,7 @@ const CORE = CONFIG.coreSkills.map((s) => s.key);
 const ADDON = CONFIG.addonSkills.map((s) => s.key);
 const SKILLS = [...CORE, ...ADDON];
 const SHORT = Object.fromEntries(META.map((s) => [s.key, s.short]));
+const TITLE = Object.fromEntries(META.map((s) => [s.key, s.title || s.key]));
 
 // Converte una cella in numero (gestisce virgola decimale e spazi). null se non valido.
 function toNum(v) {
@@ -350,8 +351,13 @@ function ProfiloView({ d }) {
       )}
 
       <CoachChat
-        athlete={{ id: sel, scores }}
-        skills={CONFIG.coreSkills.map((s) => ({ title: s.title, desc: s.desc }))}
+        subtitle={`Consigli sulle competenze allenate di ${sel}`}
+        suggestions={[
+          "Come posso migliorare il mio punto più debole?",
+          "Dammi un esercizio per resettare dopo un errore.",
+          "Una routine mentale prima del servizio nei punti caldi?",
+        ]}
+        payload={{ athlete: { id: sel, scores }, skills: CONFIG.coreSkills.map((s) => ({ title: s.title, desc: s.desc })) }}
       />
     </div>
   );
@@ -543,6 +549,143 @@ function InfoView() {
 }
 
 /* ============================================================
+   AREA STAFF (solo direzione / staff / admin)
+   ============================================================ */
+function ReportBlock({ label, color, items }) {
+  return (
+    <div style={{ border: `1px solid ${C.grid}`, borderRadius: 12, padding: 14 }}>
+      <div style={{ ...font, fontSize: 12.5, fontWeight: 600, color, marginBottom: 8 }}>{label}</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {items.length ? items.map((t, i) => <span key={i} style={{ ...font, fontSize: 13.5, color: C.ink }}>{t}</span>)
+          : <span style={{ ...font, fontSize: 13, color: C.muted }}>—</span>}
+      </div>
+    </div>
+  );
+}
+
+function StaffView({ d }) {
+  const { NOMI, atleti, overall, RANK, TEAM_AVG, lastPeriod } = d;
+  const [report, setReport] = useState(null);
+  const [repBusy, setRepBusy] = useState(false);
+  const [repErr, setRepErr] = useState(null);
+
+  const teamAvg = (k) => Math.round((NOMI.reduce((a, n) => a + (atleti[n].scores[k] ?? 0), 0) / Math.max(NOMI.length, 1)) * 10) / 10;
+  const bySkill = CORE.map((k) => ({ key: k, title: TITLE[k], value: teamAvg(k) })).sort((a, b) => a.value - b.value);
+  const weakest = bySkill.slice(0, 3);
+  const strongest = [...bySkill].reverse().slice(0, 3);
+  const attention = [...NOMI].sort((a, b) => overall(a) - overall(b)).slice(0, 3);
+  const max = Math.max(...NOMI.map(overall));
+  const teamMean = (NOMI.reduce((a, n) => a + overall(n), 0) / Math.max(NOMI.length, 1)).toFixed(1);
+
+  const team = {
+    count: NOMI.length,
+    lastPeriod,
+    averages: CORE.map((k) => ({ title: TITLE[k], value: teamAvg(k) })),
+    roster: RANK.map((n) => ({ id: n, overall: overall(n).toFixed(1) })),
+  };
+  const skills = CONFIG.coreSkills.map((s) => ({ title: s.title, desc: s.desc }));
+
+  const genReport = async () => {
+    setRepBusy(true); setRepErr(null);
+    try {
+      const res = await fetch("/api/coach", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ role: "user", content: "Genera un breve report di analisi della squadra: 1) punti di forza, 2) le competenze da allenare come priorità, 3) due o tre azioni concrete per il prossimo allenamento. Usa elenchi puntati e resta sintetico." }],
+          team, skills,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Report non disponibile.");
+      setReport(data.reply);
+    } catch (e) { setRepErr(e.message); } finally { setRepBusy(false); }
+  };
+
+  return (
+    <div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
+        {[
+          { l: "Atlete monitorate", v: NOMI.length },
+          { l: "Competenze core", v: CORE.length },
+          { l: "Media squadra", v: teamMean },
+          { l: "Ultimo rilevamento", v: lastPeriod },
+        ].map((s) => (
+          <div key={s.l} style={{ flex: "1 1 140px", background: C.card, border: `1px solid ${C.grid}`, borderRadius: 14, padding: "16px 18px" }}>
+            <div style={{ ...display, fontSize: 26, fontWeight: 700, color: C.navy }}>{s.v}</div>
+            <div style={{ ...font, fontSize: 12.5, color: C.muted, marginTop: 2 }}>{s.l}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
+        <Card title="Profilo medio della squadra" subtitle="Media delle competenze su tutte le atlete">
+          <ResponsiveContainer width="100%" height={300}>
+            <RadarChart data={TEAM_AVG} outerRadius="72%">
+              <PolarGrid stroke={C.grid} />
+              <PolarAngleAxis dataKey="skill" tick={{ fill: C.muted, fontSize: 11, ...font }} />
+              <PolarRadiusAxis domain={[0, 10]} tick={false} axisLine={false} />
+              <Radar name="Media" dataKey="valore" stroke={C.navy2} fill={C.navy2} fillOpacity={0.28} strokeWidth={2} />
+              <Tooltip contentStyle={tooltipStyle} />
+            </RadarChart>
+          </ResponsiveContainer>
+        </Card>
+
+        <Card title="Classifica generale" subtitle="Punteggio medio complessivo per atleta">
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {RANK.map((n, i) => (
+              <div key={n} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ ...display, fontWeight: 700, fontSize: 14, width: 22, color: i < 3 ? C.orange : C.muted }}>{i + 1}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+                    <span style={{ ...font, fontSize: 13.5, color: C.ink }}>{n}</span>
+                    <span style={{ ...display, fontSize: 13.5, fontWeight: 600, color: C.navy }}>{overall(n).toFixed(1)}</span>
+                  </div>
+                  <div style={{ height: 7, background: C.surface, borderRadius: 99, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${(overall(n) / max) * 100}%`, background: i < 3 ? C.orange : C.navy2, borderRadius: 99 }} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      <Card title="Report & analisi" subtitle="Sintesi automatica dai dati della squadra" style={{ marginTop: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
+          <ReportBlock label="Punti di forza (squadra)" color="#0F7A4E" items={strongest.map((s) => `${s.title} · ${s.value}/10`)} />
+          <ReportBlock label="Priorità di allenamento" color="#B4232A" items={weakest.map((s) => `${s.title} · ${s.value}/10`)} />
+          <ReportBlock label="Atlete da seguire" color={C.navy2} items={attention.map((n) => `${n} · ${overall(n).toFixed(1)}`)} />
+        </div>
+
+        <div style={{ marginTop: 16, borderTop: `1px solid ${C.grid}`, paddingTop: 16 }}>
+          <button onClick={genReport} disabled={repBusy}
+            style={{ ...font, display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px", borderRadius: 10, border: "none", background: C.orange, color: "#fff", fontSize: 14, fontWeight: 600, cursor: repBusy ? "default" : "pointer", opacity: repBusy ? 0.7 : 1 }}>
+            <Sparkles size={16} /> {repBusy ? "Genero l'analisi…" : "Genera analisi con IA"}
+          </button>
+          {repErr && <div style={{ ...font, fontSize: 13, color: "#B4232A", marginTop: 10 }}>{repErr}</div>}
+          {report && (
+            <div style={{ ...font, fontSize: 14, color: C.ink, lineHeight: 1.6, whiteSpace: "pre-wrap", background: C.surface, borderRadius: 12, padding: "14px 16px", marginTop: 14, borderLeft: `3px solid ${C.orange}` }}>
+              {report}
+            </div>
+          )}
+        </div>
+      </Card>
+
+      <CoachChat
+        title="Coach IA — Squadra"
+        subtitle="Consigli allo staff su come allenare le soft skill del gruppo"
+        suggestions={[
+          "Su quale competenza dovremmo concentrarci come squadra?",
+          "Proponi una seduta di allenamento mentale di gruppo.",
+          "Come far crescere le atlete più in difficoltà?",
+        ]}
+        payload={{ team, skills }}
+      />
+    </div>
+  );
+}
+
+/* ============================================================
    APP + LAYOUT RESPONSIVE
    ============================================================ */
 const BASE_NAV = [
@@ -556,9 +699,12 @@ const BASE_NAV = [
 function Dashboard() {
   const { profile, signOut } = useAuth();
   const isAdmin = profile?.role === "admin";
-  const NAV = isAdmin
-    ? [...BASE_NAV, { id: "admin", label: "Richieste accesso", icon: ShieldCheck, comp: AdminPanel }]
-    : BASE_NAV;
+  const isStaff = isAdmin || ["direzione", "staff"].includes(profile?.category);
+  const NAV = [
+    ...BASE_NAV,
+    ...(isStaff ? [{ id: "staff", label: "Area Staff", icon: ClipboardList, comp: StaffView }] : []),
+    ...(isAdmin ? [{ id: "admin", label: "Richieste accesso", icon: ShieldCheck, comp: AdminPanel }] : []),
+  ];
 
   const [view, setView] = useState("home");
   const [mobileOpen, setMobileOpen] = useState(false);

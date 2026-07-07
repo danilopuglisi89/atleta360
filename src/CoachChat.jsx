@@ -2,13 +2,14 @@ import { useState, useRef, useEffect } from "react";
 import { Sparkles, Send, AlertCircle } from "lucide-react";
 import { C, font, display } from "./theme";
 
-const SUGGESTIONS = [
-  "Come posso migliorare il mio punto più debole?",
-  "Dammi un esercizio per resettare dopo un errore.",
-  "Una routine mentale prima del servizio nei punti caldi?",
-];
-
-export default function CoachChat({ athlete, skills }) {
+/*
+ * Chat "Coach IA" riusabile.
+ * - title / subtitle: intestazione
+ * - suggestions: domande pronte mostrate quando la chat è vuota
+ * - payload: oggetto unito al corpo della richiesta a /api/coach
+ *   (es. { athlete, skills } per una singola atleta, oppure { team, skills }).
+ */
+export default function CoachChat({ title = "Coach IA", subtitle, suggestions = [], payload = {} }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -31,7 +32,7 @@ export default function CoachChat({ athlete, skills }) {
       const res = await fetch("/api/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: next, athlete, skills }),
+        body: JSON.stringify({ messages: next, ...payload }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Il coach non è raggiungibile.");
@@ -50,17 +51,17 @@ export default function CoachChat({ athlete, skills }) {
           <Sparkles size={17} color={C.orange} />
         </div>
         <div>
-          <h3 style={{ ...display, fontSize: 15, fontWeight: 600, color: C.ink, margin: 0 }}>Coach IA</h3>
-          <p style={{ ...font, fontSize: 12.5, color: C.muted, margin: "2px 0 0" }}>Consigli sulle competenze allenate di {athlete?.id}</p>
+          <h3 style={{ ...display, fontSize: 15, fontWeight: 600, color: C.ink, margin: 0 }}>{title}</h3>
+          {subtitle && <p style={{ ...font, fontSize: 12.5, color: C.muted, margin: "2px 0 0" }}>{subtitle}</p>}
         </div>
       </div>
 
       <div ref={listRef} style={{ maxHeight: 320, overflowY: "auto", margin: "16px 0", display: "flex", flexDirection: "column", gap: 10, paddingRight: 4 }}>
         {messages.length === 0 && (
           <div style={{ ...font, fontSize: 13, color: C.muted, lineHeight: 1.6, background: C.surface, borderRadius: 12, padding: 14 }}>
-            Chiedi un consiglio pratico sulle soft skill di questa atleta. Per esempio:
+            Fai una domanda per un consiglio pratico. Per esempio:
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
-              {SUGGESTIONS.map((s) => (
+              {suggestions.map((s) => (
                 <button key={s} onClick={() => send(s)} disabled={busy}
                   style={{ ...font, fontSize: 12.5, padding: "7px 12px", borderRadius: 99, cursor: "pointer",
                     border: `1px solid ${C.grid}`, background: "#fff", color: C.navy2, textAlign: "left" }}>
