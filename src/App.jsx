@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   LineChart, Line, ResponsiveContainer,
 } from "recharts";
-import { Home, User, Users, TrendingUp, Info, Menu, X, MessageCircle, ShieldCheck, LogOut, RefreshCw, Printer, ClipboardList, Sparkles, ClipboardPlus, UserCircle } from "lucide-react";
+import { Home, User, Users, TrendingUp, Info, Menu, X, MessageCircle, ShieldCheck, LogOut, RefreshCw, Printer, ClipboardList, Sparkles, ClipboardPlus, UserCircle, MessagesSquare } from "lucide-react";
 import { C, font, display } from "./theme";
 import { AuthProvider, useAuth } from "./auth";
 import { supabaseConfigured } from "./supabaseClient";
@@ -14,6 +14,7 @@ import AdminPanel from "./AdminPanel";
 import CoachChat from "./CoachChat";
 import NewAssessment from "./NewAssessment";
 import PersonalArea, { Avatar } from "./PersonalArea";
+import Chat from "./Chat";
 
 const SERIES = ["#FF7A18", "#17297A", "#16A6A6"];              // confronto atlete
 const CORE_COLORS = ["#FF7A18", "#17297A", "#16A6A6", "#8B5CF6", "#E11D74", "#0EA5E9"]; // andamento
@@ -643,7 +644,6 @@ const BASE_NAV = [
   { id: "confronto", label: "Confronto", icon: Users, comp: ConfrontoView },
   { id: "andamento", label: "Andamento", icon: TrendingUp, comp: AndamentoView },
   { id: "info", label: "Info & Legenda", icon: Info, comp: InfoView },
-  { id: "personale", label: "Area personale", icon: UserCircle, comp: PersonalArea },
 ];
 
 function Dashboard() {
@@ -651,6 +651,7 @@ function Dashboard() {
   const isAdmin = profile?.role === "admin";
   const isStaff = isAdmin || ["direzione", "staff"].includes(profile?.category);
   const canAssess = isAdmin || !!profile?.can_assess;   // può inserire rilevamenti (mister)
+  const isChatMember = isAdmin || profile?.category === "atleta";  // chat: atlete + admin
   // Un'atleta "semplice" (non staff/admin) vede solo il proprio profilo.
   const viewCtx = {
     restricted: !isStaff && profile?.category === "atleta",
@@ -659,8 +660,10 @@ function Dashboard() {
   };
   const NAV = [
     ...BASE_NAV,
-    ...(canAssess ? [{ id: "rilevamento", label: "Nuovo rilevamento", icon: ClipboardPlus, comp: NewAssessment }] : []),
     ...(isStaff ? [{ id: "staff", label: "Area Staff", icon: ClipboardList, comp: StaffView }] : []),
+    ...(canAssess ? [{ id: "rilevamento", label: "Nuovo rilevamento", icon: ClipboardPlus, comp: NewAssessment }] : []),
+    { id: "personale", label: "Area personale", icon: UserCircle, comp: PersonalArea },
+    ...(isChatMember ? [{ id: "chat", label: "Chat squadra", icon: MessagesSquare, comp: Chat }] : []),
     ...(isAdmin ? [{ id: "admin", label: "Richieste accesso", icon: ShieldCheck, comp: AdminPanel }] : []),
   ];
 
@@ -751,6 +754,8 @@ function Dashboard() {
     content = <NewAssessment onSaved={reload} />;
   } else if (active.id === "personale") {
     content = <PersonalArea />;
+  } else if (active.id === "chat") {
+    content = <Chat />;
   } else if (errore) {
     content = (
       <StatusBox tone="error" title="Non riesco a leggere i dati"
