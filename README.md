@@ -131,6 +131,21 @@ imposta su Supabase **Authentication → URL Configuration**:
 - **Site URL**: `https://atleta360-jl71.vercel.app`
 - aggiungi lo stesso indirizzo tra i **Redirect URLs**.
 
+## Coach IA (nella scheda Atleta)
+
+Un assistente che dà consigli **solo** sulle soft skill allenate dell'atleta selezionata.
+La chiave IA è un segreto e vive lato server nella funzione [`api/coach.js`](api/coach.js)
+(su Vercel), mai nel frontend. Usa **Google Gemini**, che ha un piano gratuito.
+
+1. Crea una chiave gratuita su [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+   (serve un account Google; niente carta di credito).
+2. Vercel → progetto → **Settings → Environment Variables** → aggiungi
+   `GEMINI_API_KEY` con la tua chiave (ambiente **Production**).
+3. Fai un **Redeploy** (o un nuovo push): la chat si attiva.
+
+> La chat non funziona con `npm run dev` (le funzioni `/api` girano solo su Vercel).
+> Per un modello diverso, cambia `MODEL` in `api/coach.js`.
+
 ## Deploy su Vercel
 
 **Percorso A — GitHub (consigliato):**

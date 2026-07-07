@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from "./auth";
 import { supabaseConfigured } from "./supabaseClient";
 import AuthScreen, { ResetPasswordScreen } from "./AuthScreen";
 import AdminPanel from "./AdminPanel";
+import CoachChat from "./CoachChat";
 
 const SERIES = ["#FF7A18", "#17297A", "#16A6A6"];              // confronto atlete
 const CORE_COLORS = ["#FF7A18", "#17297A", "#16A6A6", "#8B5CF6", "#E11D74", "#0EA5E9"]; // andamento
@@ -347,6 +348,11 @@ function ProfiloView({ d }) {
           </div>
         </Card>
       )}
+
+      <CoachChat
+        athlete={{ id: sel, scores }}
+        skills={CONFIG.coreSkills.map((s) => ({ title: s.title, desc: s.desc }))}
+      />
     </div>
   );
 }
