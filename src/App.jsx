@@ -954,10 +954,25 @@ function Dashboard() {
 /* ============================================================
    CANCELLO DI ACCESSO — decide cosa mostrare in base all'utente
    ============================================================ */
+// Logo Danilo Puglisi fisso in basso a destra, su ogni pagina (desktop + mobile).
+function SiteLogo() {
+  return (
+    <a href="https://www.danilopuglisi.com" target="_blank" rel="noopener noreferrer" className="a360-noprint"
+      title="Danilo Puglisi — Consulente e Formatore"
+      style={{ position: "fixed", right: "clamp(10px, 2vw, 18px)", bottom: "clamp(10px, 2vw, 18px)", zIndex: 30,
+        background: "#fff", borderRadius: 10, border: `1px solid ${C.grid}`, boxShadow: "0 4px 14px rgba(10,22,80,0.14)",
+        padding: "5px 9px", display: "inline-flex", alignItems: "center", lineHeight: 0, textDecoration: "none" }}>
+      <img src="/logo-danilo.jpg" alt="Danilo Puglisi — Consulente e Formatore"
+        style={{ height: "clamp(20px, 4.5vw, 26px)", width: "auto", display: "block" }} />
+    </a>
+  );
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <Root />
+      <SiteLogo />
     </AuthProvider>
   );
 }
