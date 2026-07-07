@@ -89,6 +89,40 @@ Così le atlete non devono confermare un'email: tanto sei tu ad approvarle.
 > ⚠️ Niente `admin/admin`: il tuo accesso admin usa la tua email e una password vera che
 > scegli tu. È l'unico modo per proteggere davvero l'accesso ai dati di atlete minorenni.
 
+## Email di notifica a ogni nuova iscrizione
+
+A ogni nuova richiesta di registrazione parte una email a `info@danilopuglisi.com`.
+Meccanismo: **Database Webhook** su `profiles` (INSERT) → **Edge Function**
+[`supabase/functions/notify-admin`](supabase/functions/notify-admin/index.ts) → invio via **Resend**.
+
+### 1. Account Resend (mittente email, gratis)
+1. Crea un account su [resend.com](https://resend.com) usando **info@danilopuglisi.com**
+   (così le email di test arrivano subito nella tua casella, senza verificare un dominio).
+2. **API Keys → Create API Key** → copia la chiave (inizia con `re_...`). Tienila da parte.
+
+> Per inviare da un indirizzo del tuo dominio (es. `notifiche@danilopuglisi.com`) o verso
+> altri destinatari, in seguito potrai verificare il dominio `danilopuglisi.com` su Resend
+> (aggiungendo i record DNS). Per ora il mittente è `onboarding@resend.dev` verso la tua email.
+
+### 2. Crea la Edge Function su Supabase
+1. Supabase → **Edge Functions** → **Create a function** → nome esatto **`notify-admin`**.
+2. Incolla il contenuto di [`supabase/functions/notify-admin/index.ts`](supabase/functions/notify-admin/index.ts) → **Deploy**.
+3. **Edge Functions → Secrets** → aggiungi:
+   - `RESEND_API_KEY` = la chiave `re_...` di Resend
+   - `WEBHOOK_SECRET` = una parola/stringa a piacere (es. una password lunga) — servirà al passo 3
+   - *(opzionali)* `NOTIFY_TO`, `APP_URL`
+
+### 3. Crea il Database Webhook
+1. Supabase → **Database → Webhooks** → **Create a new hook**.
+2. Nome `on-new-signup`; tabella **`public.profiles`**; evento **Insert**.
+3. Tipo: **Supabase Edge Functions** → seleziona **`notify-admin`**.
+4. In **HTTP Headers** aggiungi: nome `x-webhook-secret`, valore = lo **stesso** `WEBHOOK_SECRET` del passo 2.
+5. Salva.
+
+### 4. Prova
+Registra una nuova richiesta dal sito: entro pochi secondi deve arrivarti l'email.
+Se non arriva, controlla **Edge Functions → notify-admin → Logs** su Supabase.
+
 ## Deploy su Vercel
 
 **Percorso A — GitHub (consigliato):**
