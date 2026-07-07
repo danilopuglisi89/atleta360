@@ -8,6 +8,7 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [recovery, setRecovery] = useState(false);
 
   const loadProfile = useCallback(async (sess) => {
     if (!sess?.user) { setProfile(null); return; }
@@ -30,8 +31,9 @@ export function AuthProvider({ children }) {
       setLoading(false);
     });
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, sess) => {
+    const { data: sub } = supabase.auth.onAuthStateChange(async (event, sess) => {
       if (!active) return;
+      if (event === "PASSWORD_RECOVERY") setRecovery(true);
       setSession(sess);
       await loadProfile(sess);
     });
@@ -59,10 +61,23 @@ export function AuthProvider({ children }) {
     setSession(null);
   };
 
+  const resetPassword = async (email) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin,
+    });
+    return error;
+  };
+
+  const updatePassword = async (password) => {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (!error) setRecovery(false);
+    return error;
+  };
+
   const refreshProfile = () => loadProfile(session);
 
   return (
-    <AuthCtx.Provider value={{ session, profile, loading, signUp, signIn, signOut, refreshProfile }}>
+    <AuthCtx.Provider value={{ session, profile, loading, recovery, signUp, signIn, signOut, resetPassword, updatePassword, refreshProfile }}>
       {children}
     </AuthCtx.Provider>
   );

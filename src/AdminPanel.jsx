@@ -56,6 +56,14 @@ export default function AdminPanel() {
     setRows((rs) => rs.map((r) => (r.id === id ? { ...r, status } : r)));
   };
 
+  const setCategory = async (id, category) => {
+    setBusyId(id);
+    const { error } = await supabase.from("profiles").update({ category }).eq("id", id);
+    setBusyId(null);
+    if (error) { setError(error.message); return; }
+    setRows((rs) => rs.map((r) => (r.id === id ? { ...r, category } : r)));
+  };
+
   if (error) {
     return <Card title="Errore"><span style={{ ...font, fontSize: 14, color: "#B4232A" }}>{error}</span></Card>;
   }
@@ -99,9 +107,9 @@ export default function AdminPanel() {
         )}
       </Card>
 
-      <Card title="Richieste gestite" subtitle="Puoi cambiare decisione in qualsiasi momento">
+      <Card title="Iscritti" subtitle="Cambia ruolo, revoca o ripristina l'accesso in qualsiasi momento">
         {decided.length === 0 ? (
-          <div style={{ ...font, fontSize: 13.5, color: C.muted }}>Ancora nessuna decisione presa.</div>
+          <div style={{ ...font, fontSize: 13.5, color: C.muted }}>Ancora nessun iscritto gestito.</div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {decided.map((r) => {
@@ -109,13 +117,16 @@ export default function AdminPanel() {
               return (
                 <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
                   borderBottom: `1px solid ${C.grid}`, padding: "10px 2px" }}>
-                  <div style={{ flex: "1 1 200px", minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                      <span style={{ ...font, fontSize: 14, color: C.ink }}>{fullName(r)}</span>
-                      <CategoryTag value={r.category} />
-                    </div>
+                  <div style={{ flex: "1 1 180px", minWidth: 0 }}>
+                    <div style={{ ...font, fontSize: 14, color: C.ink }}>{fullName(r)}</div>
                     <div style={{ ...font, fontSize: 12, color: C.muted, marginTop: 2 }}>{r.email}</div>
                   </div>
+                  <select value={r.category || "atleta"} onChange={(e) => setCategory(r.id, e.target.value)} disabled={busyId === r.id}
+                    style={{ ...font, fontSize: 12.5, color: C.ink, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 9, padding: "6px 9px", cursor: "pointer" }}>
+                    <option value="atleta">Atleta</option>
+                    <option value="staff">Staff</option>
+                    <option value="direzione">Direzione</option>
+                  </select>
                   <span style={{ ...font, fontSize: 12, fontWeight: 600, color: s.color, background: s.bg, padding: "4px 10px", borderRadius: 99 }}>{s.label}</span>
                   <button
                     onClick={() => setStatus(r.id, r.status === "approved" ? "rejected" : "approved")}

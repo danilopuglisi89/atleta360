@@ -15,3 +15,20 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Stampa / salva PDF: mostra solo la scheda profilo, nasconde navigazione e footer. */
+@media print {
+  .a360-sidebar,
+  .a360-mobilebar,
+  .a360-noprint,
+  footer {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+  @page {
+    margin: 14mm;
+  }
+}

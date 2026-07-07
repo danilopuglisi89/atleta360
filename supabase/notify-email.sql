@@ -56,3 +56,47 @@ drop trigger if exists on_new_signup_notify on public.profiles;
 create trigger on_new_signup_notify
   after insert on public.profiles
   for each row execute function public.notify_admin_new_signup();
+
+-- ============================================================
+-- Email all'ATLETA quando l'accesso viene approvato.
+-- NB: per consegnare email a indirizzi diversi dal tuo, su Resend serve
+-- verificare il dominio (danilopuglisi.com) e usare un mittente di quel dominio.
+-- ============================================================
+create or replace function public.notify_athlete_approved()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  full_name text := nullif(trim(coalesce(new.first_name, '') || ' ' || coalesce(new.last_name, '')), '');
+begin
+  if new.status = 'approved' and coalesce(old.status, '') <> 'approved' then
+    perform net.http_post(
+      url := 'https://api.resend.com/emails',
+      headers := jsonb_build_object(
+        'Authorization', 'Bearer re_INCOLLA_LA_TUA_CHIAVE_RESEND',
+        'Content-Type', 'application/json'
+      ),
+      body := jsonb_build_object(
+        'from', 'Atleta360 <onboarding@resend.dev>',
+        'to', jsonb_build_array(new.email),
+        'subject', 'Atleta360 — il tuo accesso è stato approvato',
+        'html',
+          '<div style="font-family:Arial,sans-serif;color:#0C1330">' ||
+          '<h2 style="color:#0A1650">Accesso approvato ✅</h2>' ||
+          '<p>Ciao ' || coalesce(full_name, '') || ', il tuo accesso ad Atleta360 è stato approvato.</p>' ||
+          '<p><a href="https://atleta360-jl71.vercel.app" style="display:inline-block;background:#FF7A18;' ||
+          'color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none">Entra nella dashboard</a></p>' ||
+          '</div>'
+      )
+    );
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_status_approved_notify on public.profiles;
+create trigger on_status_approved_notify
+  after update of status on public.profiles
+  for each row execute function public.notify_athlete_approved();

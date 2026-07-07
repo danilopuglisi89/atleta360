@@ -110,10 +110,26 @@ Meccanismo: un **trigger** sul database invia la mail via **Resend** usando `pg_
    `re_INCOLLA_LA_TUA_CHIAVE_RESEND` con la tua chiave.
 2. Supabase → **SQL Editor** → incolla tutto → **Run**.
 
+Lo script crea due notifiche:
+- a **te** (`info@danilopuglisi.com`) a ogni nuova richiesta;
+- all'**atleta** quando approvi il suo accesso.
+
+> ⚠️ Con il mittente di test `onboarding@resend.dev`, Resend consegna solo alla tua email.
+> Perché le email di approvazione raggiungano davvero le atlete, verifica il dominio
+> `danilopuglisi.com` su Resend (**Domains → Add Domain**, poi aggiungi i record DNS) e
+> cambia il mittente in un indirizzo del dominio (es. `notifiche@danilopuglisi.com`) nello script.
+
 ### 3. Prova
 Registra una nuova richiesta dal sito: entro pochi secondi deve arrivarti l'email.
-Se non arriva, controlla in Supabase **Database → Extensions** che `pg_net` sia attiva,
-e i log delle richieste in **Database → (Postgres logs)**.
+Se non arriva, controlla in Supabase **Database → Extensions** che `pg_net` sia attiva.
+
+## Recupero password
+
+C'è "Password dimenticata?" nella schermata di accesso: invia un'email (SMTP integrato di
+Supabase) con un link per reimpostare la password. Perché il link punti al sito giusto,
+imposta su Supabase **Authentication → URL Configuration**:
+- **Site URL**: `https://atleta360-jl71.vercel.app`
+- aggiungi lo stesso indirizzo tra i **Redirect URLs**.
 
 ## Deploy su Vercel
 

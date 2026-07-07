@@ -4,12 +4,12 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   LineChart, Line, ResponsiveContainer,
 } from "recharts";
-import { Home, User, Users, TrendingUp, Info, Menu, X, MessageCircle, ShieldCheck, LogOut, RefreshCw } from "lucide-react";
+import { Home, User, Users, TrendingUp, Info, Menu, X, MessageCircle, ShieldCheck, LogOut, RefreshCw, Printer } from "lucide-react";
 import Papa from "papaparse";
 import { C, font, display } from "./theme";
 import { AuthProvider, useAuth } from "./auth";
 import { supabaseConfigured } from "./supabaseClient";
-import AuthScreen from "./AuthScreen";
+import AuthScreen, { ResetPasswordScreen } from "./AuthScreen";
 import AdminPanel from "./AdminPanel";
 
 const SERIES = ["#FF7A18", "#17297A", "#16A6A6"];              // confronto atlete
@@ -90,6 +90,8 @@ const CONFIG = {
   colTimestamp: "Informazioni cronologiche",
   // Identificatore dell'atleta: iniziali o numero di maglia (mai il nome completo).
   colAtleta: "Nome dell'atleta",
+  // Nota qualitativa del mister (facoltativa). Se assente sul Foglio, viene ignorata.
+  colNote: "Note del mister",
 
   coreSkills: CORE_META,
   addonSkills: ADDON_META,
@@ -139,16 +141,19 @@ function transform(rows) {
     });
     if (!hasAny) return;
     const ts = toTs(r[CONFIG.colTimestamp]);
+    const nota = String(r[CONFIG.colNote] ?? "").trim();
     allTs.push(ts);
-    (byId[id] ||= []).push({ ts, scores });
+    (byId[id] ||= []).push({ ts, scores, nota });
   });
 
   const atleti = {}, storico = {};
   Object.entries(byId).forEach(([id, entries]) => {
     entries.sort((a, b) => a.ts - b.ts);
-    atleti[id] = { id, scores: entries[entries.length - 1].scores };
+    const last = entries[entries.length - 1];
+    atleti[id] = { id, scores: last.scores, nota: last.nota };
     storico[id] = entries.map((e) => ({
       periodo: e.ts ? new Date(e.ts).toLocaleDateString("it-IT", { day: "2-digit", month: "short" }) : "",
+      nota: e.nota,
       ...e.scores,
     }));
   });
@@ -289,28 +294,37 @@ function ProfiloView({ d }) {
   const [n, setN] = useState(NOMI[0]);
   const sel = atleti[n] ? n : NOMI[0];
   const scores = atleti[sel].scores;
-  const radar = SKILLS.map((k) => ({ skill: SHORT[k], valore: scores[k] ?? 0, full: 10 }));
+  const nota = atleti[sel].nota;
+  const teamAvg = (k) => Math.round((NOMI.reduce((a, m) => a + (atleti[m].scores[k] ?? 0), 0) / Math.max(NOMI.length, 1)) * 10) / 10;
+  const radar = SKILLS.map((k) => ({ skill: SHORT[k], valore: scores[k] ?? 0, media: teamAvg(k), full: 10 }));
   const ranked = SKILLS.map((k) => ({ k, v: scores[k] ?? 0 })).sort((a, b) => b.v - a.v);
   const top = ranked.slice(0, 3), bottom = ranked.slice(-3).reverse();
 
   return (
-    <div>
+    <div className="a360-print-area">
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
         <span style={{ ...font, fontSize: 13, color: C.muted }}>Atleta</span>
         <Select value={sel} onChange={setN} options={NOMI} />
+        <button className="a360-noprint" onClick={() => window.print()}
+          style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500,
+            padding: "9px 13px", borderRadius: 10, border: `1px solid ${C.grid}`, background: "#fff", color: C.ink, cursor: "pointer" }}>
+          <Printer size={16} /> Stampa / PDF
+        </button>
         <div style={{ marginLeft: "auto", ...display, fontSize: 13, color: C.muted }}>
           Punteggio complessivo <b style={{ color: C.orange, fontSize: 20, marginLeft: 6 }}>{overall(sel).toFixed(1)}</b>
         </div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
-        <Card title="Profilo a 360°" subtitle="Tutte le competenze rilevate">
+        <Card title="Profilo a 360°" subtitle="Competenze dell'atleta a confronto con la media squadra">
           <ResponsiveContainer width="100%" height={330}>
             <RadarChart data={radar} outerRadius="72%">
               <PolarGrid stroke={C.grid} />
               <PolarAngleAxis dataKey="skill" tick={{ fill: C.muted, fontSize: 11, ...font }} />
               <PolarRadiusAxis domain={[0, 10]} tick={false} axisLine={false} />
+              <Radar name="Media squadra" dataKey="media" stroke={C.navy2} fill={C.navy2} fillOpacity={0.06} strokeWidth={1.5} strokeDasharray="4 4" />
               <Radar name={sel} dataKey="valore" stroke={C.orange} fill={C.orange} fillOpacity={0.35} strokeWidth={2} dot={{ r: 2.5, fill: C.orange }} />
+              <Legend wrapperStyle={{ ...font, fontSize: 12 }} />
               <Tooltip contentStyle={tooltipStyle} />
             </RadarChart>
           </ResponsiveContainer>
@@ -325,6 +339,14 @@ function ProfiloView({ d }) {
           </Card>
         </div>
       </div>
+
+      {nota && (
+        <Card title="Nota del mister" subtitle={`Ultimo rilevamento`} style={{ marginTop: 20 }}>
+          <div style={{ ...font, fontSize: 14, color: C.ink, lineHeight: 1.6, background: C.surface, borderRadius: 12, padding: "14px 16px", borderLeft: `3px solid ${C.orange}` }}>
+            {nota}
+          </div>
+        </Card>
+      )}
     </div>
   );
 }
@@ -415,12 +437,40 @@ function AndamentoView({ d }) {
   const sel = storico[n] ? n : NOMI[0];
   const data = storico[sel];
   const single = data.length < 2;
+
+  // Variazioni rispetto al rilevamento precedente (ultimo vs penultimo).
+  const deltas = single ? [] : CORE.map((k) => ({
+    k, short: SHORT[k],
+    diff: Math.round(((data[data.length - 1][k] ?? 0) - (data[data.length - 2][k] ?? 0)) * 10) / 10,
+  }));
+  const note = data.filter((e) => e.nota).map((e) => ({ periodo: e.periodo, nota: e.nota }));
+
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
         <span style={{ ...font, fontSize: 13, color: C.muted }}>Atleta</span>
         <Select value={sel} onChange={setN} options={NOMI} />
       </div>
+
+      {!single && (
+        <Card title="Variazione dall'ultimo rilevamento" subtitle="Confronto tra le ultime due compilazioni" style={{ marginBottom: 20 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {deltas.map(({ k, short, diff }) => {
+              const up = diff > 0, down = diff < 0;
+              const col = up ? "#0F7A4E" : down ? "#B4232A" : C.muted;
+              const bg = up ? "#DDF3E7" : down ? "#FDECEC" : C.surface;
+              return (
+                <div key={k} style={{ ...font, fontSize: 13, display: "inline-flex", alignItems: "center", gap: 6,
+                  background: bg, color: col, borderRadius: 99, padding: "6px 12px", fontWeight: 600 }}>
+                  <span style={{ color: C.ink, fontWeight: 500 }}>{short}</span>
+                  {up ? "▲" : down ? "▼" : "="} {diff > 0 ? `+${diff}` : diff}
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
       <Card title="Evoluzione nel tempo" subtitle="Andamento delle competenze core rilevamento dopo rilevamento">
         {single && (
           <div style={{ ...font, fontSize: 13, color: C.muted, background: C.surface, borderRadius: 12, padding: 14, marginBottom: 16 }}>
@@ -440,6 +490,19 @@ function AndamentoView({ d }) {
           </LineChart>
         </ResponsiveContainer>
       </Card>
+
+      {note.length > 0 && (
+        <Card title="Note del mister" subtitle="Commenti rilevamento per rilevamento" style={{ marginTop: 20 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {note.slice().reverse().map((e, i) => (
+              <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                <span style={{ ...display, fontSize: 12, fontWeight: 600, color: C.orange, background: C.orangeSoft, borderRadius: 8, padding: "3px 9px", whiteSpace: "nowrap" }}>{e.periodo}</span>
+                <span style={{ ...font, fontSize: 13.5, color: C.ink, lineHeight: 1.55 }}>{e.nota}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   );
 }
@@ -658,9 +721,10 @@ export default function App() {
 }
 
 function Root() {
-  const { loading, session, profile, signOut, refreshProfile } = useAuth();
+  const { loading, session, profile, recovery, signOut, refreshProfile } = useAuth();
 
   if (!supabaseConfigured) return <SetupNotice />;
+  if (recovery) return <ResetPasswordScreen />;
   if (loading) return <GateScreen title="Un attimo…" message="Sto verificando il tuo accesso." />;
   if (!session) return <AuthScreen />;
 
