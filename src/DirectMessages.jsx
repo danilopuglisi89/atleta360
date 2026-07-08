@@ -27,13 +27,13 @@ function MiniAvatar({ url, name, size = 30 }) {
   return <div style={{ width: size, height: size, borderRadius: "50%", background: C.navy2, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", ...display, fontWeight: 700, fontSize: size * 0.4, flexShrink: 0 }}>{initials(name)}</div>;
 }
 
-export default function DirectMessages() {
+export default function DirectMessages({ initialToId, initialToName }) {
   const { profile, session } = useAuth();
   const uid = session?.user?.id;
   const myName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.email;
 
   const [mates, setMates] = useState([]);          // altre atlete
-  const [toId, setToId] = useState("");            // destinataria selezionata
+  const [toId, setToId] = useState(initialToId || "");   // destinataria selezionata
   const [pickerOpen, setPickerOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
@@ -50,7 +50,11 @@ export default function DirectMessages() {
     });
   }, [uid]);
 
-  const to = mates.find((m) => m.id === toId);
+  // Apri direttamente la conversazione richiesta (es. dal pulsante "Messaggio
+  // privato" nella card di un'atleta).
+  useEffect(() => { if (initialToId) setToId(initialToId); }, [initialToId]);
+
+  const to = mates.find((m) => m.id === toId) || (toId && initialToId === toId && initialToName ? { id: toId, name: initialToName } : null);
 
   const load = useCallback(async () => {
     if (!toId) { setMessages([]); return; }

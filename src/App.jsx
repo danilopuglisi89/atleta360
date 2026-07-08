@@ -7,7 +7,7 @@ import {
 import { Home, User, Users, TrendingUp, Info, Menu, X, MessageCircle, ShieldCheck, LogOut, RefreshCw, Printer, ClipboardList, Sparkles, ClipboardPlus, UserCircle, MessagesSquare, ScrollText, Quote } from "lucide-react";
 import { C, font, display, MEDALS, ringForScore, ringForRole } from "./theme";
 import { AuthProvider, useAuth } from "./auth";
-import { supabaseConfigured } from "./supabaseClient";
+import { supabase, supabaseConfigured } from "./supabaseClient";
 import { fetchModel } from "./data";
 import { phraseOfTheDay } from "./phrases";
 import { computeBadges } from "./badges";
@@ -20,6 +20,7 @@ import PersonalArea, { Avatar } from "./PersonalArea";
 import ChatPage from "./ChatPage";
 import AdminChatLog from "./AdminChatLog";
 import ShareCard from "./ShareCard";
+import PublicProfileCard from "./PublicProfileCard";
 
 const SERIES = ["#FF7A18", "#17297A", "#16A6A6"];              // confronto atlete
 const CORE_COLORS = ["#FF7A18", "#17297A", "#16A6A6", "#8B5CF6", "#E11D74", "#0EA5E9"]; // andamento
@@ -262,7 +263,7 @@ function Footer() {
 /* ============================================================
    VISTE
    ============================================================ */
-function HomeView({ d, onOpenProfile }) {
+function HomeView({ d, onOpenCard }) {
   const { NOMI, overall, RANK, TEAM_AVG, lastPeriod } = d;
   return (
     <div>
@@ -294,29 +295,26 @@ function HomeView({ d, onOpenProfile }) {
           </ResponsiveContainer>
         </Card>
 
-        <Card title="Classifica generale" subtitle="Tocca un nome per aprire il profilo">
-          <Classifica RANK={RANK} overall={overall} onOpen={onOpenProfile} />
+        <Card title="Classifica generale" subtitle="Tocca un nome per vedere il profilo">
+          <Classifica RANK={RANK} overall={overall} onOpen={onOpenCard} />
         </Card>
       </div>
     </div>
   );
 }
 
-function ProfiloView({ d, auth, target, onOpenProfile }) {
+function ProfiloView({ d, auth, target, onOpenFullProfile }) {
   const { NOMI, atleti, overall, storico } = d;
   const restricted = !!auth?.restricted;
   const myId = auth?.athleteId;
   const firstName = auth?.firstName || "";
   const avatarUrl = auth?.avatarUrl || "";
 
-  // Profilo mostrato: quello indicato (nome cliccato/selezionato) se valido,
-  // altrimenti il proprio (atlete) o la prima della rosa (staff).
-  const wantsOther = !!(target && atleti[target]);
-  const sel = wantsOther ? target : (restricted ? myId : NOMI[0]);
+  // Le atlete vedono SOLO il proprio profilo. Lo staff sceglie dalla rosa
+  // (menu a tendina o "Vedi scheda completa" dalla card di un'atleta).
+  const sel = restricted ? myId : (target && atleti[target] ? target : NOMI[0]);
   const hasData = !!atleti[sel];
-  const isOwn = sel === myId;
-  const canPrivate = !restricted || isOwn;        // nota mister + coach IA
-  const personal = restricted && isOwn;           // saluto + coriandoli + card propria
+  const personal = restricted;                    // l'atleta guarda sempre sé stessa
 
   // Rileva un miglioramento tra gli ultimi due rilevamenti (per i coriandoli).
   const improvement = useMemo(() => {
@@ -341,8 +339,8 @@ function ProfiloView({ d, auth, target, onOpenProfile }) {
     }
   }, [sel, personal, hasData, improvement]);
 
-  // Atleta "semplice" senza profilo collegato e senza un profilo altrui aperto.
-  if (restricted && !wantsOther && (!myId || !atleti[myId])) {
+  // Atleta "semplice" senza profilo collegato / senza rilevamenti.
+  if (restricted && (!myId || !atleti[myId])) {
     return (
       <StatusBox
         title={firstName ? `Ciao ${firstName}!` : "Profilo non ancora disponibile"}
@@ -363,8 +361,6 @@ function ProfiloView({ d, auth, target, onOpenProfile }) {
   const ranked = SKILLS.map((k) => ({ k, v: scores[k] ?? 0 })).sort((a, b) => b.v - a.v);
   const top = ranked.slice(0, 3), bottom = ranked.slice(-3).reverse();
 
-  const showBack = restricted && !isOwn;   // atleta che sta guardando una compagna
-
   return (
     <div className="a360-print-area">
       {personal && firstName && (
@@ -384,24 +380,16 @@ function ProfiloView({ d, auth, target, onOpenProfile }) {
         </div>
       )}
 
-      {showBack && (
-        <button onClick={() => onOpenProfile && onOpenProfile(myId)} className="a360-noprint"
-          style={{ ...font, display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, marginBottom: 14,
-            padding: "8px 13px", borderRadius: 10, border: `1px solid ${C.grid}`, background: "#fff", color: C.navy2, cursor: "pointer" }}>
-          <User size={15} /> Torna al mio profilo
-        </button>
-      )}
-
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
         {(personal && avatarUrl)
           ? <Avatar url={avatarUrl} name={firstName || sel} size={44} ring={scoreRing} />
           : <InitialsCircle name={sel} size={44} ring={scoreRing} />}
-        <span style={{ ...font, fontSize: 13, color: C.muted }}>{showBack ? "Profilo pubblico" : "Atleta"}</span>
+        <span style={{ ...font, fontSize: 13, color: C.muted }}>Atleta</span>
         {restricted
           ? <span style={{ ...display, fontSize: 15, fontWeight: 600, color: C.ink }}>{sel}</span>
-          : <Select value={sel} onChange={onOpenProfile} options={NOMI} />}
+          : <Select value={sel} onChange={onOpenFullProfile} options={NOMI} />}
         {position && <span style={{ ...font, fontSize: 12, fontWeight: 600, color: C.navy2, background: C.surface, border: `1px solid ${C.grid}`, padding: "5px 11px", borderRadius: 99 }}>{position}</span>}
-        {canPrivate && <ShareCard name={sel} position={position} scores={scores} keys={SKILLS} SHORT={SHORT} overall={overall(sel)} avatarUrl={personal ? avatarUrl : ""} />}
+        <ShareCard name={sel} position={position} scores={scores} keys={SKILLS} SHORT={SHORT} overall={overall(sel)} avatarUrl={personal ? avatarUrl : ""} />
         <button className="a360-noprint" onClick={() => window.print()}
           style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500,
             padding: "9px 13px", borderRadius: 10, border: `1px solid ${C.grid}`, background: "#fff", color: C.ink, cursor: "pointer" }}>
@@ -443,7 +431,7 @@ function ProfiloView({ d, auth, target, onOpenProfile }) {
         </div>
       </div>
 
-      {canPrivate && nota && (
+      {nota && (
         <Card title="Nota del mister" subtitle={`Ultimo rilevamento`} style={{ marginTop: 20 }}>
           <div style={{ ...font, fontSize: 14, color: C.ink, lineHeight: 1.6, background: C.surface, borderRadius: 12, padding: "14px 16px", borderLeft: `3px solid ${C.orange}` }}>
             {nota}
@@ -451,17 +439,15 @@ function ProfiloView({ d, auth, target, onOpenProfile }) {
         </Card>
       )}
 
-      {canPrivate && (
-        <CoachChat
-          subtitle={`Consigli sulle competenze allenate di ${sel}`}
-          suggestions={[
-            "Come posso migliorare il mio punto più debole?",
-            "Dammi un esercizio per resettare dopo un errore.",
-            "Una routine mentale prima del servizio nei punti caldi?",
-          ]}
-          payload={{ athlete: { id: sel, scores }, skills: SKILL_META.map((s) => ({ title: s.title, desc: s.description })) }}
-        />
-      )}
+      <CoachChat
+        subtitle={`Consigli sulle competenze allenate di ${sel}`}
+        suggestions={[
+          "Come posso migliorare il mio punto più debole?",
+          "Dammi un esercizio per resettare dopo un errore.",
+          "Una routine mentale prima del servizio nei punti caldi?",
+        ]}
+        payload={{ athlete: { id: sel, scores }, skills: SKILL_META.map((s) => ({ title: s.title, desc: s.description })) }}
+      />
     </div>
   );
 }
@@ -546,7 +532,7 @@ function ConfrontoView({ d }) {
   );
 }
 
-function AndamentoView({ d, onOpenProfile }) {
+function AndamentoView({ d, onOpenCard }) {
   const { NOMI, storico } = d;
   const [n, setN] = useState(NOMI[0]);
   const sel = storico[n] ? n : NOMI[0];
@@ -645,8 +631,8 @@ function AndamentoView({ d, onOpenProfile }) {
               return (
                 <div key={name} style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <div style={{ ...display, fontWeight: 700, fontSize: 14, width: 22, color: i < 3 ? C.orange : C.muted }}>{i + 1}</div>
-                  <span className={onOpenProfile ? "a360-clickname" : undefined} onClick={onOpenProfile ? () => onOpenProfile(name) : undefined}
-                    title={onOpenProfile ? `Apri il profilo di ${name}` : undefined}
+                  <span className={onOpenCard ? "a360-clickname" : undefined} onClick={onOpenCard ? () => onOpenCard(name) : undefined}
+                    title={onOpenCard ? `Vedi il profilo di ${name}` : undefined}
                     style={{ ...font, fontSize: 14, color: C.ink, flex: 1 }}>{name}</span>
                   <span style={{ ...font, fontSize: 13, fontWeight: 600, color: col, background: bg, borderRadius: 99, padding: "5px 12px" }}>
                     {up ? "▲" : down ? "▼" : "="} {g > 0 ? `+${g}` : g}
@@ -748,7 +734,7 @@ function ReportBlock({ label, color, items, onOpen }) {
   );
 }
 
-function StaffView({ d, onOpenProfile }) {
+function StaffView({ d, onOpenCard }) {
   const { NOMI, atleti, overall, RANK, TEAM_AVG, lastPeriod } = d;
   const [report, setReport] = useState(null);
   const [repBusy, setRepBusy] = useState(false);
@@ -825,8 +811,8 @@ function StaffView({ d, onOpenProfile }) {
           </ResponsiveContainer>
         </Card>
 
-        <Card title="Classifica generale" subtitle="Tocca un nome per aprire il profilo">
-          <Classifica RANK={RANK} overall={overall} onOpen={onOpenProfile} />
+        <Card title="Classifica generale" subtitle="Tocca un nome per vedere il profilo">
+          <Classifica RANK={RANK} overall={overall} onOpen={onOpenCard} />
         </Card>
       </div>
 
@@ -834,7 +820,7 @@ function StaffView({ d, onOpenProfile }) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
           <ReportBlock label="Punti di forza (squadra)" color="#0F7A4E" items={strongest.map((s) => `${s.title} · ${s.value}/10`)} />
           <ReportBlock label="Priorità di allenamento" color="#B4232A" items={weakest.map((s) => `${s.title} · ${s.value}/10`)} />
-          <ReportBlock label="Atlete da seguire" color={C.navy2} onOpen={onOpenProfile} items={attention.map((n) => ({ name: n, label: `${n} · ${overall(n).toFixed(1)}` }))} />
+          <ReportBlock label="Atlete da seguire" color={C.navy2} onOpen={onOpenCard} items={attention.map((n) => ({ name: n, label: `${n} · ${overall(n).toFixed(1)}` }))} />
         </div>
 
         <div style={{ marginTop: 16, borderTop: `1px solid ${C.grid}`, paddingTop: 16 }}>
@@ -901,8 +887,21 @@ function Dashboard() {
 
   const [view, setView] = useState("home");
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [profileTarget, setProfileTarget] = useState(null);   // profilo aperto cliccando un nome
-  const openProfile = (name) => { setProfileTarget(name); setView("profilo"); setMobileOpen(false); };
+  const [cardTarget, setCardTarget] = useState(null);          // card social aperta cliccando un nome
+  const [profileTarget, setProfileTarget] = useState(null);    // scheda completa (solo staff)
+  const [dmTarget, setDmTarget] = useState(null);              // destinataria messaggio privato
+
+  const openCard = (name) => setCardTarget(name);
+  const openFullProfile = (name) => { setCardTarget(null); setProfileTarget(name); setView("profilo"); setMobileOpen(false); };
+  const openDM = (userId, name) => { setCardTarget(null); setDmTarget({ id: userId, name }); setView("chat"); setMobileOpen(false); };
+
+  // Roster dei membri (nome, foto, collegamento atleta) per le card social.
+  const [roster, setRoster] = useState([]);
+  useEffect(() => { supabase.rpc("chat_roster").then(({ data }) => setRoster(data || [])).catch(() => {}); }, []);
+  const rosterByAthlete = useMemo(
+    () => Object.fromEntries((roster || []).filter((r) => r.athlete_id).map((r) => [r.athlete_id, r])),
+    [roster]
+  );
 
   const [model, setModel] = useState(null);
   const [errore, setErrore] = useState(null);
@@ -994,7 +993,7 @@ function Dashboard() {
   } else if (active.id === "personale") {
     content = <PersonalArea />;
   } else if (active.id === "chat") {
-    content = <ChatPage />;
+    content = <ChatPage dmTarget={dmTarget} />;
   } else if (errore) {
     content = (
       <StatusBox tone="error" title="Non riesco a leggere i dati"
@@ -1005,8 +1004,10 @@ function Dashboard() {
   } else if (model.NOMI.length === 0) {
     content = <StatusBox title="Nessun rilevamento ancora" message="Appena il mister inserisce il primo rilevamento dalla pagina “Nuovo rilevamento”, la dashboard si popola da sola." />;
   } else {
-    content = <ViewComp d={model} auth={viewCtx} target={profileTarget} onOpenProfile={openProfile} />;
+    content = <ViewComp d={model} auth={viewCtx} target={profileTarget} onOpenCard={openCard} onOpenFullProfile={openFullProfile} />;
   }
+
+  const isStaffViewer = isStaff;
 
   return (
     <div style={{ ...font, display: "flex", minHeight: "100vh", background: C.surface, color: C.ink }}>
@@ -1050,6 +1051,18 @@ function Dashboard() {
         </main>
         <Footer />
       </div>
+
+      {cardTarget && model?.atleti?.[cardTarget] && (
+        <PublicProfileCard
+          identifier={cardTarget}
+          model={model}
+          entry={rosterByAthlete[cardTarget]}
+          viewer={{ isAthlete, uid: profile?.id }}
+          onClose={() => setCardTarget(null)}
+          onMessage={isAthlete ? openDM : undefined}
+          onFullProfile={isStaffViewer ? openFullProfile : undefined}
+        />
+      )}
     </div>
   );
 }
