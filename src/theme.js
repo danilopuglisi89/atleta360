@@ -16,3 +16,20 @@ export const C = {
 
 export const font = { fontFamily: "'Inter', system-ui, sans-serif" };
 export const display = { fontFamily: "'Space Grotesk', system-ui, sans-serif" };
+
+// Medaglie del podio (oro / argento / bronzo).
+export const MEDALS = ["#E8A400", "#9AA6BF", "#CD7F32"];
+
+// Anello colorato attorno all'avatar in base al punteggio complessivo.
+export function ringForScore(v) {
+  if (v >= 7.5) return "#0F7A4E";   // verde — ottimo
+  if (v >= 5.5) return C.orange;    // arancione — in crescita
+  return C.navy2;                   // navy — da allenare
+}
+
+// Anello in base al ruolo (quando non c'è un punteggio, es. staff/admin).
+export function ringForRole(role, category) {
+  if (role === "admin") return C.navy2;
+  if (category === "direzione" || category === "staff") return "#16A6A6";
+  return C.orange;                  // atleta
+}

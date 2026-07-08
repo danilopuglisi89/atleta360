@@ -16,6 +16,67 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ============================================================
+   MICRO-ANIMAZIONI — card in dissolvenza, barre che crescono,
+   skeleton che pulsa, badge/podio che entrano. Tutto CSS puro.
+   ============================================================ */
+@keyframes a360-fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes a360-pop {
+  0%   { opacity: 0; transform: scale(0.6); }
+  70%  { transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes a360-rise {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes a360-bar-grow {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+@keyframes a360-shimmer {
+  0%   { background-position: -420px 0; }
+  100% { background-position: 420px 0; }
+}
+@keyframes a360-confetti-fall {
+  to { transform: translateY(110vh) rotate(720deg); opacity: 1; }
+}
+
+/* Ingresso "vivo" delle card e delle sezioni. */
+.a360-reveal { animation: a360-fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Barra dei punteggi che si riempie da sinistra. */
+.a360-bar-fill {
+  transform-origin: left center;
+  animation: a360-bar-grow 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Skeleton loader stile Instagram. */
+.a360-skel {
+  background: linear-gradient(90deg, #EEF0F6 25%, #F6F7FB 37%, #EEF0F6 63%);
+  background-size: 840px 100%;
+  animation: a360-shimmer 1.4s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* Coriandoli. */
+.a360-confetti-layer {
+  position: fixed; inset: 0; z-index: 90; pointer-events: none; overflow: hidden;
+}
+.a360-confetti-piece {
+  position: absolute; top: -14px; width: 9px; height: 14px; opacity: 0;
+  animation: a360-confetti-fall linear forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .a360-reveal, .a360-bar-fill, .a360-skel, .a360-confetti-piece,
+  .a360-pop, .a360-rise { animation: none !important; }
+  .a360-bar-fill { transform: none !important; }
+}
+
 /* Stampa / salva PDF: mostra solo la scheda profilo, nasconde navigazione e footer. */
 @media print {
   .a360-sidebar,

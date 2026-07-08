@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Send, Trash2, ImagePlus, X } from "lucide-react";
+import { Send, Trash2, ImagePlus, X, SmilePlus } from "lucide-react";
 import { C, font, display } from "./theme";
 import { supabase } from "./supabaseClient";
 import { useAuth } from "./auth";
@@ -23,6 +23,8 @@ const timeLabel = (iso) => {
   return d.toDateString() === now.toDateString() ? t : `${d.toLocaleDateString("it-IT", { day: "2-digit", month: "short" })} ${t}`;
 };
 
+const REACTION_EMOJIS = ["👍", "❤️", "🔥", "😂", "😮", "💪"];
+
 function MiniAvatar({ url, name, size = 30 }) {
   if (url) return <img src={url} alt={name} style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />;
   return (
@@ -40,6 +42,8 @@ export default function Chat() {
 
   const [messages, setMessages] = useState([]);
   const [roster, setRoster] = useState({});
+  const [reactions, setReactions] = useState({});   // id -> [{emoji, user_id}]
+  const [pickerFor, setPickerFor] = useState(null);
   const [text, setText] = useState("");
   const [pendingImage, setPendingImage] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -54,7 +58,39 @@ export default function Chat() {
     if (error) { setError(error.message); return; }
     setError(null);
     setMessages(data || []);
+    const ids = (data || []).map((m) => m.id);
+    if (ids.length) {
+      const { data: rx } = await supabase.from("message_reactions").select("message_id,emoji,user_id").in("message_id", ids);
+      const map = {};
+      (rx || []).forEach((r) => { (map[r.message_id] ||= []).push(r); });
+      setReactions(map);
+    } else setReactions({});
   }, []);
+
+  const toggleReaction = async (messageId, emoji) => {
+    setPickerFor(null);
+    const mine = (reactions[messageId] || []).find((r) => r.emoji === emoji && r.user_id === uid);
+    // Aggiornamento ottimista, poi ricarico dal server.
+    setReactions((prev) => {
+      const list = prev[messageId] || [];
+      const next = mine
+        ? list.filter((r) => !(r.emoji === emoji && r.user_id === uid))
+        : [...list, { emoji, user_id: uid }];
+      return { ...prev, [messageId]: next };
+    });
+    if (mine) {
+      await supabase.from("message_reactions").delete().eq("message_id", messageId).eq("user_id", uid).eq("emoji", emoji);
+    } else {
+      await supabase.from("message_reactions").insert({ message_id: messageId, user_id: uid, emoji });
+    }
+    await load();
+  };
+
+  const summarize = (list = []) => {
+    const m = {};
+    list.forEach((r) => { (m[r.emoji] ||= { count: 0, mine: false }); m[r.emoji].count++; if (r.user_id === uid) m[r.emoji].mine = true; });
+    return Object.entries(m);
+  };
 
   useEffect(() => {
     supabase.rpc("chat_roster").then(({ data }) => {
@@ -126,10 +162,35 @@ export default function Chat() {
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: mine ? "flex-end" : "flex-start", marginTop: 3 }}>
                     <span style={{ ...font, fontSize: 10.5, color: C.muted }}>{timeLabel(m.created_at)}</span>
+                    <button onClick={() => setPickerFor(pickerFor === m.id ? null : m.id)} title="Reagisci"
+                      style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", padding: 0, display: "inline-flex" }}><SmilePlus size={13} /></button>
                     {(mine || isAdmin) && (
                       <button onClick={() => del(m)} title="Elimina" style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", padding: 0, display: "inline-flex" }}><Trash2 size={12} /></button>
                     )}
                   </div>
+
+                  {pickerFor === m.id && (
+                    <div style={{ display: "flex", gap: 2, marginTop: 5, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 99, padding: "3px 5px", boxShadow: "0 6px 18px rgba(10,22,80,0.12)", width: "fit-content", marginLeft: mine ? "auto" : 0 }}>
+                      {REACTION_EMOJIS.map((e) => (
+                        <button key={e} onClick={() => toggleReaction(m.id, e)} title={`Reagisci ${e}`}
+                          style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, lineHeight: 1, padding: "3px 5px", borderRadius: 8 }}>{e}</button>
+                      ))}
+                    </div>
+                  )}
+
+                  {summarize(reactions[m.id]).length > 0 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 5, justifyContent: mine ? "flex-end" : "flex-start" }}>
+                      {summarize(reactions[m.id]).map(([emoji, info]) => (
+                        <button key={emoji} onClick={() => toggleReaction(m.id, emoji)}
+                          style={{ ...font, display: "inline-flex", alignItems: "center", gap: 3, fontSize: 12, cursor: "pointer",
+                            background: info.mine ? C.orangeSoft : C.surface, border: `1px solid ${info.mine ? C.orange : C.grid}`,
+                            borderRadius: 99, padding: "2px 8px", color: C.ink }}>
+                          <span style={{ fontSize: 13 }}>{emoji}</span>
+                          <span style={{ fontWeight: 600, color: info.mine ? C.orange : C.muted }}>{info.count}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

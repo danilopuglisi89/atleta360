@@ -1,14 +1,17 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   LineChart, Line, ResponsiveContainer,
 } from "recharts";
-import { Home, User, Users, TrendingUp, Info, Menu, X, MessageCircle, ShieldCheck, LogOut, RefreshCw, Printer, ClipboardList, Sparkles, ClipboardPlus, UserCircle, MessagesSquare, ScrollText } from "lucide-react";
-import { C, font, display } from "./theme";
+import { Home, User, Users, TrendingUp, Info, Menu, X, MessageCircle, ShieldCheck, LogOut, RefreshCw, Printer, ClipboardList, Sparkles, ClipboardPlus, UserCircle, MessagesSquare, ScrollText, Quote } from "lucide-react";
+import { C, font, display, MEDALS, ringForScore, ringForRole } from "./theme";
 import { AuthProvider, useAuth } from "./auth";
 import { supabaseConfigured } from "./supabaseClient";
 import { fetchModel } from "./data";
+import { phraseOfTheDay } from "./phrases";
+import { computeBadges } from "./badges";
+import { fireConfetti } from "./effects";
 import AuthScreen, { ResetPasswordScreen } from "./AuthScreen";
 import AdminPanel from "./AdminPanel";
 import CoachChat from "./CoachChat";
@@ -16,6 +19,7 @@ import NewAssessment from "./NewAssessment";
 import PersonalArea, { Avatar } from "./PersonalArea";
 import ChatPage from "./ChatPage";
 import AdminChatLog from "./AdminChatLog";
+import ShareCard from "./ShareCard";
 
 const SERIES = ["#FF7A18", "#17297A", "#16A6A6"];              // confronto atlete
 const CORE_COLORS = ["#FF7A18", "#17297A", "#16A6A6", "#8B5CF6", "#E11D74", "#0EA5E9"]; // andamento
@@ -43,13 +47,159 @@ function bindSkills(model) {
 /* ============================================================
    PICCOLI COMPONENTI
    ============================================================ */
-function Card({ title, subtitle, children, style }) {
+function Card({ title, subtitle, children, style, className = "" }) {
   return (
-    <div style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.grid}`, boxShadow: "0 1px 2px rgba(12,19,48,0.04)", padding: 20, ...style }}>
+    <div className={`a360-reveal ${className}`.trim()} style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.grid}`, boxShadow: "0 1px 2px rgba(12,19,48,0.04)", padding: 20, ...style }}>
       {title && <h3 style={{ ...display, fontSize: 15, fontWeight: 600, color: C.ink, margin: 0 }}>{title}</h3>}
       {subtitle && <p style={{ ...font, fontSize: 13, color: C.muted, margin: "4px 0 0" }}>{subtitle}</p>}
       {(title || subtitle) && <div style={{ height: 16 }} />}
       {children}
+    </div>
+  );
+}
+
+const initialsOf = (name) => (name || "").split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "?";
+
+/* Cerchio con iniziali + anello colorato (usato in podio e classifica). */
+function InitialsCircle({ name, size = 44, ring }) {
+  return (
+    <div style={{ width: size, height: size, borderRadius: "50%", background: C.navy2, color: "#fff",
+      display: "flex", alignItems: "center", justifyContent: "center", ...display, fontWeight: 700, fontSize: size * 0.36,
+      border: ring ? `3px solid ${ring}` : "none", boxShadow: ring ? `0 0 0 3px ${ring}22` : "none", flexShrink: 0 }}>
+      {initialsOf(name)}
+    </div>
+  );
+}
+
+/* Podio oro/argento/bronzo per le prime 3 della classifica. */
+function Podium({ names, overall }) {
+  const top = names.slice(0, 3);
+  if (top.length < 3) return null;
+  // Ordine visivo: 2ª (sx), 1ª (centro, più alta), 3ª (dx).
+  const layout = [
+    { name: top[1], rank: 2, h: 74, av: 46 },
+    { name: top[0], rank: 1, h: 104, av: 60 },
+    { name: top[2], rank: 3, h: 58, av: 42 },
+  ];
+  return (
+    <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 12, marginBottom: 18 }}>
+      {layout.map((p, i) => {
+        const medal = MEDALS[p.rank - 1];
+        return (
+          <div key={p.name} className="a360-reveal" style={{ flex: "1 1 0", maxWidth: 130, textAlign: "center", animationDelay: `${i * 0.08}s` }}>
+            <div style={{ position: "relative", display: "inline-block", marginBottom: 8 }}>
+              <InitialsCircle name={p.name} size={p.av} ring={medal} />
+              {p.rank === 1 && <div style={{ position: "absolute", top: -16, left: "50%", transform: "translateX(-50%)", fontSize: 20 }}>👑</div>}
+            </div>
+            <div style={{ ...font, fontSize: 12.5, color: C.ink, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
+            <div style={{ ...display, fontSize: 15, fontWeight: 700, color: C.navy, marginBottom: 6 }}>{overall(p.name).toFixed(1)}</div>
+            <div style={{ height: p.h, borderRadius: "10px 10px 0 0", background: `linear-gradient(180deg, ${medal} 0%, ${medal}CC 100%)`,
+              display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 8, ...display, fontWeight: 700, fontSize: 22, color: "#fff", boxShadow: "inset 0 2px 6px rgba(255,255,255,0.25)" }}>
+              {p.rank}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* Classifica: podio in alto + barre per le altre atlete. */
+function Classifica({ RANK, overall }) {
+  const max = Math.max(...RANK.map(overall), 1);
+  const hasPodium = RANK.length >= 3;
+  const rest = hasPodium ? RANK.slice(3) : RANK;
+  return (
+    <div>
+      {hasPodium && <Podium names={RANK} overall={overall} />}
+      {rest.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, borderTop: hasPodium ? `1px solid ${C.grid}` : "none", paddingTop: hasPodium ? 14 : 0 }}>
+          {rest.map((n, i) => (
+            <div key={n} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ ...display, fontWeight: 700, fontSize: 14, width: 22, color: C.muted }}>{hasPodium ? i + 4 : i + 1}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+                  <span style={{ ...font, fontSize: 13.5, color: C.ink }}>{n}</span>
+                  <span style={{ ...display, fontSize: 13.5, fontWeight: 600, color: C.navy }}>{overall(n).toFixed(1)}</span>
+                </div>
+                <div style={{ height: 7, background: C.surface, borderRadius: 99, overflow: "hidden" }}>
+                  <div className="a360-bar-fill" style={{ height: "100%", width: `${(overall(n) / max) * 100}%`, background: C.navy2, borderRadius: 99 }} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* Striscia dei badge conquistati. */
+function BadgeStrip({ badges }) {
+  if (!badges.length) return null;
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+      {badges.map((b, i) => (
+        <div key={b.id} className="a360-reveal" title={b.desc}
+          style={{ display: "inline-flex", alignItems: "center", gap: 8, background: C.surface, border: `1px solid ${b.color}33`,
+            borderLeft: `3px solid ${b.color}`, borderRadius: 12, padding: "8px 12px", animationDelay: `${i * 0.06}s` }}>
+          <span style={{ fontSize: 20, lineHeight: 1 }}>{b.emoji}</span>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ ...display, fontSize: 13, fontWeight: 700, color: C.ink }}>{b.label}</div>
+            <div style={{ ...font, fontSize: 11.5, color: C.muted }}>{b.desc}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* Skeleton loader stile Instagram. */
+function Skel({ w = "100%", h = 14, r = 8, style }) {
+  return <div className="a360-skel" style={{ width: w, height: h, borderRadius: r, ...style }} />;
+}
+function DashboardSkeleton() {
+  return (
+    <div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} style={{ flex: "1 1 140px", background: C.card, border: `1px solid ${C.grid}`, borderRadius: 14, padding: "16px 18px" }}>
+            <Skel w={60} h={26} />
+            <div style={{ height: 8 }} />
+            <Skel w="80%" h={12} />
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
+        {[0, 1].map((i) => (
+          <div key={i} style={{ background: C.card, border: `1px solid ${C.grid}`, borderRadius: 16, padding: 20 }}>
+            <Skel w={180} h={15} />
+            <div style={{ height: 8 }} />
+            <Skel w={240} h={12} />
+            <div style={{ height: 20 }} />
+            {i === 0
+              ? <div style={{ margin: "0 auto", width: 220, height: 220, borderRadius: "50%" }} className="a360-skel" />
+              : <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  {[0, 1, 2, 3, 4].map((j) => (<div key={j}><Skel w="100%" h={10} /><div style={{ height: 6 }} /><Skel w={`${80 - j * 12}%`} h={7} r={99} /></div>))}
+                </div>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* Frase motivazionale del giorno. */
+function MotivationCard() {
+  const phrase = phraseOfTheDay();
+  return (
+    <div className="a360-reveal" style={{ background: `linear-gradient(120deg, ${C.navy} 0%, ${C.navy2} 100%)`, borderRadius: 16,
+      padding: "20px 22px", marginBottom: 20, position: "relative", overflow: "hidden" }}>
+      <Quote size={64} style={{ position: "absolute", right: 12, top: 6, color: "rgba(255,255,255,0.08)" }} />
+      <div style={{ ...font, fontSize: 11.5, color: C.orange, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 8 }}>Frase del giorno</div>
+      <div style={{ ...display, fontSize: "clamp(16px, 2.6vw, 20px)", fontWeight: 600, color: "#fff", lineHeight: 1.45, position: "relative", maxWidth: 720 }}>
+        {phrase}
+      </div>
     </div>
   );
 }
@@ -110,9 +260,9 @@ function Footer() {
    ============================================================ */
 function HomeView({ d }) {
   const { NOMI, overall, RANK, TEAM_AVG, lastPeriod } = d;
-  const max = Math.max(...NOMI.map(overall));
   return (
     <div>
+      <MotivationCard />
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
         {[
           { l: "Atlete monitorate", v: NOMI.length },
@@ -140,23 +290,8 @@ function HomeView({ d }) {
           </ResponsiveContainer>
         </Card>
 
-        <Card title="Classifica generale" subtitle="Punteggio medio complessivo per atleta">
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {RANK.map((n, i) => (
-              <div key={n} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ ...display, fontWeight: 700, fontSize: 14, width: 22, color: i < 3 ? C.orange : C.muted }}>{i + 1}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-                    <span style={{ ...font, fontSize: 13.5, color: C.ink }}>{n}</span>
-                    <span style={{ ...display, fontSize: 13.5, fontWeight: 600, color: C.navy }}>{overall(n).toFixed(1)}</span>
-                  </div>
-                  <div style={{ height: 7, background: C.surface, borderRadius: 99, overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${(overall(n) / max) * 100}%`, background: i < 3 ? C.orange : C.navy2, borderRadius: 99 }} />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+        <Card title="Classifica generale" subtitle="Le prime sul podio, poi il resto della squadra">
+          <Classifica RANK={RANK} overall={overall} />
         </Card>
       </div>
     </div>
@@ -164,11 +299,38 @@ function HomeView({ d }) {
 }
 
 function ProfiloView({ d, auth }) {
-  const { NOMI, atleti, overall } = d;
+  const { NOMI, atleti, overall, storico } = d;
   const restricted = !!auth?.restricted;
   const myId = auth?.athleteId;
   const firstName = auth?.firstName || "";
+  const avatarUrl = auth?.avatarUrl || "";
   const [n, setN] = useState(restricted ? myId : NOMI[0]);
+
+  const sel = restricted ? myId : (atleti[n] ? n : NOMI[0]);
+  const hasData = !!atleti[sel];
+
+  // Rileva un miglioramento tra gli ultimi due rilevamenti (per i coriandoli).
+  const improvement = useMemo(() => {
+    const hist = storico?.[sel] || [];
+    if (hist.length < 2) return null;
+    const a = hist[hist.length - 2], b = hist[hist.length - 1];
+    const ov = (e) => { const vs = SKILLS.map((k) => e[k]).filter((v) => typeof v === "number"); return vs.length ? vs.reduce((x, y) => x + y, 0) / vs.length : 0; };
+    const diff = ov(b) - ov(a);
+    if (diff <= 0) return null;
+    let best = null, bestD = 0;
+    SKILLS.forEach((k) => { const dd = (b[k] ?? 0) - (a[k] ?? 0); if (dd > bestD) { bestD = dd; best = k; } });
+    return { diff: Math.round(diff * 10) / 10, skill: best ? SHORT[best] : null };
+  }, [sel, storico]);
+
+  // Coriandoli quando l'atleta apre un profilo migliorato (una volta per profilo).
+  const firedRef = useRef(null);
+  useEffect(() => {
+    if (hasData && improvement && firedRef.current !== sel) {
+      firedRef.current = sel;
+      const t = setTimeout(() => fireConfetti(), 350);
+      return () => clearTimeout(t);
+    }
+  }, [sel, hasData, improvement]);
 
   // Atleta "semplice": vede sempre e solo il proprio profilo.
   if (restricted && (!myId || !atleti[myId])) {
@@ -182,10 +344,11 @@ function ProfiloView({ d, auth }) {
     );
   }
 
-  const sel = restricted ? myId : (atleti[n] ? n : NOMI[0]);
   const scores = atleti[sel].scores;
   const nota = atleti[sel].nota;
   const position = atleti[sel].position;
+  const scoreRing = ringForScore(overall(sel));
+  const badges = computeBadges(d, sel);
   const teamAvg = (k) => Math.round((NOMI.reduce((a, m) => a + (atleti[m].scores[k] ?? 0), 0) / Math.max(NOMI.length, 1)) * 10) / 10;
   const radar = SKILLS.map((k) => ({ skill: SHORT[k], valore: scores[k] ?? 0, media: teamAvg(k), full: 10 }));
   const ranked = SKILLS.map((k) => ({ k, v: scores[k] ?? 0 })).sort((a, b) => b.v - a.v);
@@ -198,12 +361,26 @@ function ProfiloView({ d, auth }) {
           Ciao {firstName}! 👋 <span style={{ ...font, fontSize: 14, fontWeight: 400, color: C.muted }}>Ecco il tuo profilo.</span>
         </div>
       )}
+
+      {improvement && (
+        <div className="a360-reveal" style={{ display: "flex", alignItems: "center", gap: 10, background: "linear-gradient(120deg, #DDF3E7 0%, #FFF3E6 100%)",
+          border: "1px solid #B7E3C9", borderRadius: 14, padding: "12px 16px", marginBottom: 18 }}>
+          <span style={{ fontSize: 24 }}>🎉</span>
+          <div style={{ ...font, fontSize: 14, color: "#0F5A38", lineHeight: 1.4 }}>
+            <b style={{ ...display, color: "#0F7A4E" }}>Sei cresciuta{improvement.skill ? ` in ${improvement.skill}` : ""}!</b>{" "}
+            +{improvement.diff} di media dall'ultimo rilevamento. Continua così! 💪
+          </div>
+        </div>
+      )}
+
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+        {restricted && <Avatar url={avatarUrl} name={firstName || sel} size={44} ring={scoreRing} />}
         <span style={{ ...font, fontSize: 13, color: C.muted }}>Atleta</span>
         {restricted
           ? <span style={{ ...display, fontSize: 15, fontWeight: 600, color: C.ink }}>{sel}</span>
           : <Select value={sel} onChange={setN} options={NOMI} />}
         {position && <span style={{ ...font, fontSize: 12, fontWeight: 600, color: C.navy2, background: C.surface, border: `1px solid ${C.grid}`, padding: "5px 11px", borderRadius: 99 }}>{position}</span>}
+        <ShareCard name={sel} position={position} scores={scores} keys={SKILLS} SHORT={SHORT} overall={overall(sel)} avatarUrl={restricted ? avatarUrl : ""} />
         <button className="a360-noprint" onClick={() => window.print()}
           style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500,
             padding: "9px 13px", borderRadius: 10, border: `1px solid ${C.grid}`, background: "#fff", color: C.ink, cursor: "pointer" }}>
@@ -213,6 +390,12 @@ function ProfiloView({ d, auth }) {
           Punteggio complessivo <b style={{ color: C.orange, fontSize: 20, marginLeft: 6 }}>{overall(sel).toFixed(1)}</b>
         </div>
       </div>
+
+      {badges.length > 0 && (
+        <Card title="I tuoi traguardi" subtitle="Riconoscimenti calcolati dai tuoi rilevamenti" style={{ marginBottom: 20 }}>
+          <BadgeStrip badges={badges} />
+        </Card>
+      )}
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
         <Card title="Profilo a 360°" subtitle="Competenze dell'atleta a confronto con la media squadra">
@@ -268,7 +451,7 @@ function Row({ label, value, color }) {
         <span style={{ ...display, fontSize: 13.5, fontWeight: 600, color }}>{value}/10</span>
       </div>
       <div style={{ height: 7, background: C.surface, borderRadius: 99, overflow: "hidden" }}>
-        <div style={{ height: "100%", width: `${value * 10}%`, background: color, borderRadius: 99 }} />
+        <div className="a360-bar-fill" style={{ height: "100%", width: `${value * 10}%`, background: color, borderRadius: 99 }} />
       </div>
     </div>
   );
@@ -541,7 +724,6 @@ function StaffView({ d }) {
   const weakest = bySkill.slice(0, 3);
   const strongest = [...bySkill].reverse().slice(0, 3);
   const attention = [...NOMI].sort((a, b) => overall(a) - overall(b)).slice(0, 3);
-  const max = Math.max(...NOMI.map(overall));
   const teamMean = (NOMI.reduce((a, n) => a + overall(n), 0) / Math.max(NOMI.length, 1)).toFixed(1);
 
   const team = {
@@ -608,23 +790,8 @@ function StaffView({ d }) {
           </ResponsiveContainer>
         </Card>
 
-        <Card title="Classifica generale" subtitle="Punteggio medio complessivo per atleta">
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {RANK.map((n, i) => (
-              <div key={n} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ ...display, fontWeight: 700, fontSize: 14, width: 22, color: i < 3 ? C.orange : C.muted }}>{i + 1}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-                    <span style={{ ...font, fontSize: 13.5, color: C.ink }}>{n}</span>
-                    <span style={{ ...display, fontSize: 13.5, fontWeight: 600, color: C.navy }}>{overall(n).toFixed(1)}</span>
-                  </div>
-                  <div style={{ height: 7, background: C.surface, borderRadius: 99, overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${(overall(n) / max) * 100}%`, background: i < 3 ? C.orange : C.navy2, borderRadius: 99 }} />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+        <Card title="Classifica generale" subtitle="Le prime sul podio, poi il resto della squadra">
+          <Classifica RANK={RANK} overall={overall} />
         </Card>
       </div>
 
@@ -686,6 +853,7 @@ function Dashboard() {
     restricted: !isStaff && profile?.category === "atleta",
     athleteId: profile?.athlete_id || null,
     firstName: profile?.first_name || "",
+    avatarUrl: profile?.avatar_url || "",
   };
   const NAV = [
     ...BASE_NAV,
@@ -755,7 +923,7 @@ function Dashboard() {
   const UserFooter = () => (
     <div style={{ marginTop: "auto", padding: 16, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-        <Avatar url={profile?.avatar_url} name={[profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.email} size={34} />
+        <Avatar url={profile?.avatar_url} name={[profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.email} size={34} ring={ringForRole(profile?.role, profile?.category)} />
         <div style={{ minWidth: 0 }}>
           <div style={{ ...display, fontSize: 13, color: "#fff", fontWeight: 600, ...ellipsis }}>
             {[profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.email}
@@ -796,7 +964,7 @@ function Dashboard() {
         message="C'è stato un problema nel caricare i dati. Riprova tra poco; se persiste, verifica la connessione. Dettaglio tecnico in console." />
     );
   } else if (!model) {
-    content = <StatusBox title="Carico i dati della squadra…" message="Un attimo, sto caricando atlete, focus e rilevamenti." />;
+    content = <DashboardSkeleton />;
   } else if (model.NOMI.length === 0) {
     content = <StatusBox title="Nessun rilevamento ancora" message="Appena il mister inserisce il primo rilevamento dalla pagina “Nuovo rilevamento”, la dashboard si popola da sola." />;
   } else {

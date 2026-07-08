@@ -20,11 +20,14 @@ function Card({ title, subtitle, children, style }) {
 const labelStyle = { ...font, fontSize: 12.5, color: C.muted, fontWeight: 500, marginBottom: 6, display: "block" };
 const inputStyle = { ...font, fontSize: 14, color: C.ink, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 10, padding: "10px 12px", width: "100%", boxSizing: "border-box", outline: "none" };
 
-export function Avatar({ url, name, size = 96 }) {
+export function Avatar({ url, name, size = 96, ring }) {
   const initials = (name || "").split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "?";
-  if (url) return <img src={url} alt={name} style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", border: `2px solid ${C.grid}` }} />;
+  // Anello colorato: bordo più marcato + alone, in base a punteggio o ruolo.
+  const border = ring ? `3px solid ${ring}` : `2px solid ${C.grid}`;
+  const glow = ring ? { boxShadow: `0 0 0 3px ${ring}22` } : {};
+  if (url) return <img src={url} alt={name} style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", border, ...glow }} />;
   return (
-    <div style={{ width: size, height: size, borderRadius: "50%", background: C.navy2, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", ...display, fontWeight: 700, fontSize: size * 0.36 }}>
+    <div style={{ width: size, height: size, borderRadius: "50%", background: C.navy2, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", ...display, fontWeight: 700, fontSize: size * 0.36, border, ...glow }}>
       {initials}
     </div>
   );
