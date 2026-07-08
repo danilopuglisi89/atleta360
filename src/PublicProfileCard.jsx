@@ -22,9 +22,9 @@ export default function PublicProfileCard({ identifier, model, entry, viewer, on
 
   return (
     <div onClick={onClose} className="a360-noprint"
-      style={{ position: "fixed", inset: 0, zIndex: 75, background: "rgba(10,19,48,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      style={{ position: "fixed", inset: 0, zIndex: 75, background: "rgba(10,19,48,0.55)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "6vh 20px", overflowY: "auto" }}>
       <div onClick={(e) => e.stopPropagation()} className="a360-reveal"
-        style={{ width: "100%", maxWidth: 340, background: C.card, borderRadius: 20, overflow: "hidden", boxShadow: "0 24px 70px rgba(0,0,0,0.35)" }}>
+        style={{ width: "100%", maxWidth: 340, background: C.card, borderRadius: 20, overflow: "hidden", boxShadow: "0 24px 70px rgba(0,0,0,0.35)", margin: "auto" }}>
         {/* Banner + chiudi */}
         <div style={{ height: 56, background: `linear-gradient(120deg, ${C.navy} 0%, ${C.navy2} 100%)`, position: "relative" }}>
           <button onClick={onClose} aria-label="Chiudi" style={{ position: "absolute", top: 9, right: 9, background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", borderRadius: 8, cursor: "pointer", padding: 4, display: "inline-flex" }}><X size={17} /></button>
