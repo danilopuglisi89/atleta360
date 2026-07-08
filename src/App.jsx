@@ -72,7 +72,7 @@ function InitialsCircle({ name, size = 44, ring }) {
 }
 
 /* Podio oro/argento/bronzo per le prime 3 della classifica. */
-function Podium({ names, overall }) {
+function Podium({ names, overall, onOpen }) {
   const top = names.slice(0, 3);
   if (top.length < 3) return null;
   // Ordine visivo: 2ª (sx), 1ª (centro, più alta), 3ª (dx).
@@ -86,12 +86,14 @@ function Podium({ names, overall }) {
       {layout.map((p, i) => {
         const medal = MEDALS[p.rank - 1];
         return (
-          <div key={p.name} className="a360-reveal" style={{ flex: "1 1 0", maxWidth: 130, textAlign: "center", animationDelay: `${i * 0.08}s` }}>
+          <div key={p.name} className="a360-reveal" onClick={onOpen ? () => onOpen(p.name) : undefined}
+            title={onOpen ? `Apri il profilo di ${p.name}` : undefined}
+            style={{ flex: "1 1 0", maxWidth: 130, textAlign: "center", animationDelay: `${i * 0.08}s`, cursor: onOpen ? "pointer" : "default" }}>
             <div style={{ position: "relative", display: "inline-block", marginBottom: 8 }}>
               <InitialsCircle name={p.name} size={p.av} ring={medal} />
               {p.rank === 1 && <div style={{ position: "absolute", top: -16, left: "50%", transform: "translateX(-50%)", fontSize: 20 }}>👑</div>}
             </div>
-            <div style={{ ...font, fontSize: 12.5, color: C.ink, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
+            <div className={onOpen ? "a360-clickname" : undefined} style={{ ...font, fontSize: 12.5, color: C.ink, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
             <div style={{ ...display, fontSize: 15, fontWeight: 700, color: C.navy, marginBottom: 6 }}>{overall(p.name).toFixed(1)}</div>
             <div style={{ height: p.h, borderRadius: "10px 10px 0 0", background: `linear-gradient(180deg, ${medal} 0%, ${medal}CC 100%)`,
               display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 8, ...display, fontWeight: 700, fontSize: 22, color: "#fff", boxShadow: "inset 0 2px 6px rgba(255,255,255,0.25)" }}>
@@ -105,13 +107,13 @@ function Podium({ names, overall }) {
 }
 
 /* Classifica: podio in alto + barre per le altre atlete. */
-function Classifica({ RANK, overall }) {
+function Classifica({ RANK, overall, onOpen }) {
   const max = Math.max(...RANK.map(overall), 1);
   const hasPodium = RANK.length >= 3;
   const rest = hasPodium ? RANK.slice(3) : RANK;
   return (
     <div>
-      {hasPodium && <Podium names={RANK} overall={overall} />}
+      {hasPodium && <Podium names={RANK} overall={overall} onOpen={onOpen} />}
       {rest.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 12, borderTop: hasPodium ? `1px solid ${C.grid}` : "none", paddingTop: hasPodium ? 14 : 0 }}>
           {rest.map((n, i) => (
@@ -119,7 +121,9 @@ function Classifica({ RANK, overall }) {
               <div style={{ ...display, fontWeight: 700, fontSize: 14, width: 22, color: C.muted }}>{hasPodium ? i + 4 : i + 1}</div>
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-                  <span style={{ ...font, fontSize: 13.5, color: C.ink }}>{n}</span>
+                  <span className={onOpen ? "a360-clickname" : undefined} onClick={onOpen ? () => onOpen(n) : undefined}
+                    title={onOpen ? `Apri il profilo di ${n}` : undefined}
+                    style={{ ...font, fontSize: 13.5, color: C.ink }}>{n}</span>
                   <span style={{ ...display, fontSize: 13.5, fontWeight: 600, color: C.navy }}>{overall(n).toFixed(1)}</span>
                 </div>
                 <div style={{ height: 7, background: C.surface, borderRadius: 99, overflow: "hidden" }}>
@@ -258,7 +262,7 @@ function Footer() {
 /* ============================================================
    VISTE
    ============================================================ */
-function HomeView({ d }) {
+function HomeView({ d, onOpenProfile }) {
   const { NOMI, overall, RANK, TEAM_AVG, lastPeriod } = d;
   return (
     <div>
@@ -290,24 +294,29 @@ function HomeView({ d }) {
           </ResponsiveContainer>
         </Card>
 
-        <Card title="Classifica generale" subtitle="Le prime sul podio, poi il resto della squadra">
-          <Classifica RANK={RANK} overall={overall} />
+        <Card title="Classifica generale" subtitle="Tocca un nome per aprire il profilo">
+          <Classifica RANK={RANK} overall={overall} onOpen={onOpenProfile} />
         </Card>
       </div>
     </div>
   );
 }
 
-function ProfiloView({ d, auth }) {
+function ProfiloView({ d, auth, target, onOpenProfile }) {
   const { NOMI, atleti, overall, storico } = d;
   const restricted = !!auth?.restricted;
   const myId = auth?.athleteId;
   const firstName = auth?.firstName || "";
   const avatarUrl = auth?.avatarUrl || "";
-  const [n, setN] = useState(restricted ? myId : NOMI[0]);
 
-  const sel = restricted ? myId : (atleti[n] ? n : NOMI[0]);
+  // Profilo mostrato: quello indicato (nome cliccato/selezionato) se valido,
+  // altrimenti il proprio (atlete) o la prima della rosa (staff).
+  const wantsOther = !!(target && atleti[target]);
+  const sel = wantsOther ? target : (restricted ? myId : NOMI[0]);
   const hasData = !!atleti[sel];
+  const isOwn = sel === myId;
+  const canPrivate = !restricted || isOwn;        // nota mister + coach IA
+  const personal = restricted && isOwn;           // saluto + coriandoli + card propria
 
   // Rileva un miglioramento tra gli ultimi due rilevamenti (per i coriandoli).
   const improvement = useMemo(() => {
@@ -322,18 +331,18 @@ function ProfiloView({ d, auth }) {
     return { diff: Math.round(diff * 10) / 10, skill: best ? SHORT[best] : null };
   }, [sel, storico]);
 
-  // Coriandoli quando l'atleta apre un profilo migliorato (una volta per profilo).
+  // Coriandoli solo quando l'atleta apre il PROPRIO profilo migliorato.
   const firedRef = useRef(null);
   useEffect(() => {
-    if (hasData && improvement && firedRef.current !== sel) {
+    if (personal && hasData && improvement && firedRef.current !== sel) {
       firedRef.current = sel;
       const t = setTimeout(() => fireConfetti(), 350);
       return () => clearTimeout(t);
     }
-  }, [sel, hasData, improvement]);
+  }, [sel, personal, hasData, improvement]);
 
-  // Atleta "semplice": vede sempre e solo il proprio profilo.
-  if (restricted && (!myId || !atleti[myId])) {
+  // Atleta "semplice" senza profilo collegato e senza un profilo altrui aperto.
+  if (restricted && !wantsOther && (!myId || !atleti[myId])) {
     return (
       <StatusBox
         title={firstName ? `Ciao ${firstName}!` : "Profilo non ancora disponibile"}
@@ -354,15 +363,17 @@ function ProfiloView({ d, auth }) {
   const ranked = SKILLS.map((k) => ({ k, v: scores[k] ?? 0 })).sort((a, b) => b.v - a.v);
   const top = ranked.slice(0, 3), bottom = ranked.slice(-3).reverse();
 
+  const showBack = restricted && !isOwn;   // atleta che sta guardando una compagna
+
   return (
     <div className="a360-print-area">
-      {restricted && firstName && (
+      {personal && firstName && (
         <div style={{ ...display, fontSize: 18, fontWeight: 700, color: C.ink, marginBottom: 14 }}>
           Ciao {firstName}! 👋 <span style={{ ...font, fontSize: 14, fontWeight: 400, color: C.muted }}>Ecco il tuo profilo.</span>
         </div>
       )}
 
-      {improvement && (
+      {personal && improvement && (
         <div className="a360-reveal" style={{ display: "flex", alignItems: "center", gap: 10, background: "linear-gradient(120deg, #DDF3E7 0%, #FFF3E6 100%)",
           border: "1px solid #B7E3C9", borderRadius: 14, padding: "12px 16px", marginBottom: 18 }}>
           <span style={{ fontSize: 24 }}>🎉</span>
@@ -373,14 +384,24 @@ function ProfiloView({ d, auth }) {
         </div>
       )}
 
+      {showBack && (
+        <button onClick={() => onOpenProfile && onOpenProfile(myId)} className="a360-noprint"
+          style={{ ...font, display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, marginBottom: 14,
+            padding: "8px 13px", borderRadius: 10, border: `1px solid ${C.grid}`, background: "#fff", color: C.navy2, cursor: "pointer" }}>
+          <User size={15} /> Torna al mio profilo
+        </button>
+      )}
+
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
-        {restricted && <Avatar url={avatarUrl} name={firstName || sel} size={44} ring={scoreRing} />}
-        <span style={{ ...font, fontSize: 13, color: C.muted }}>Atleta</span>
+        {(personal && avatarUrl)
+          ? <Avatar url={avatarUrl} name={firstName || sel} size={44} ring={scoreRing} />
+          : <InitialsCircle name={sel} size={44} ring={scoreRing} />}
+        <span style={{ ...font, fontSize: 13, color: C.muted }}>{showBack ? "Profilo pubblico" : "Atleta"}</span>
         {restricted
           ? <span style={{ ...display, fontSize: 15, fontWeight: 600, color: C.ink }}>{sel}</span>
-          : <Select value={sel} onChange={setN} options={NOMI} />}
+          : <Select value={sel} onChange={onOpenProfile} options={NOMI} />}
         {position && <span style={{ ...font, fontSize: 12, fontWeight: 600, color: C.navy2, background: C.surface, border: `1px solid ${C.grid}`, padding: "5px 11px", borderRadius: 99 }}>{position}</span>}
-        <ShareCard name={sel} position={position} scores={scores} keys={SKILLS} SHORT={SHORT} overall={overall(sel)} avatarUrl={restricted ? avatarUrl : ""} />
+        {canPrivate && <ShareCard name={sel} position={position} scores={scores} keys={SKILLS} SHORT={SHORT} overall={overall(sel)} avatarUrl={personal ? avatarUrl : ""} />}
         <button className="a360-noprint" onClick={() => window.print()}
           style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500,
             padding: "9px 13px", borderRadius: 10, border: `1px solid ${C.grid}`, background: "#fff", color: C.ink, cursor: "pointer" }}>
@@ -392,7 +413,7 @@ function ProfiloView({ d, auth }) {
       </div>
 
       {badges.length > 0 && (
-        <Card title="I tuoi traguardi" subtitle="Riconoscimenti calcolati dai tuoi rilevamenti" style={{ marginBottom: 20 }}>
+        <Card title={personal ? "I tuoi traguardi" : "Traguardi"} subtitle={personal ? "Riconoscimenti calcolati dai tuoi rilevamenti" : `Riconoscimenti di ${sel}`} style={{ marginBottom: 20 }}>
           <BadgeStrip badges={badges} />
         </Card>
       )}
@@ -422,7 +443,7 @@ function ProfiloView({ d, auth }) {
         </div>
       </div>
 
-      {nota && (
+      {canPrivate && nota && (
         <Card title="Nota del mister" subtitle={`Ultimo rilevamento`} style={{ marginTop: 20 }}>
           <div style={{ ...font, fontSize: 14, color: C.ink, lineHeight: 1.6, background: C.surface, borderRadius: 12, padding: "14px 16px", borderLeft: `3px solid ${C.orange}` }}>
             {nota}
@@ -430,15 +451,17 @@ function ProfiloView({ d, auth }) {
         </Card>
       )}
 
-      <CoachChat
-        subtitle={`Consigli sulle competenze allenate di ${sel}`}
-        suggestions={[
-          "Come posso migliorare il mio punto più debole?",
-          "Dammi un esercizio per resettare dopo un errore.",
-          "Una routine mentale prima del servizio nei punti caldi?",
-        ]}
-        payload={{ athlete: { id: sel, scores }, skills: SKILL_META.map((s) => ({ title: s.title, desc: s.description })) }}
-      />
+      {canPrivate && (
+        <CoachChat
+          subtitle={`Consigli sulle competenze allenate di ${sel}`}
+          suggestions={[
+            "Come posso migliorare il mio punto più debole?",
+            "Dammi un esercizio per resettare dopo un errore.",
+            "Una routine mentale prima del servizio nei punti caldi?",
+          ]}
+          payload={{ athlete: { id: sel, scores }, skills: SKILL_META.map((s) => ({ title: s.title, desc: s.description })) }}
+        />
+      )}
     </div>
   );
 }
@@ -523,7 +546,7 @@ function ConfrontoView({ d }) {
   );
 }
 
-function AndamentoView({ d }) {
+function AndamentoView({ d, onOpenProfile }) {
   const { NOMI, storico } = d;
   const [n, setN] = useState(NOMI[0]);
   const sel = storico[n] ? n : NOMI[0];
@@ -622,7 +645,9 @@ function AndamentoView({ d }) {
               return (
                 <div key={name} style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <div style={{ ...display, fontWeight: 700, fontSize: 14, width: 22, color: i < 3 ? C.orange : C.muted }}>{i + 1}</div>
-                  <span style={{ ...font, fontSize: 14, color: C.ink, flex: 1 }}>{name}</span>
+                  <span className={onOpenProfile ? "a360-clickname" : undefined} onClick={onOpenProfile ? () => onOpenProfile(name) : undefined}
+                    title={onOpenProfile ? `Apri il profilo di ${name}` : undefined}
+                    style={{ ...font, fontSize: 14, color: C.ink, flex: 1 }}>{name}</span>
                   <span style={{ ...font, fontSize: 13, fontWeight: 600, color: col, background: bg, borderRadius: 99, padding: "5px 12px" }}>
                     {up ? "▲" : down ? "▼" : "="} {g > 0 ? `+${g}` : g}
                   </span>
@@ -701,19 +726,29 @@ function InfoView() {
 /* ============================================================
    AREA STAFF (solo direzione / staff / admin)
    ============================================================ */
-function ReportBlock({ label, color, items }) {
+function ReportBlock({ label, color, items, onOpen }) {
+  // items: stringhe, oppure { name, label } per righe cliccabili (→ profilo).
   return (
     <div style={{ border: `1px solid ${C.grid}`, borderRadius: 12, padding: 14 }}>
       <div style={{ ...font, fontSize: 12.5, fontWeight: 600, color, marginBottom: 8 }}>{label}</div>
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        {items.length ? items.map((t, i) => <span key={i} style={{ ...font, fontSize: 13.5, color: C.ink }}>{t}</span>)
-          : <span style={{ ...font, fontSize: 13, color: C.muted }}>—</span>}
+        {items.length ? items.map((t, i) => {
+          const isObj = t && typeof t === "object";
+          const text = isObj ? t.label : t;
+          const clickable = isObj && t.name && onOpen;
+          return (
+            <span key={i} className={clickable ? "a360-clickname" : undefined}
+              onClick={clickable ? () => onOpen(t.name) : undefined}
+              title={clickable ? `Apri il profilo di ${t.name}` : undefined}
+              style={{ ...font, fontSize: 13.5, color: C.ink }}>{text}</span>
+          );
+        }) : <span style={{ ...font, fontSize: 13, color: C.muted }}>—</span>}
       </div>
     </div>
   );
 }
 
-function StaffView({ d }) {
+function StaffView({ d, onOpenProfile }) {
   const { NOMI, atleti, overall, RANK, TEAM_AVG, lastPeriod } = d;
   const [report, setReport] = useState(null);
   const [repBusy, setRepBusy] = useState(false);
@@ -790,8 +825,8 @@ function StaffView({ d }) {
           </ResponsiveContainer>
         </Card>
 
-        <Card title="Classifica generale" subtitle="Le prime sul podio, poi il resto della squadra">
-          <Classifica RANK={RANK} overall={overall} />
+        <Card title="Classifica generale" subtitle="Tocca un nome per aprire il profilo">
+          <Classifica RANK={RANK} overall={overall} onOpen={onOpenProfile} />
         </Card>
       </div>
 
@@ -799,7 +834,7 @@ function StaffView({ d }) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
           <ReportBlock label="Punti di forza (squadra)" color="#0F7A4E" items={strongest.map((s) => `${s.title} · ${s.value}/10`)} />
           <ReportBlock label="Priorità di allenamento" color="#B4232A" items={weakest.map((s) => `${s.title} · ${s.value}/10`)} />
-          <ReportBlock label="Atlete da seguire" color={C.navy2} items={attention.map((n) => `${n} · ${overall(n).toFixed(1)}`)} />
+          <ReportBlock label="Atlete da seguire" color={C.navy2} onOpen={onOpenProfile} items={attention.map((n) => ({ name: n, label: `${n} · ${overall(n).toFixed(1)}` }))} />
         </div>
 
         <div style={{ marginTop: 16, borderTop: `1px solid ${C.grid}`, paddingTop: 16 }}>
@@ -866,6 +901,8 @@ function Dashboard() {
 
   const [view, setView] = useState("home");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [profileTarget, setProfileTarget] = useState(null);   // profilo aperto cliccando un nome
+  const openProfile = (name) => { setProfileTarget(name); setView("profilo"); setMobileOpen(false); };
 
   const [model, setModel] = useState(null);
   const [errore, setErrore] = useState(null);
@@ -894,7 +931,7 @@ function Dashboard() {
         const Icon = item.icon;
         return (
           <button key={item.id}
-            onClick={() => { setView(item.id); setMobileOpen(false); }}
+            onClick={() => { setView(item.id); setMobileOpen(false); if (item.id === "profilo") setProfileTarget(null); }}
             style={{ ...font, display: "flex", alignItems: "center", gap: 12, padding: "11px 14px", borderRadius: 11,
               border: "none", cursor: "pointer", textAlign: "left", fontSize: 14.5,
               background: on ? "rgba(255,122,24,0.15)" : "transparent",
@@ -968,7 +1005,7 @@ function Dashboard() {
   } else if (model.NOMI.length === 0) {
     content = <StatusBox title="Nessun rilevamento ancora" message="Appena il mister inserisce il primo rilevamento dalla pagina “Nuovo rilevamento”, la dashboard si popola da sola." />;
   } else {
-    content = <ViewComp d={model} auth={viewCtx} />;
+    content = <ViewComp d={model} auth={viewCtx} target={profileTarget} onOpenProfile={openProfile} />;
   }
 
   return (
