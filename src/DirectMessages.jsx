@@ -103,7 +103,7 @@ export default function DirectMessages({ initialToId, initialToName }) {
   };
 
   return (
-    <Card title="Messaggi privati" subtitle="Chat privata 1-a-1 tra atlete. Le conversazioni sono visibili allo staff per la sicurezza delle Under 18.">
+    <Card title="Messaggi privati" subtitle="Le chat sono sicure e protette.">
       <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
         <button onClick={() => setPickerOpen(true)}
           style={{ ...font, display: "inline-flex", alignItems: "center", gap: 8, padding: "11px 16px", borderRadius: 11, border: "none", background: C.orange, color: "#fff", fontSize: 14.5, fontWeight: 600, cursor: "pointer" }}>
