@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 5173
+    },
+    {
+      "name": "atleta360-site-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "C:\\Users\\danil\\OneDrive\\Desktop\\atleta360-site", "run", "dev", "--", "--port", "5174"],
+      "port": 5174
     }
   ]
 }

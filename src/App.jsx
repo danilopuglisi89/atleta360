@@ -21,6 +21,7 @@ import ChatPage from "./ChatPage";
 import AdminChatLog from "./AdminChatLog";
 import ShareCard from "./ShareCard";
 import PublicProfileCard from "./PublicProfileCard";
+import { getDemoParam, getDemoCredentials } from "./demoMode";
 
 const SERIES = ["#FF7A18", "#17297A", "#16A6A6"];              // confronto atlete
 const CORE_COLORS = ["#FF7A18", "#17297A", "#16A6A6", "#8B5CF6", "#E11D74", "#0EA5E9"]; // andamento
@@ -1094,11 +1095,24 @@ export default function App() {
 }
 
 function Root() {
-  const { loading, session, profile, recovery, signOut, refreshProfile } = useAuth();
+  const { loading, session, profile, recovery, signIn, signOut, refreshProfile } = useAuth();
+
+  const demoKind = getDemoParam();
+  const demoAttempted = useRef(false);
+  const [demoFailed, setDemoFailed] = useState(false);
+
+  useEffect(() => {
+    if (!demoKind || loading || session || demoAttempted.current) return;
+    demoAttempted.current = true;
+    signIn(getDemoCredentials(demoKind)).then((err) => { if (err) setDemoFailed(true); });
+  }, [demoKind, loading, session, signIn]);
 
   if (!supabaseConfigured) return <SetupNotice />;
   if (recovery) return <ResetPasswordScreen />;
   if (loading) return <GateScreen title="Un attimo…" message="Sto verificando il tuo accesso." />;
+  if (demoKind && !session && !demoFailed) {
+    return <GateScreen title="Un attimo…" message="Sto preparando la demo di Atleta360…" />;
+  }
   if (!session) return <AuthScreen />;
 
   const status = profile?.status;
