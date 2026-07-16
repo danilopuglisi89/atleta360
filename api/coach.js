@@ -10,7 +10,27 @@
 // Google dismette una versione specifica). Gratuito e veloce.
 const MODEL = "gemini-flash-latest";
 
+// Origini esterne autorizzate a usare il coach (CORS): l'app di Aurora è un
+// sito statico su danilopuglisi.com senza un proprio backend e riusa questa
+// funzione. Le richieste dalla dashboard Oasi restano same-origin (nessun CORS).
+const ALLOWED_ORIGINS = [
+  "https://danilopuglisi.com",
+  "https://www.danilopuglisi.com",
+  "http://localhost:5173",
+];
+
 export default async function handler(req, res) {
+  const origin = req.headers.origin || "";
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  }
+  if (req.method === "OPTIONS") {
+    res.status(204).end();
+    return;
+  }
   if (req.method !== "POST") {
     res.status(405).json({ error: "Metodo non consentito." });
     return;
@@ -22,7 +42,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { messages, athlete, team, skills } = req.body || {};
+    const { messages, athlete, team, skills, club } = req.body || {};
     if (!Array.isArray(messages) || messages.length === 0) {
       res.status(400).json({ error: "Nessun messaggio." });
       return;
@@ -58,7 +78,10 @@ ${regole}`;
       const scoreLines = athlete?.scores
         ? Object.entries(athlete.scores).map(([k, v]) => `- ${k}: ${v}/10`).join("\n")
         : "(nessun punteggio disponibile)";
-      system = `Sei un assistente-coach di pallavolo per una squadra femminile Under 18 (Oasi Volley Viareggio).
+      // Contesto personalizzabile: l'app di Aurora passa il proprio (percorso
+      // individuale); senza `club` resta quello di default della squadra Oasi.
+      const contesto = club || "una squadra femminile di pallavolo Under 18 (Oasi Volley Viareggio)";
+      system = `Sei un assistente-coach sportivo per ${contesto}.
 Il tuo unico compito è dare consigli pratici, brevi e adatti a ragazze minorenni sulle COMPETENZE MENTALI / SOFT SKILL allenate nella dashboard Atleta360. Rispondi sempre in italiano, con tono positivo e incoraggiante.
 
 Competenze allenate (le UNICHE di cui puoi parlare):
