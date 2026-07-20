@@ -12,6 +12,39 @@ Vercel in `api/` (Coach IA su Google Gemini). `coach-server.mjs` è un wrapper E
 `api/coach.js` in locale per lo sviluppo (le funzioni `/api` di Vercel non girano con `npm run dev`).
 Recharts per i grafici. PWA installabile (vite-plugin-pwa).
 
+## ⚠️ Deploy — DUE target diversi, non uno solo (scoperto 2026-07-20)
+
+Il [README.md](README.md) descrive solo Vercel, ma **in produzione la dashboard vive in due posti**:
+
+| Dominio | Come si aggiorna | Cosa serve |
+|---|---|---|
+| `atleta360-jl71.vercel.app` | **Automatico**: ogni `git push` su `main` lo ridistribuisce da solo (Vercel + GitHub collegati). | Niente: basta pushare. |
+| **`oasi.danilopuglisi.com`** (quello vero, usato da Oasi Volley) | **Manuale**: gira su **VPS Hetzner** (`167.233.167.24`), nginx serve `/opt/atleta360/dist` da file statici, il Coach IA è un processo **PM2** separato (`atleta360-coach`, porta 4100, usa `coach-server.mjs`). Un `git push` **da solo non aggiorna questo dominio**. | Chiave SSH `~/.ssh/hetzner_caterino`, root sulla VPS. |
+
+**Procedura di deploy sulla VPS** (dopo aver pushato su GitHub):
+```bash
+ssh -i ~/.ssh/hetzner_caterino root@167.233.167.24
+cd /opt/atleta360
+git status                 # controlla PRIMA modifiche locali non committate (è successo!)
+git stash -u                # se ce ne sono: le mette da parte, non le cancella
+git pull origin main
+git stash pop                # riapplica; risolvi eventuali conflitti a mano, poi git add
+npm install                  # se package.json è cambiato
+npm run build                 # rigenera dist/, quello che nginx serve davvero
+pm2 restart atleta360-coach   # ricarica api/coach.js nel processo Coach IA (Node lo tiene in cache)
+```
+Sulla stessa VPS girano anche `caterino-yt-backend/-frontend`, `caterino-ig-backend/-frontend` e
+`caterino-casa-backend` (altri progetti dell'ecosistema, vedi CLAUDE.md di root): **mai** `pm2
+restart all` o toccare processi diversi da `atleta360-coach`. `ecosystem.prod.config.js` (config
+PM2, path `/opt/atleta360/coach-server.mjs`, env da `.env.coach`) vive solo sul server, non è
+tracciato da git.
+
+Il 2026-07-20 il checkout sulla VPS era fermo al commit *prima* del refactoring (mai più aggiornato
+dopo una patch manuale a `api/coach.js` per il CORS di Aurora, mai committata lì) — da qui la
+procedura `stash`/`pull`/`pop` sopra, pensata apposta per quel caso: modifiche locali sul server che
+vanno preservate, non sovrascritte alla cieca. Verificare sempre con `md5sum` prima di assumere che
+due versioni divergenti siano "la stessa cosa".
+
 ## Struttura del codice (dopo il refactoring 2026-07-20)
 
 - **`src/App.jsx`** — solo layout/routing: sidebar desktop, tab bar mobile, drawer, gate di
