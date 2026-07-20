@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Bell, MessageCircle, MessagesSquare, ClipboardPlus, CheckCircle2 } from "lucide-react";
+import { Bell, MessageCircle, MessagesSquare, ClipboardPlus, CheckCircle2, Target } from "lucide-react";
 import { C, font, display } from "../theme";
 
-const ICON_BY_TYPE = { dm: MessageCircle, team_chat: MessagesSquare, assessment: ClipboardPlus, approval: CheckCircle2 };
+const ICON_BY_TYPE = { dm: MessageCircle, team_chat: MessagesSquare, assessment: ClipboardPlus, approval: CheckCircle2, goal: Target };
 
 const timeLabel = (iso) => {
   const d = new Date(iso), now = new Date();

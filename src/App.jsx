@@ -83,16 +83,14 @@ function Dashboard() {
   const { items: notifications, unread: unreadNotif, unreadChat, unreadDmFromIds, markAllRead, markTypeRead, markFromRead } = useNotifications(profile?.id);
   const openNotification = (n) => {
     if (n.type === "dm" && n.meta?.from_id) { openDM(n.meta.from_id, n.meta.from_name || ""); return; }
-    if (n.type === "team_chat") { setView("chat"); setMobileOpen(false); return; }
-    if (n.type === "assessment") { setView("profilo"); setMobileOpen(false); return; }
-    setView("home"); setMobileOpen(false);
+    setView(n.view || "home"); setMobileOpen(false);
   };
   // Aprendo la chat, le notifiche di bacheca risultano lette (la bacheca è
   // sempre visibile in ChatPage); quelle dei messaggi privati si segnano
   // conversazione per conversazione (vedi onConversationOpen in DirectMessages).
   useEffect(() => { if (view === "chat") markTypeRead(["team_chat"]); }, [view, markTypeRead]);
-  // L'atleta che apre il proprio profilo legge la notifica di nuovo rilevamento.
-  useEffect(() => { if (view === "profilo" && viewCtx.restricted) markTypeRead(["assessment"]); }, [view, viewCtx.restricted, markTypeRead]);
+  // L'atleta che apre il proprio profilo legge le notifiche di nuovo rilevamento e obiettivo raggiunto.
+  useEffect(() => { if (view === "profilo" && viewCtx.restricted) markTypeRead(["assessment", "goal"]); }, [view, viewCtx.restricted, markTypeRead]);
 
   // Roster dei membri (nome, foto, collegamento atleta) per le card social.
   const [roster, setRoster] = useState([]);
@@ -253,7 +251,7 @@ function Dashboard() {
   } else if (model.NOMI.length === 0) {
     content = <StatusBox title="Nessun rilevamento ancora" message="Appena il mister inserisce il primo rilevamento dalla pagina “Nuovo rilevamento”, la dashboard si popola da sola." />;
   } else {
-    content = <ViewComp d={model} auth={viewCtx} target={profileTarget} onOpenCard={openCard} onOpenFullProfile={openFullProfile} />;
+    content = <ViewComp d={model} auth={viewCtx} target={profileTarget} onOpenCard={openCard} onOpenFullProfile={openFullProfile} onReload={reload} />;
   }
   const needsSuspense = ["home", "profilo", "confronto", "andamento", "info", "staff"].includes(active.id);
 

@@ -6,12 +6,16 @@ import { SKILLS, SHORT, SKILL_META } from "../skills";
 import { Card, Row, InitialsCircle, StatusBox, Select, tooltipStyle } from "../components/ui";
 import { BadgeStrip } from "../components/bits";
 import { computeBadges } from "../badges";
+import { levelFor } from "../gamification";
+import { useGoals } from "../goals";
 import { fireConfetti } from "../effects";
 import { Avatar } from "../PersonalArea";
 import ShareCard from "../ShareCard";
 import CoachChat from "../CoachChat";
+import GoalsCard from "../components/GoalsCard";
+import SelfAssessmentCard from "../components/SelfAssessmentCard";
 
-export default function ProfiloView({ d, auth, target, onOpenFullProfile }) {
+export default function ProfiloView({ d, auth, target, onOpenFullProfile, onReload }) {
   const { NOMI, atleti, overall, storico } = d;
   const restricted = !!auth?.restricted;
   const myId = auth?.athleteId;
@@ -23,6 +27,7 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile }) {
   const sel = restricted ? myId : (target && atleti[target] ? target : NOMI[0]);
   const hasData = !!atleti[sel];
   const personal = restricted;                    // l'atleta guarda sempre sé stessa
+  const { goals, addGoal, removeGoal } = useGoals(atleti[sel]?.athleteId);
 
   // Rileva un miglioramento tra gli ultimi due rilevamenti (per i coriandoli).
   const improvement = useMemo(() => {
@@ -64,6 +69,7 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile }) {
   const position = atleti[sel].position;
   const scoreRing = ringForScore(overall(sel));
   const badges = computeBadges(d, sel);
+  const level = levelFor(overall(sel));
   const teamAvg = (k) => Math.round((NOMI.reduce((a, m) => a + (atleti[m].scores[k] ?? 0), 0) / Math.max(NOMI.length, 1)) * 10) / 10;
   const radar = SKILLS.map((k) => ({ skill: SHORT[k], valore: scores[k] ?? 0, media: teamAvg(k), full: 10 }));
   const ranked = SKILLS.map((k) => ({ k, v: scores[k] ?? 0 })).sort((a, b) => b.v - a.v);
@@ -97,6 +103,9 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile }) {
           ? <span style={{ ...display, fontSize: 15, fontWeight: 600, color: C.ink }}>{sel}</span>
           : <Select value={sel} onChange={onOpenFullProfile} options={NOMI} />}
         {position && <span style={{ ...font, fontSize: 12, fontWeight: 600, color: C.navy2, background: C.surface, border: `1px solid ${C.grid}`, padding: "5px 11px", borderRadius: 99 }}>{position}</span>}
+        <span title="Livello calcolato dal punteggio complessivo" style={{ ...font, fontSize: 12, fontWeight: 600, color: C.orange, background: C.orangeSoft, padding: "5px 11px", borderRadius: 99, display: "inline-flex", alignItems: "center", gap: 5 }}>
+          {level.emoji} {level.label}
+        </span>
         <ShareCard name={sel} position={position} scores={scores} keys={SKILLS} SHORT={SHORT} overall={overall(sel)} avatarUrl={personal ? avatarUrl : ""} />
         <button className="a360-noprint" onClick={() => window.print()}
           style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500,
@@ -139,6 +148,10 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile }) {
         </div>
       </div>
 
+      <GoalsCard goals={goals} scores={scores} editable={personal} onAdd={addGoal} onRemove={removeGoal} />
+
+      <SelfAssessmentCard athleteId={atleti[sel]?.athleteId} misterScores={scores} self={atleti[sel]?.self} editable={personal} onSaved={onReload} />
+
       {nota && (
         <Card title="Nota del mister" subtitle={`Ultimo rilevamento`} style={{ marginTop: 20 }}>
           <div style={{ ...font, fontSize: 14, color: C.ink, lineHeight: 1.6, background: C.surface, borderRadius: 12, padding: "14px 16px", borderLeft: `3px solid ${C.orange}` }}>
@@ -154,7 +167,13 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile }) {
           "Dammi un esercizio per resettare dopo un errore.",
           "Una routine mentale prima del servizio nei punti caldi?",
         ]}
-        payload={{ athlete: { id: sel, scores }, skills: SKILL_META.map((s) => ({ title: s.title, desc: s.description })) }}
+        payload={{
+          athlete: {
+            id: sel, scores,
+            goals: goals.map((g) => ({ skill: SHORT[g.skill_key] || g.skill_key, target: g.target, current: scores[g.skill_key] ?? 0 })),
+          },
+          skills: SKILL_META.map((s) => ({ title: s.title, desc: s.description })),
+        }}
       />
     </div>
   );

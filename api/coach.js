@@ -78,6 +78,9 @@ ${regole}`;
       const scoreLines = athlete?.scores
         ? Object.entries(athlete.scores).map(([k, v]) => `- ${k}: ${v}/10`).join("\n")
         : "(nessun punteggio disponibile)";
+      const goalLines = (athlete?.goals || [])
+        .map((g) => `- ${g.skill}: obiettivo ${g.target}/10 (attuale ${g.current}/10)`)
+        .join("\n");
       // Contesto personalizzabile: l'app di Aurora passa il proprio (percorso
       // individuale); senza `club` resta quello di default della squadra Oasi.
       const contesto = club || "una squadra femminile di pallavolo Under 18 (Oasi Volley Viareggio)";
@@ -89,7 +92,7 @@ ${skillLines}
 
 Atleta selezionata: ${athlete?.id || "n/d"}. Punteggi attuali (scala 1-10):
 ${scoreLines}
-
+${goalLines ? `\nObiettivi personali fissati dall'atleta (tienine conto nei consigli, quando pertinenti):\n${goalLines}\n` : ""}
 ${regole}`;
     }
 

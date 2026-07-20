@@ -42,6 +42,18 @@ export default function StaffView({ d, onOpenCard }) {
   const attention = [...NOMI].sort((a, b) => overall(a) - overall(b)).slice(0, 3);
   const teamMean = (NOMI.reduce((a, n) => a + overall(n), 0) / Math.max(NOMI.length, 1)).toFixed(1);
 
+  // Scostamento medio tra autovalutazione e valutazione del mister (solo
+  // atlete che si sono autovalutate almeno una volta).
+  const selfGaps = NOMI.map((n) => {
+    const self = atleti[n].self;
+    if (!self?.scores) return null;
+    const diffs = CORE
+      .filter((k) => typeof self.scores[k] === "number" && typeof atleti[n].scores[k] === "number")
+      .map((k) => self.scores[k] - atleti[n].scores[k]);
+    if (!diffs.length) return null;
+    return { n, avg: Math.round((diffs.reduce((a, b) => a + b, 0) / diffs.length) * 10) / 10 };
+  }).filter(Boolean).sort((a, b) => Math.abs(b.avg) - Math.abs(a.avg));
+
   const team = {
     count: NOMI.length,
     lastPeriod,
@@ -110,6 +122,28 @@ export default function StaffView({ d, onOpenCard }) {
           <Classifica RANK={RANK} overall={overall} onOpen={onOpenCard} />
         </Card>
       </div>
+
+      {selfGaps.length > 0 && (
+        <Card title="Scostamenti autovalutazione" subtitle="Differenza tra come si vedono le atlete e come le valuta il mister" style={{ marginTop: 20 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {selfGaps.map(({ n, avg }) => {
+              const over = avg > 0, under = avg < 0;
+              const col = over ? "#B4520A" : under ? C.navy2 : C.muted;
+              const bg = over ? "#FFE9D5" : under ? C.surface : C.surface;
+              return (
+                <div key={n} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <span className={onOpenCard ? "a360-clickname" : undefined} onClick={onOpenCard ? () => onOpenCard(n) : undefined}
+                    title={onOpenCard ? `Apri il profilo di ${n}` : undefined}
+                    style={{ ...font, fontSize: 14, color: C.ink, flex: 1 }}>{n}</span>
+                  <span style={{ ...font, fontSize: 12.5, fontWeight: 600, color: col, background: bg, borderRadius: 99, padding: "5px 12px" }}>
+                    {over ? `si sovrastima di ${avg}` : under ? `si sottostima di ${Math.abs(avg)}` : "in linea con il mister"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
 
       <Card title="Report & analisi" subtitle="Sintesi automatica dai dati della squadra" style={{ marginTop: 20 }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>

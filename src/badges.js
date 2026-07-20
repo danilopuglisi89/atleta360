@@ -4,6 +4,7 @@
 // computeBadges(model, name) -> array di badge conquistati dall'atleta.
 // ============================================================
 import { C } from "./theme";
+import { growthStreak } from "./gamification";
 
 // Media di un rilevamento sui focus presenti.
 function entryOverall(entry, keys) {
@@ -55,13 +56,12 @@ export function computeBadges(model, name) {
     }
   }
 
-  // 5) Tre crescite di fila — le ultime 3 variazioni consecutive tutte positive.
-  if (hist.length >= 4) {
-    const overalls = hist.map((e) => entryOverall(e, keys));
-    const tail = overalls.slice(-4);
-    if (tail[1] > tail[0] && tail[2] > tail[1] && tail[3] > tail[2]) {
-      badges.push({ id: "streak", emoji: "🔥", label: "3 crescite di fila", desc: "In miglioramento da tre rilevamenti", color: "#E11D74" });
-    }
+  // 5) Serie di crescite consecutive (rilevamento dopo rilevamento).
+  const streak = growthStreak(hist, keys);
+  if (streak >= 5) {
+    badges.push({ id: "streak5", emoji: "🔥🔥", label: "Serie leggendaria", desc: `${streak} rilevamenti di fila in crescita`, color: "#E11D74" });
+  } else if (streak >= 3) {
+    badges.push({ id: "streak3", emoji: "🔥", label: "In fiamme", desc: `${streak} rilevamenti di fila in crescita`, color: "#E11D74" });
   }
 
   // 6) Costanza — almeno 3 rilevamenti registrati.

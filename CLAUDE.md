@@ -64,6 +64,36 @@ solo, in modo idempotente.
 Supabase (stesso flusso manuale degli altri script in `supabase/`) — non è stato eseguito da
 Claude Code, che non ha credenziali del database di produzione.
 
+## Esperienza atlete (2026-07-21)
+
+- **Autovalutazione** (`supabase/self-assessments.sql`, tabella `self_assessments`): l'atleta si
+  valuta sugli stessi focus del mister; nel proprio profilo vede un piccolo radar "come ti vedi
+  tu" vs "come ti vede il mister" (`src/components/SelfAssessmentCard.jsx`, editabile solo
+  dall'atleta, sola lettura per lo staff). In Area Staff (`StaffView.jsx`) un pannello mostra le
+  atlete con lo scostamento medio più grande tra le due valutazioni.
+- **Obiettivi personali** (`supabase/goals.sql`, tabella `goals`): target 1-10 su un focus, con
+  data facoltativa. Barra di progresso nel profilo (`src/components/GoalsCard.jsx`), editabile
+  dall'atleta o dallo staff, sola lettura per chi guarda senza permesso. Il trigger
+  `notify_goal_reached` in `goals.sql` manda una notifica "Obiettivo raggiunto! 🎯" **solo al
+  momento del sorpasso** (confronta col rilevamento precedente, non ripete ad ogni rilevamento
+  successivo) — allarga il check `type` di `notifications` con un 5° valore `'goal'`.
+  Gli obiettivi entrano anche nel payload del Coach IA (vedi `api/coach.js`), che ne tiene conto
+  nei consigli.
+- **Gamification** (`src/gamification.js`, nessuna tabella nuova): `levelFor(overall)` — chip di
+  livello (🌱 Esordiente → 🏆 Top Player) accanto al punteggio in ProfiloView; `growthStreak(hist,
+  keys)` — serie di rilevamenti consecutivi in crescita, usata sia per due nuovi badge in
+  `badges.js` (🔥 "In fiamme" da 3, 🔥🔥 "Serie leggendaria" da 5) sia riusabile altrove.
+- `src/data.js`: `fetchModel()`/`buildModel()` caricano anche `self_assessments` e aggiungono
+  `atleti[identifier].self = { ts, scores }` (l'ultima autovalutazione). **Tabella opzionale**:
+  se `self-assessments.sql` non è ancora stato eseguito, l'errore di quella query non blocca il
+  resto della dashboard (stesso principio "degrada senza rompere" del root CLAUDE.md).
+- `src/goals.js`: hook `useGoals(athleteId)` (CRUD), usato da `ProfiloView` e passato sia a
+  `GoalsCard` sia al payload del Coach IA.
+
+**Importante**: `supabase/self-assessments.sql` e `supabase/goals.sql` vanno eseguiti da Danilo
+nel SQL Editor di Supabase (`goals.sql` richiede che `notifications.sql` sia già stato eseguito,
+per via del trigger su obiettivo raggiunto) — non eseguiti da Claude Code.
+
 ## Brand
 
 Palette propria Atleta360 (navy `#0A1650`/`#17297A` + arancio `#FF7A18`), **non** segue la
@@ -82,7 +112,8 @@ Piano a 4 ondate concordato con Danilo:
 1. **Fondamenta e UX mobile** ✅ 2026-07-20 — refactoring App.jsx, code splitting, tab bar mobile.
 2. **Notifiche** ✅ 2026-07-21 — badge non letti su chat/DM, campanella in-app. Push PWA rimandata
    (vedi sopra).
-3. **Esperienza atlete** — autovalutazione (atleta vs mister), obiettivi personali, più gamification.
+3. **Esperienza atlete** ✅ 2026-07-21 — autovalutazione (atleta vs mister), obiettivi personali,
+   gamification (livelli + streak).
 4. **Strumenti staff** — report IA salvati nello storico, registro presenze, stampa/PDF rifinita.
 
 Ogni ondata che tocca il database arriva con il suo script SQL in `supabase/`.
