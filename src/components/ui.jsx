@@ -44,9 +44,9 @@ export function Row({ label, value, color }) {
   );
 }
 
-export function Select({ value, onChange, options }) {
+export function Select({ value, onChange, options, className }) {
   return (
-    <select value={value} onChange={(e) => onChange(e.target.value)}
+    <select value={value} onChange={(e) => onChange(e.target.value)} className={className}
       style={{ ...font, fontSize: 14, color: C.ink, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 10, padding: "9px 12px", outline: "none", cursor: "pointer", minWidth: 180 }}>
       {options.map((o) => <option key={o} value={o}>{o}</option>)}
     </select>
@@ -54,6 +54,17 @@ export function Select({ value, onChange, options }) {
 }
 
 export const tooltipStyle = { background: C.navy, border: "none", borderRadius: 12, color: "#fff", fontSize: 12, ...font, boxShadow: "0 8px 24px rgba(10,22,80,0.25)" };
+
+// Timbro visibile SOLO in stampa/PDF (.a360-print-only, vedi index.css):
+// dà al documento un riferimento chiaro di provenienza e data.
+export function PrintStamp({ label }) {
+  const today = new Date().toLocaleDateString("it-IT", { day: "2-digit", month: "long", year: "numeric" });
+  return (
+    <div className="a360-print-only" style={{ ...font, fontSize: 11, color: C.muted, marginTop: 24, paddingTop: 12, borderTop: `1px solid ${C.grid}` }}>
+      Atleta360{label ? ` · ${label}` : ""} · generato il {today}
+    </div>
+  );
+}
 
 /* Stati: caricamento / errore / vuoto. */
 export function StatusBox({ title, message, tone = "info" }) {

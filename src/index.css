@@ -116,13 +116,22 @@ body {
   }
 }
 
+/* Timbro "generato il..." (PrintStamp): visibile SOLO in stampa. */
+.a360-print-only {
+  display: none;
+}
+
 /* Stampa / salva PDF: mostra solo la scheda profilo, nasconde navigazione e footer. */
 @media print {
   .a360-sidebar,
   .a360-mobilebar,
   .a360-noprint,
+  .a360-page-header,
   footer {
     display: none !important;
+  }
+  .a360-print-only {
+    display: block !important;
   }
   main {
     padding: 0 !important;

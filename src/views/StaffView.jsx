@@ -1,11 +1,40 @@
 import { useState } from "react";
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip, ResponsiveContainer } from "recharts";
-import { Printer, Sparkles } from "lucide-react";
+import { Printer, Sparkles, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { C, font, display } from "../theme";
 import { CORE, TITLE, SKILL_META } from "../skills";
-import { Card, tooltipStyle } from "../components/ui";
+import { Card, tooltipStyle, PrintStamp } from "../components/ui";
 import Classifica from "../components/Classifica";
+import AttendanceCard from "../components/AttendanceCard";
 import CoachChat from "../CoachChat";
+import { useReports } from "../reports";
+import { useAttendance } from "../attendance";
+
+// Riga collassabile di uno storico report: data + anteprima, clic per aprire.
+function ReportHistoryItem({ report, onRemove }) {
+  const [open, setOpen] = useState(false);
+  const date = new Date(report.created_at).toLocaleDateString("it-IT", { day: "2-digit", month: "short", year: "numeric" });
+  const preview = report.content.length > 90 ? `${report.content.slice(0, 90)}…` : report.content;
+  return (
+    <div style={{ border: `1px solid ${C.grid}`, borderRadius: 10, padding: "10px 12px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => setOpen((o) => !o)}>
+        <span style={{ ...display, fontSize: 12, fontWeight: 600, color: C.navy, background: C.surface, borderRadius: 8, padding: "3px 9px", whiteSpace: "nowrap" }}>{date}</span>
+        {!open && <span style={{ ...font, fontSize: 13, color: C.muted, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{preview}</span>}
+        {open && <span style={{ flex: 1 }} />}
+        {open ? <ChevronUp size={15} color={C.muted} /> : <ChevronDown size={15} color={C.muted} />}
+        <button onClick={(e) => { e.stopPropagation(); onRemove(); }} title="Elimina" className="a360-noprint"
+          style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", display: "inline-flex" }}>
+          <Trash2 size={14} />
+        </button>
+      </div>
+      {open && (
+        <div style={{ ...font, fontSize: 13.5, color: C.ink, lineHeight: 1.6, whiteSpace: "pre-wrap", marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.grid}` }}>
+          {report.content}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // items: stringhe, oppure { name, label } per righe cliccabili (→ profilo).
 function ReportBlock({ label, color, items, onOpen }) {
@@ -34,6 +63,10 @@ export default function StaffView({ d, onOpenCard }) {
   const [report, setReport] = useState(null);
   const [repBusy, setRepBusy] = useState(false);
   const [repErr, setRepErr] = useState(null);
+  const { reports, saveReport, removeReport } = useReports();
+  const { rows: attendanceRows, saveSession } = useAttendance();
+
+  const athletes = NOMI.map((n) => ({ id: atleti[n].athleteId, identifier: n })).filter((a) => a.id);
 
   const teamAvg = (k) => Math.round((NOMI.reduce((a, n) => a + (atleti[n].scores[k] ?? 0), 0) / Math.max(NOMI.length, 1)) * 10) / 10;
   const bySkill = CORE.map((k) => ({ key: k, title: TITLE[k], value: teamAvg(k) })).sort((a, b) => a.value - b.value);
@@ -75,6 +108,7 @@ export default function StaffView({ d, onOpenCard }) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Report non disponibile.");
       setReport(data.reply);
+      await saveReport(data.reply);
     } catch (e) { setRepErr(e.message); } finally { setRepBusy(false); }
   };
 
@@ -123,6 +157,8 @@ export default function StaffView({ d, onOpenCard }) {
         </Card>
       </div>
 
+      <AttendanceCard athletes={athletes} rows={attendanceRows} onSave={saveSession} />
+
       {selfGaps.length > 0 && (
         <Card title="Scostamenti autovalutazione" subtitle="Differenza tra come si vedono le atlete e come le valuta il mister" style={{ marginTop: 20 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -165,6 +201,18 @@ export default function StaffView({ d, onOpenCard }) {
           )}
         </div>
       </Card>
+
+      <Card title="Storico report" subtitle={reports.length ? `${reports.length} salvati` : "Nessun report salvato ancora"} style={{ marginTop: 20 }} className="a360-noprint">
+        {reports.length === 0 ? (
+          <div style={{ ...font, fontSize: 13.5, color: C.muted }}>Genera la prima analisi qui sopra: resterà salvata qui.</div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {reports.map((r) => <ReportHistoryItem key={r.id} report={r} onRemove={() => removeReport(r.id)} />)}
+          </div>
+        )}
+      </Card>
+
+      <PrintStamp label="Report squadra" />
 
       <CoachChat
         title="Coach IA — Squadra"

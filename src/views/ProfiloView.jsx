@@ -3,7 +3,7 @@ import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip,
 import { Printer } from "lucide-react";
 import { C, font, display, ringForScore } from "../theme";
 import { SKILLS, SHORT, SKILL_META } from "../skills";
-import { Card, Row, InitialsCircle, StatusBox, Select, tooltipStyle } from "../components/ui";
+import { Card, Row, InitialsCircle, StatusBox, Select, tooltipStyle, PrintStamp } from "../components/ui";
 import { BadgeStrip } from "../components/bits";
 import { computeBadges } from "../badges";
 import { levelFor } from "../gamification";
@@ -77,6 +77,13 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
 
   return (
     <div className="a360-print-area">
+      <div className="a360-print-only" style={{ ...display, fontSize: 20, fontWeight: 700, color: C.navy, marginBottom: 2 }}>
+        Atleta360 — Scheda soft skill
+      </div>
+      <div className="a360-print-only" style={{ ...font, fontSize: 13.5, color: C.muted, marginBottom: 18 }}>
+        {sel}{position ? ` · ${position}` : ""}
+      </div>
+
       {personal && firstName && (
         <div style={{ ...display, fontSize: 18, fontWeight: 700, color: C.ink, marginBottom: 14 }}>
           Ciao {firstName}! 👋 <span style={{ ...font, fontSize: 14, fontWeight: 400, color: C.muted }}>Ecco il tuo profilo.</span>
@@ -101,7 +108,7 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
         <span style={{ ...font, fontSize: 13, color: C.muted }}>Atleta</span>
         {restricted
           ? <span style={{ ...display, fontSize: 15, fontWeight: 600, color: C.ink }}>{sel}</span>
-          : <Select value={sel} onChange={onOpenFullProfile} options={NOMI} />}
+          : <Select value={sel} onChange={onOpenFullProfile} options={NOMI} className="a360-noprint" />}
         {position && <span style={{ ...font, fontSize: 12, fontWeight: 600, color: C.navy2, background: C.surface, border: `1px solid ${C.grid}`, padding: "5px 11px", borderRadius: 99 }}>{position}</span>}
         <span title="Livello calcolato dal punteggio complessivo" style={{ ...font, fontSize: 12, fontWeight: 600, color: C.orange, background: C.orangeSoft, padding: "5px 11px", borderRadius: 99, display: "inline-flex", alignItems: "center", gap: 5 }}>
           {level.emoji} {level.label}
@@ -159,6 +166,8 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
           </div>
         </Card>
       )}
+
+      <PrintStamp label={sel} />
 
       <CoachChat
         subtitle={`Consigli sulle competenze allenate di ${sel}`}

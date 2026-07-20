@@ -94,6 +94,29 @@ Claude Code, che non ha credenziali del database di produzione.
 nel SQL Editor di Supabase (`goals.sql` richiede che `notifications.sql` sia già stato eseguito,
 per via del trigger su obiettivo raggiunto) — non eseguiti da Claude Code.
 
+## Strumenti staff (2026-07-21)
+
+- **Report IA salvati** (`supabase/reports.sql`, tabella `reports`, solo staff in lettura/scrittura):
+  ogni "Genera analisi con IA" in `StaffView.jsx` ora resta anche nello storico (prima si perdeva
+  al refresh) — hook `src/reports.js` (`useReports`), lista collassabile con eliminazione.
+- **Registro presenze** (`supabase/attendance.sql`, tabella `attendance`, vincolo unique su
+  `(athlete_id, session_date)` così ri-salvare lo stesso allenamento aggiorna invece di duplicare):
+  check-in rapido per data (`src/components/AttendanceCard.jsx`, tutte presenti di default, il
+  mister toglie le assenti) + percentuale di presenza per atleta su tutte le sessioni registrate,
+  ordinata dalla più bassa. Hook `src/attendance.js` (`useAttendance`, upsert via
+  `onConflict: "athlete_id,session_date"`).
+- **Stampa/PDF rifinita**: `.a360-print-area` in `ProfiloView.jsx` era già presente ma senza alcuna
+  regola CSS collegata (nessun effetto reale). Ora: l'header condiviso dell'app (eyebrow/h1/
+  campanella, classe `.a360-page-header`) si nasconde in stampa su ogni vista; `PrintStamp`
+  (`src/components/ui.jsx`) aggiunge un timbro "Atleta360 · generato il [data]" visibile SOLO in
+  stampa (`.a360-print-only`, vedi `index.css`) in fondo al profilo atleta e al report squadra; il
+  profilo stampato ha un'intestazione dedicata con nome+ruolo; il selettore atleta per lo staff si
+  nasconde in stampa. Registro presenze e storico report sono `a360-noprint` (strumenti di lavoro,
+  non contenuto da consegnare).
+
+**Importante**: `supabase/reports.sql` e `supabase/attendance.sql` vanno eseguiti da Danilo nel
+SQL Editor di Supabase — non eseguiti da Claude Code.
+
 ## Brand
 
 Palette propria Atleta360 (navy `#0A1650`/`#17297A` + arancio `#FF7A18`), **non** segue la
@@ -114,6 +137,9 @@ Piano a 4 ondate concordato con Danilo:
    (vedi sopra).
 3. **Esperienza atlete** ✅ 2026-07-21 — autovalutazione (atleta vs mister), obiettivi personali,
    gamification (livelli + streak).
-4. **Strumenti staff** — report IA salvati nello storico, registro presenze, stampa/PDF rifinita.
+4. **Strumenti staff** ✅ 2026-07-21 — report IA salvati nello storico, registro presenze,
+   stampa/PDF rifinita.
 
-Ogni ondata che tocca il database arriva con il suo script SQL in `supabase/`.
+Le 4 ondate pianificate sono complete. Ogni ondata che ha toccato il database ha portato il suo
+script SQL in `supabase/`: `notifications.sql`, `self-assessments.sql`, `goals.sql`, `reports.sql`,
+`attendance.sql` — tutti eseguiti da Danilo nel SQL Editor di Supabase.
