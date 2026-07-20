@@ -27,7 +27,7 @@ function MiniAvatar({ url, name, size = 30 }) {
   return <div style={{ width: size, height: size, borderRadius: "50%", background: C.navy2, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", ...display, fontWeight: 700, fontSize: size * 0.4, flexShrink: 0 }}>{initials(name)}</div>;
 }
 
-export default function DirectMessages({ initialToId, initialToName }) {
+export default function DirectMessages({ initialToId, initialToName, onConversationOpen, unreadFromIds = [] }) {
   const { profile, session } = useAuth();
   const uid = session?.user?.id;
   const myName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.email;
@@ -53,6 +53,9 @@ export default function DirectMessages({ initialToId, initialToName }) {
   // Apri direttamente la conversazione richiesta (es. dal pulsante "Messaggio
   // privato" nella card di un'atleta).
   useEffect(() => { if (initialToId) setToId(initialToId); }, [initialToId]);
+
+  // Segna come lette le notifiche di questa conversazione quando la si apre.
+  useEffect(() => { if (toId) onConversationOpen?.(toId); }, [toId, onConversationOpen]);
 
   const to = mates.find((m) => m.id === toId) || (toId && initialToId === toId && initialToName ? { id: toId, name: initialToName } : null);
 
@@ -105,9 +108,9 @@ export default function DirectMessages({ initialToId, initialToName }) {
   return (
     <Card title="Messaggi privati" subtitle="Le chat sono sicure e protette.">
       <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
-        <button onClick={() => setPickerOpen(true)}
-          style={{ ...font, display: "inline-flex", alignItems: "center", gap: 8, padding: "11px 16px", borderRadius: 11, border: "none", background: C.orange, color: "#fff", fontSize: 14.5, fontWeight: 600, cursor: "pointer" }}>
+        <button onClick={() => setPickerOpen(true)} style={{ position: "relative", ...font, display: "inline-flex", alignItems: "center", gap: 8, padding: "11px 16px", borderRadius: 11, border: "none", background: C.orange, color: "#fff", fontSize: 14.5, fontWeight: 600, cursor: "pointer" }}>
           <Plus size={17} /> Nuovo messaggio privato
+          {unreadFromIds.length > 0 && <span style={{ position: "absolute", top: -3, right: -3, width: 12, height: 12, borderRadius: 99, background: "#E11D48", border: "2px solid #fff" }} />}
         </button>
         {to && <span style={{ ...font, fontSize: 13.5, color: C.muted }}>Conversazione con <b style={{ color: C.ink }}>{to.name}</b></span>}
       </div>
@@ -172,7 +175,8 @@ export default function DirectMessages({ initialToId, initialToName }) {
                 <button key={m.id} onClick={() => { setToId(m.id); setPickerOpen(false); }}
                   style={{ ...font, display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 10, border: "none", background: m.id === toId ? C.surface : "transparent", cursor: "pointer", textAlign: "left" }}>
                   <MiniAvatar url={m.avatar_url} name={m.name} size={32} />
-                  <span style={{ ...font, fontSize: 14, color: C.ink }}>{m.name || "—"}</span>
+                  <span style={{ ...font, fontSize: 14, color: C.ink, flex: 1 }}>{m.name || "—"}</span>
+                  {unreadFromIds.includes(m.id) && <span style={{ width: 8, height: 8, borderRadius: 99, background: "#E11D48", flexShrink: 0 }} />}
                 </button>
               ))}
             </div>

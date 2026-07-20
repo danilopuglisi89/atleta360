@@ -38,6 +38,32 @@ Andamento + "Altro" che apre il drawer con il resto). Regole CSS in `src/index.c
 per i telefoni con notch/home indicator. Il footer normale (copyright/WhatsApp) è nascosto su
 mobile per non duplicare la navigazione: le informazioni di contatto restano in "Info & Legenda".
 
+## Notifiche in-app (2026-07-21)
+
+Una sola tabella `public.notifications` (vedi `supabase/notifications.sql`) alimentata da 4
+trigger: messaggio in bacheca (`chat_messages`), messaggio privato (`direct_messages`), nuovo
+rilevamento (`assessments`), approvazione account (`profiles.status`). Niente polling: la
+campanella si aggiorna via Supabase Realtime (`useNotifications` in `src/notifications.js`),
+serve `alter publication supabase_realtime add table public.notifications` — lo script lo fa da
+solo, in modo idempotente.
+
+- **`src/notifications.js`** — hook `useNotifications(userId)`: elenco, non lette, sottoinsieme
+  chat (`dm`+`team_chat`) per il badge, `markRead`/`markAllRead`/`markTypeRead`/`markFromRead`.
+- **`src/components/NotificationBell.jsx`** — campanella con pallino rosso, montata una sola volta
+  nell'header dentro `<main>` in App.jsx (stessa posizione su desktop e mobile).
+- Badge non letti sulla voce **Chat** (sidebar + tab bar mobile) = notifiche `dm`+`team_chat` non
+  lette. Le notifiche di bacheca si segnano lette aprendo la vista Chat (sempre visibile in
+  ChatPage); quelle private conversazione per conversazione (`onConversationOpen` in
+  `DirectMessages.jsx`, che marca lette solo le DM di quel mittente). Puntino rosso anche sulle
+  singole compagne nel selettore "A chi vuoi scrivere?".
+- **Push PWA rimandata**: richiederebbe una tabella subscription + endpoint Vercel con firma
+  VAPID (pg_net/webhook non basta per il protocollo Web Push) — troppo per questa ondata. Badge +
+  campanella + le email Resend già esistenti (`notify-email.sql`) coprono il bisogno per ora.
+
+**Importante**: `supabase/notifications.sql` va incollato ed eseguito da Danilo nel SQL Editor di
+Supabase (stesso flusso manuale degli altri script in `supabase/`) — non è stato eseguito da
+Claude Code, che non ha credenziali del database di produzione.
+
 ## Brand
 
 Palette propria Atleta360 (navy `#0A1650`/`#17297A` + arancio `#FF7A18`), **non** segue la
@@ -53,8 +79,9 @@ vedi `src/demoMode.js`).
 ## Roadmap pianificata (2026-07-20)
 
 Piano a 4 ondate concordato con Danilo:
-1. **Fondamenta e UX mobile** (in corso) — refactoring App.jsx, code splitting, tab bar mobile.
-2. **Notifiche** — badge non letti su chat/DM, campanella in-app, eventuale push PWA.
+1. **Fondamenta e UX mobile** ✅ 2026-07-20 — refactoring App.jsx, code splitting, tab bar mobile.
+2. **Notifiche** ✅ 2026-07-21 — badge non letti su chat/DM, campanella in-app. Push PWA rimandata
+   (vedi sopra).
 3. **Esperienza atlete** — autovalutazione (atleta vs mister), obiettivi personali, più gamification.
 4. **Strumenti staff** — report IA salvati nello storico, registro presenze, stampa/PDF rifinita.
 

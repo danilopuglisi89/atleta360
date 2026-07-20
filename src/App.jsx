@@ -16,6 +16,8 @@ import { getDemoParam, getDemoCredentials } from "./demoMode";
 import { StatusBox, DashboardSkeleton } from "./components/ui";
 import Footer, { SiteLogo } from "./components/Footer";
 import { GateScreen, SetupNotice } from "./components/GateScreens";
+import NotificationBell from "./components/NotificationBell";
+import { useNotifications } from "./notifications";
 
 // Le viste con grafici (recharts) pesano parecchio: caricate on-demand così
 // il primo avvio da telefono non le scarica finché non servono davvero.
@@ -77,6 +79,21 @@ function Dashboard() {
   const openFullProfile = (name) => { setCardTarget(null); setProfileTarget(name); setView("profilo"); setMobileOpen(false); };
   const openDM = (userId, name) => { setCardTarget(null); setDmTarget({ id: userId, name }); setView("chat"); setMobileOpen(false); };
 
+  // Notifiche: chat di squadra, messaggi privati, nuovi rilevamenti, approvazione.
+  const { items: notifications, unread: unreadNotif, unreadChat, unreadDmFromIds, markAllRead, markTypeRead, markFromRead } = useNotifications(profile?.id);
+  const openNotification = (n) => {
+    if (n.type === "dm" && n.meta?.from_id) { openDM(n.meta.from_id, n.meta.from_name || ""); return; }
+    if (n.type === "team_chat") { setView("chat"); setMobileOpen(false); return; }
+    if (n.type === "assessment") { setView("profilo"); setMobileOpen(false); return; }
+    setView("home"); setMobileOpen(false);
+  };
+  // Aprendo la chat, le notifiche di bacheca risultano lette (la bacheca è
+  // sempre visibile in ChatPage); quelle dei messaggi privati si segnano
+  // conversazione per conversazione (vedi onConversationOpen in DirectMessages).
+  useEffect(() => { if (view === "chat") markTypeRead(["team_chat"]); }, [view, markTypeRead]);
+  // L'atleta che apre il proprio profilo legge la notifica di nuovo rilevamento.
+  useEffect(() => { if (view === "profilo" && viewCtx.restricted) markTypeRead(["assessment"]); }, [view, viewCtx.restricted, markTypeRead]);
+
   // Roster dei membri (nome, foto, collegamento atleta) per le card social.
   const [roster, setRoster] = useState([]);
   useEffect(() => { supabase.rpc("chat_roster").then(({ data }) => setRoster(data || [])).catch(() => {}); }, []);
@@ -116,6 +133,7 @@ function Dashboard() {
       {NAV.map((item) => {
         const on = item.id === view;
         const Icon = item.icon;
+        const badge = item.id === "chat" ? unreadChat.length : 0;
         return (
           <button key={item.id} onClick={() => goTo(item.id)}
             style={{ ...font, display: "flex", alignItems: "center", gap: 12, padding: "11px 14px", borderRadius: 11,
@@ -124,6 +142,12 @@ function Dashboard() {
               color: on ? "#FFB27A" : "rgba(255,255,255,0.72)",
               fontWeight: on ? 600 : 400, borderLeft: on ? `3px solid ${C.orange}` : "3px solid transparent", transition: "all .15s" }}>
             <Icon size={19} /> {item.label}
+            {badge > 0 && (
+              <span style={{ marginLeft: "auto", minWidth: 18, height: 18, borderRadius: 99, background: "#E11D48", color: "#fff",
+                ...display, fontSize: 10.5, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
+                {badge > 9 ? "9+" : badge}
+              </span>
+            )}
           </button>
         );
       })}
@@ -173,12 +197,21 @@ function Dashboard() {
       {mobileTabs.map((item) => {
         const on = item.id === view && !mobileOpen;
         const Icon = item.icon;
+        const badge = item.id === "chat" ? unreadChat.length : 0;
         return (
           <button key={item.id} onClick={() => goTo(item.id)}
-            style={{ ...font, flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3,
+            style={{ ...font, position: "relative", flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3,
               padding: "8px 4px 10px", border: "none", background: "none", cursor: "pointer",
               color: on ? C.orange : "rgba(255,255,255,0.6)", fontSize: 10.5, fontWeight: on ? 600 : 400 }}>
-            <Icon size={21} />
+            <span style={{ position: "relative" }}>
+              <Icon size={21} />
+              {badge > 0 && (
+                <span style={{ position: "absolute", top: -4, right: -7, minWidth: 15, height: 15, borderRadius: 99, background: "#E11D48", color: "#fff",
+                  ...display, fontSize: 9, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 3px", border: "2px solid #0A1650" }}>
+                  {badge > 9 ? "9+" : badge}
+                </span>
+              )}
+            </span>
             {item.label === "Profilo Atleta" ? "Profilo" : item.label}
           </button>
         );
@@ -209,7 +242,7 @@ function Dashboard() {
   } else if (active.id === "personale") {
     content = <PersonalArea />;
   } else if (active.id === "chat") {
-    content = <ChatPage dmTarget={dmTarget} />;
+    content = <ChatPage dmTarget={dmTarget} onMarkDmRead={markFromRead} unreadDmFromIds={unreadDmFromIds} />;
   } else if (errore) {
     content = (
       <StatusBox tone="error" title="Non riesco a leggere i dati"
@@ -260,9 +293,12 @@ function Dashboard() {
         </header>
 
         <main className="a360-main" style={{ padding: "clamp(18px, 4vw, 34px)", maxWidth: 1180, width: "100%", margin: "0 auto" }}>
-          <div style={{ marginBottom: 22 }}>
-            <div style={{ ...font, fontSize: 12.5, color: C.orange, fontWeight: 600, letterSpacing: 0.6, textTransform: "uppercase" }}>Dashboard soft skills</div>
-            <h1 style={{ ...display, fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 700, color: C.ink, margin: "4px 0 0", letterSpacing: -0.5 }}>{active.label}</h1>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 22 }}>
+            <div>
+              <div style={{ ...font, fontSize: 12.5, color: C.orange, fontWeight: 600, letterSpacing: 0.6, textTransform: "uppercase" }}>Dashboard soft skills</div>
+              <h1 style={{ ...display, fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 700, color: C.ink, margin: "4px 0 0", letterSpacing: -0.5 }}>{active.label}</h1>
+            </div>
+            <NotificationBell items={notifications} unreadCount={unreadNotif.length} onOpenItem={openNotification} onMarkAllRead={markAllRead} />
           </div>
           {needsSuspense ? <Suspense fallback={<ViewFallback />}>{content}</Suspense> : content}
         </main>
