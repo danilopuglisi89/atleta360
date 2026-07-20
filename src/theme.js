@@ -20,6 +20,10 @@ export const display = { fontFamily: "'Space Grotesk', system-ui, sans-serif" };
 // Medaglie del podio (oro / argento / bronzo).
 export const MEDALS = ["#E8A400", "#9AA6BF", "#CD7F32"];
 
+// Palette dei grafici: serie del confronto atlete e curve dell'andamento.
+export const SERIES = ["#FF7A18", "#17297A", "#16A6A6"];
+export const CORE_COLORS = ["#FF7A18", "#17297A", "#16A6A6", "#8B5CF6", "#E11D74", "#0EA5E9"];
+
 // Anello colorato attorno all'avatar in base al punteggio complessivo.
 export function ringForScore(v) {
   if (v >= 7.5) return "#0F7A4E";   // verde — ottimo

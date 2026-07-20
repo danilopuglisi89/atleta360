@@ -81,6 +81,41 @@ body {
   .a360-bar-fill { transform: none !important; }
 }
 
+/* ============================================================
+   TAB BAR MOBILE — barra di navigazione fissa in basso, stile app
+   nativa. Visibile solo sotto i 900px (vedi media query in App.jsx
+   che nasconde .a360-mobilebar da desktop in su).
+   ============================================================ */
+.a360-tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  background: #0A1650;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Spazio in fondo al contenuto e al footer perché la tab bar non li copra. */
+@media (max-width: 899px) {
+  .a360-main {
+    padding-bottom: calc(70px + env(safe-area-inset-bottom, 0)) !important;
+  }
+  footer {
+    display: none;
+  }
+  /* Il logo di Danilo sale sopra la tab bar invece di starci sotto. */
+  .a360-sitelogo {
+    bottom: calc(70px + 10px + env(safe-area-inset-bottom, 0)) !important;
+  }
+}
+@media (min-width: 900px) {
+  .a360-sitelogo {
+    bottom: clamp(10px, 2vw, 18px);
+  }
+}
+
 /* Stampa / salva PDF: mostra solo la scheda profilo, nasconde navigazione e footer. */
 @media print {
   .a360-sidebar,
