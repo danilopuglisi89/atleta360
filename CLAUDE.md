@@ -101,12 +101,15 @@ Claude Code, che non ha credenziali del database di produzione.
 
 - **Autovalutazione** (`supabase/self-assessments.sql`, tabella `self_assessments`): l'atleta si
   valuta sugli stessi focus del mister; nel proprio profilo vede un piccolo radar "come ti vedi
-  tu" vs "come ti vede il mister" (`src/components/SelfAssessmentCard.jsx`, editabile solo
-  dall'atleta, sola lettura per lo staff). In Area Staff (`StaffView.jsx`) un pannello mostra le
+  tu" vs "come ti vede il mister" (`src/components/SelfAssessmentCard.jsx`). **Editabile anche
+  dallo staff** per conto dell'atleta (test, o atlete che non usano l'app) — RLS lato Supabase lo
+  permette già (`is_staff()` oppure l'atleta stessa), il testo del pulsante/titolo cambia in base
+  a chi scrive (prop `personal` = l'atleta sul proprio profilo, vs `athleteName` per lo staff:
+  "Inserisci l'autovalutazione di X"). In Area Staff (`StaffView.jsx`) un pannello mostra le
   atlete con lo scostamento medio più grande tra le due valutazioni.
 - **Obiettivi personali** (`supabase/goals.sql`, tabella `goals`): target 1-10 su un focus, con
-  data facoltativa. Barra di progresso nel profilo (`src/components/GoalsCard.jsx`), editabile
-  dall'atleta o dallo staff, sola lettura per chi guarda senza permesso. Il trigger
+  data facoltativa. Barra di progresso nel profilo (`src/components/GoalsCard.jsx`), stessa
+  logica: editabile da atleta o staff, testo adattato via `personal`/`athleteName`. Il trigger
   `notify_goal_reached` in `goals.sql` manda una notifica "Obiettivo raggiunto! 🎯" **solo al
   momento del sorpasso** (confronta col rilevamento precedente, non ripete ad ogni rilevamento
   successivo) — allarga il check `type` di `notifications` con un 5° valore `'goal'`.

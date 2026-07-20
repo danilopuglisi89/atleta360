@@ -5,9 +5,10 @@ import { CORE, TITLE } from "../skills";
 import { Card } from "./ui";
 
 // Obiettivi personali con barra di progresso (tabella goals, vedi
-// supabase/goals.sql). Editabile solo dall'atleta sul proprio profilo;
-// lo staff che guarda un profilo li vede in sola lettura.
-export default function GoalsCard({ goals, scores, editable, onAdd, onRemove }) {
+// supabase/goals.sql). Editabile dall'atleta sul proprio profilo o dallo
+// staff per conto dell'atleta (es. per test, o se l'atleta non usa l'app) —
+// stesso permesso già concesso lato Supabase (RLS: is_staff() o l'atleta stessa).
+export default function GoalsCard({ goals, scores, editable, personal, athleteName, onAdd, onRemove }) {
   const [adding, setAdding] = useState(false);
   const [skillKey, setSkillKey] = useState(CORE[0]);
   const [target, setTarget] = useState(8);
@@ -26,8 +27,12 @@ export default function GoalsCard({ goals, scores, editable, onAdd, onRemove }) 
 
   const inp = { ...font, fontSize: 13.5, color: C.ink, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 9, padding: "8px 10px", outline: "none" };
 
+  const name = athleteName || "l'atleta";
+
   return (
-    <Card title={editable ? "I tuoi obiettivi" : "Obiettivi"} subtitle={editable ? "Fissa un traguardo per un focus e segui i progressi" : "Traguardi fissati per questa atleta"} style={{ marginTop: 20 }}>
+    <Card title={personal ? "I tuoi obiettivi" : "Obiettivi"}
+      subtitle={personal ? "Fissa un traguardo per un focus e segui i progressi" : editable ? `Fissa un traguardo per ${name} e segui i progressi` : "Traguardi fissati per questa atleta"}
+      style={{ marginTop: 20 }}>
       {goals.length === 0 && !adding && (
         <div style={{ ...font, fontSize: 13.5, color: C.muted }}>Nessun obiettivo ancora impostato.</div>
       )}

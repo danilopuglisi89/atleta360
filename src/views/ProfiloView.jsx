@@ -155,9 +155,9 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
         </div>
       </div>
 
-      <GoalsCard goals={goals} scores={scores} editable={personal} onAdd={addGoal} onRemove={removeGoal} />
+      <GoalsCard goals={goals} scores={scores} editable athleteName={sel} personal={personal} onAdd={addGoal} onRemove={removeGoal} />
 
-      <SelfAssessmentCard athleteId={atleti[sel]?.athleteId} misterScores={scores} self={atleti[sel]?.self} editable={personal} onSaved={onReload} />
+      <SelfAssessmentCard athleteId={atleti[sel]?.athleteId} athleteName={sel} misterScores={scores} self={atleti[sel]?.self} editable personal={personal} onSaved={onReload} />
 
       {nota && (
         <Card title="Nota del mister" subtitle={`Ultimo rilevamento`} style={{ marginTop: 20 }}>

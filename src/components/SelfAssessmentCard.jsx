@@ -8,8 +8,10 @@ import { supabase } from "../supabaseClient";
 
 // "Come ti vedi tu": l'atleta si autovaluta sugli stessi focus del mister,
 // poi vede un piccolo radar di confronto (tabella self_assessments, vedi
-// supabase/self-assessments.sql). Read-only per lo staff che guarda un profilo.
-export default function SelfAssessmentCard({ athleteId, misterScores, self, editable, onSaved }) {
+// supabase/self-assessments.sql). Lo staff può compilarla per conto
+// dell'atleta (es. per test, o se l'atleta non usa l'app) — stesso permesso
+// già concesso lato Supabase (RLS: is_staff() oppure l'atleta stessa).
+export default function SelfAssessmentCard({ athleteId, athleteName, misterScores, self, editable, personal, onSaved }) {
   const [editing, setEditing] = useState(false);
   const [scores, setScores] = useState({});
   const [busy, setBusy] = useState(false);
@@ -17,6 +19,8 @@ export default function SelfAssessmentCard({ athleteId, misterScores, self, edit
 
   const hasSelf = !!self?.scores && Object.keys(self.scores).length > 0;
   const hasBoth = hasSelf && misterScores && Object.keys(misterScores).length > 0;
+  const name = athleteName || "l'atleta";
+  const seriesLabel = personal ? "Tu" : name;
 
   if (!editable && !hasSelf) return null;
 
@@ -46,12 +50,17 @@ export default function SelfAssessmentCard({ athleteId, misterScores, self, edit
     : [];
 
   return (
-    <Card title="Come ti vedi tu" subtitle="La tua autovalutazione a confronto con quella del mister" style={{ marginTop: 20 }}>
+    <Card title={personal ? "Come ti vedi tu" : "Autovalutazione"}
+      subtitle={personal ? "La tua autovalutazione a confronto con quella del mister" : `Autovalutazione di ${name} a confronto con la valutazione dello staff`}
+      style={{ marginTop: 20 }}>
       {editable && !editing && (
         <button onClick={startEdit}
           style={{ ...font, display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px", borderRadius: 10, border: "none",
             background: C.navy2, color: "#fff", fontSize: 13.5, fontWeight: 600, cursor: "pointer", marginBottom: hasSelf ? 18 : 0 }}>
-          <Eye size={16} /> {hasSelf ? "Aggiorna la tua autovalutazione" : "Fai la tua autovalutazione"}
+          <Eye size={16} />
+          {personal
+            ? (hasSelf ? "Aggiorna la tua autovalutazione" : "Fai la tua autovalutazione")
+            : (hasSelf ? `Modifica l'autovalutazione di ${name}` : `Inserisci l'autovalutazione di ${name}`)}
         </button>
       )}
 
@@ -97,7 +106,7 @@ export default function SelfAssessmentCard({ athleteId, misterScores, self, edit
               <PolarAngleAxis dataKey="skill" tick={{ fill: C.muted, fontSize: 11, ...font }} />
               <PolarRadiusAxis domain={[0, 10]} tick={false} axisLine={false} />
               <Radar name="Il mister" dataKey="mister" stroke={C.navy2} fill={C.navy2} fillOpacity={0.12} strokeWidth={1.5} strokeDasharray="4 4" />
-              <Radar name="Tu" dataKey="tu" stroke={C.orange} fill={C.orange} fillOpacity={0.3} strokeWidth={2} dot={{ r: 2.5, fill: C.orange }} />
+              <Radar name={seriesLabel} dataKey="tu" stroke={C.orange} fill={C.orange} fillOpacity={0.3} strokeWidth={2} dot={{ r: 2.5, fill: C.orange }} />
               <Legend wrapperStyle={{ ...font, fontSize: 12 }} />
             </RadarChart>
           </ResponsiveContainer>
@@ -106,9 +115,13 @@ export default function SelfAssessmentCard({ athleteId, misterScores, self, edit
               {gaps.map((g) => (
                 <div key={g.short} style={{ ...font, fontSize: 12.5, color: C.muted }}>
                   <b style={{ color: C.ink }}>{g.short}:</b>{" "}
-                  {g.diff > 0
-                    ? `ti vedi meglio di come ti vede il mister (+${g.diff})`
-                    : `sei più severa con te stessa di quanto ti veda il mister (${g.diff})`}
+                  {personal
+                    ? (g.diff > 0
+                        ? `ti vedi meglio di come ti vede il mister (+${g.diff})`
+                        : `sei più severa con te stessa di quanto ti veda il mister (${g.diff})`)
+                    : (g.diff > 0
+                        ? `si vede meglio di come la vede il mister (+${g.diff})`
+                        : `è più severa con se stessa di quanto la veda il mister (${g.diff})`)}
                 </div>
               ))}
             </div>
