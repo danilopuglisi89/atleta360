@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { CheckCircle2, AlertCircle, Save, Pencil, Trash2, X } from "lucide-react";
+import { CheckCircle2, AlertCircle, Save, Pencil, Trash2, X, History } from "lucide-react";
 import { C, font, display } from "./theme";
 import { supabase } from "./supabaseClient";
 
@@ -28,17 +28,18 @@ export default function NewAssessment({ onSaved }) {
   const [error, setError] = useState(null);
   const [flash, setFlash] = useState(null);
 
-  const resetScores = (list) => {
+  const resetScores = (list, base) => {
     const init = {};
-    list.forEach((k) => (init[k.key] = 6));
+    list.forEach((k) => (init[k.key] = base?.[k.key] ?? 6));
     setScores(init);
   };
-  const resetForm = () => { setEditingId(null); setNote(""); resetScores(skills); };
+  const resetForm = (base) => { setEditingId(null); setNote(""); resetScores(skills, base); };
 
   const loadHistory = useCallback(async (aid) => {
-    if (!aid) { setHistory([]); return; }
+    if (!aid) { setHistory([]); return []; }
     const { data } = await supabase.from("assessments").select("*").eq("athlete_id", aid).order("created_at", { ascending: false });
     setHistory(data || []);
+    return data || [];
   }, []);
 
   useEffect(() => {
@@ -56,7 +57,13 @@ export default function NewAssessment({ onSaved }) {
     })();
   }, []);
 
-  useEffect(() => { loadHistory(athleteId); resetForm(); /* eslint-disable-next-line */ }, [athleteId]);
+  useEffect(() => {
+    (async () => {
+      const data = await loadHistory(athleteId);
+      resetForm(data?.[0]?.scores);
+    })();
+    /* eslint-disable-next-line */
+  }, [athleteId]);
 
   const save = async () => {
     if (!athleteId) { setError("Scegli un'atleta."); return; }
@@ -72,8 +79,8 @@ export default function NewAssessment({ onSaved }) {
     setBusy(false);
     if (res.error) { setError(res.error.message); return; }
     setFlash(editingId ? "Rilevamento aggiornato." : "Rilevamento salvato.");
-    resetForm();
-    await loadHistory(athleteId);
+    const data = await loadHistory(athleteId);
+    resetForm(data?.[0]?.scores);
     onSaved && onSaved();
     setTimeout(() => setFlash(null), 4000);
   };
@@ -93,10 +100,13 @@ export default function NewAssessment({ onSaved }) {
     setError(null);
     const { error } = await supabase.from("assessments").delete().eq("id", a.id);
     if (error) { setError(error.message); return; }
-    if (editingId === a.id) resetForm();
-    await loadHistory(athleteId);
+    const data = await loadHistory(athleteId);
+    if (editingId === a.id) resetForm(data?.[0]?.scores);
     onSaved && onSaved();
   };
+
+  const activeIndex = editingId ? history.findIndex((h) => h.id === editingId) : -1;
+  const previous = editingId ? history[activeIndex + 1] : history[0];
 
   if (athletes === null) return <Card title="Carico atlete e focus…" />;
   if (athletes.length === 0)
@@ -121,12 +131,23 @@ export default function NewAssessment({ onSaved }) {
           </select>
         </div>
 
+        {previous && (
+          <div style={{ display: "flex", alignItems: "center", gap: 6, background: C.surface, borderRadius: 10, padding: "8px 12px", ...font, fontSize: 12.5, color: C.muted, marginBottom: 14 }}>
+            <History size={14} /> Rispetto al rilevamento del {fmt(previous.created_at)} — "prec." sotto ogni focus è il punto di partenza dell'atleta.
+          </div>
+        )}
+
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {skills.map((k) => (
             <div key={k.key}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
                 <span style={{ ...font, fontSize: 14, color: C.ink }}>{k.title}</span>
-                <span style={{ ...display, fontSize: 16, fontWeight: 700, color: C.orange }}>{scores[k.key] ?? 6}</span>
+                <span style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                  {previous?.scores?.[k.key] != null && (
+                    <span style={{ ...font, fontSize: 12, color: C.muted }}>prec. {previous.scores[k.key]}</span>
+                  )}
+                  <span style={{ ...display, fontSize: 16, fontWeight: 700, color: C.orange }}>{scores[k.key] ?? 6}</span>
+                </span>
               </div>
               <input type="range" min={1} max={10} step={1} value={scores[k.key] ?? 6}
                 onChange={(e) => setScores((sc) => ({ ...sc, [k.key]: Number(e.target.value) }))}
