@@ -153,6 +153,43 @@ per via del trigger su obiettivo raggiunto) — non eseguiti da Claude Code.
 **Importante**: `supabase/reports.sql` e `supabase/attendance.sql` vanno eseguiti da Danilo nel
 SQL Editor di Supabase — non eseguiti da Claude Code.
 
+## Valutazione precedente a colpo d'occhio (2026-07-30)
+
+Su richiesta di Danilo: quando il mister apre **Nuovo rilevamento** (`src/NewAssessment.jsx`),
+ora vede subito il punto di partenza invece di uno slider neutro fisso a 6:
+- ogni slider parte già dal valore dell'**ultimo rilevamento salvato per quell'atleta**, non da 6;
+- accanto al valore corrente (in arancio) compare una piccola etichetta grigia `prec. X` con
+  il punteggio precedente per quel focus, sempre visibile mentre si sposta lo slider;
+- una riga sotto il titolo della card ricorda la data del rilevamento di riferimento
+  ("Rispetto al rilevamento del…").
+
+In modifica di un rilevamento esistente (`startEdit`), il confronto è con il rilevamento
+**immediatamente precedente a quello in modifica** (non con l'ultimo in assoluto), calcolato
+cercando la posizione di `editingId` dentro `history` (già ordinata per data decrescente) e
+prendendo l'elemento successivo. `history` per atleta si ricarica ad ogni cambio di atleta/salvataggio/
+eliminazione tramite `loadHistory(athleteId)`, che ora **ritorna** i dati appena caricati così
+che `resetForm` possa usarli subito per il prefill, senza aspettare un altro giro di render.
+
+Stessa modifica portata identica su **Aurora Atleta360** e **Chiara Atleta360** (`src/Assessment.jsx`
+in entrambe) — vedi nota sotto.
+
+## Dashboard gemelle: Aurora e Chiara (2026-07-30)
+
+**`Aurora Atleta360/`** e **`Chiara Atleta360/`** (cartelle sorelle, fuori da questo repo) sono
+versioni mono-atleta di questa dashboard, previste da due diversi contratti di sponsorizzazione
+tecnica. Condividono il progetto Supabase di questa app (tabelle `aurora_*`/`chiara_*`) e il
+Coach IA (`atleta360-coach` su PM2) — vedi CLAUDE.md di root per i dettagli. Non hanno repository
+git: si modificano i sorgenti in locale e si sincronizzano sul VPS via `scp` (`/opt/aurora`,
+`/opt/chiara`), poi `npm run build` lì. Chiara non aveva **nessuna cartella locale** prima del
+2026-07-30 (esisteva solo sul VPS, mai documentata) — è stata scaricata in `Chiara Atleta360/`
+apposta per portarci questa modifica; se in futuro manca di nuovo, richiederla via `scp` da
+`/opt/chiara` sul VPS (`167.233.167.24`).
+
+Le tre dashboard soft-skill (Oasi/Aurora/Chiara) condividono lo stesso `Assessment`/`NewAssessment`
+concettuale (form 1–10 per focus + storico): una feature aggiunta a una delle tre va di norma
+replicata identica sulle altre due, salvo differenze strutturali note (Oasi ha selettore atleta,
+Aurora/Chiara no; Chiara ha in più il campo "nota di Chiara" per i messaggi WhatsApp dell'atleta).
+
 ## Brand
 
 Palette propria Atleta360 (navy `#0A1650`/`#17297A` + arancio `#FF7A18`), **non** segue la
