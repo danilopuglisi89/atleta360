@@ -311,6 +311,66 @@ Atleta360 (esagono arancio, fonte `atleta360-site/public/logo-icona.png`, come C
 Safe area iOS (stesso giorno): header mobile e drawer con `env(safe-area-inset-top)` — da
 app installata la barra finiva sotto l'orologio di sistema e il menu non era cliccabile.
 
+## Gamification — 4 ondate su engagement/ingaggio atlete (2026-08-14)
+
+Dopo un'intervista dedicata ("se fossi una ragazzina che gioca a pallavolo, cosa ti terrebbe
+con il focus sull'app?", 16 domande in 4 blocchi), Danilo ha chiesto di implementare **tutte**
+le risposte, ondata per ondata con deploy dopo ognuna (stesso metodo delle "24 domande").
+Tutto costruito sopra i dati/tabelle già esistenti dove possibile, per limitare il nuovo SQL.
+
+- **Ondata A — il motore** (`supabase/gamify-a.sql`, Oasi + `Aurora Atleta360/supabase/gamify-a.sql`
+  ridotto): tabella `participation_points` (mai scritta dal client: solo trigger `AFTER INSERT`
+  su `checkins`/`event_rsvps`/`self_assessments`/`profile_reactions` — stesso principio del
+  sistema badge, "punti di partecipazione" separati dal punteggio soft-skill), RPC
+  `my_participation_level()` (6 livelli: Nuova→Leggenda). `src/participation.js`
+  (`useParticipation`, streak check-in calcolata in JS con lo stesso trucco "data meno
+  posizione" già usato lato SQL). **Momento del giorno** stile BeReal (`daily_moments`,
+  RPC `todays_daily_moments()`, solo Oasi — su Aurora è ridondante col diario/check-in già
+  esistenti). **Missione del giorno** (`MissionCard.jsx`, nessuna tabella: appare solo nei
+  giorni con un allenamento/partita in calendario e se il check-in di oggi manca ancora,
+  con bottone che scrolla all'anchor `#a360-checkin` in `WellbeingCard`).
+- **Ondata B** (`supabase/gamify-b.sql`, solo Oasi per la classifica — Aurora non ha il quiz,
+  una classifica non ha senso mono-atleta): **quiz settimanale** (`src/quiz.js`, 4 set di 5
+  domande sulle regole della pallavolo che ruotano ogni settimana come `phraseOfTheDay()`,
+  tabella `quiz_scores` un tentativo/settimana, +2 punti per risposta esatta, RPC
+  `weekly_quiz_leaderboard()` per non allargare la RLS di `profiles`). **Bacheca badge
+  completa** (`badgeCatalog()` in `badges.js`, `BadgeBoard.jsx`/gemello inline in Aurora
+  `App.jsx`: mostra anche i badge NON ancora sbloccati, in grigio con l'indizio per
+  sbloccarli). **Curiosità del giorno** (`trivia.js`, stesso trucco di `phrases.js`).
+  **Carta collezionabile che evolve**: `ShareCard.jsx` (entrambe le app) ora prende un prop
+  `level` e cambia cornice/anello avatar/glow di sfondo in un colore diverso per livello
+  (grigio→bronzo→argento→oro→ciano→magenta), badge "🏆 {livello}" in alto — il punteggio
+  soft-skill (radar arancio) resta un concetto separato, qui si premia la costanza nell'uso
+  dell'app, non la bravura in campo.
+- **Ondata C** (`supabase/gamify-c.sql`, solo Oasi — feature sociali, non ha senso su Aurora
+  senza compagne): **reazioni sulle foto album** (`photo_reactions`, cuoricino con contatore
+  in `PhotoAlbumCard.jsx`, hook esteso in `photos.js`). **Personalizzazione sbloccabile**:
+  un'emoji "flair" accanto al nome, scelta da una lista che si allarga salendo di punti,
+  salvata con RPC dedicata `set_my_flair` (mai un update diretto su `profiles`, stesso
+  principio di `set_my_motto`) — picker in `PersonalArea.jsx`, mostrata in `ProfiloView.jsx`.
+  Le reazioni rapide in chat squadra (`message_reactions`) esistevano già, non ricostruite.
+  **Scartato di proposito**: MVP della settimana votato dalle compagne — Danilo ha detto
+  esplicitamente no in intervista.
+- **Ondata D** (`supabase/gamify-d.sql` Oasi + `Aurora Atleta360/supabase/gamify-d.sql`):
+  **la stella del mister** (tabella `stars`/`aurora_stars`, insert **solo staff**, mai
+  automatica — `AwardStarCard.jsx` in Area Staff, `StarsCard.jsx` nel profilo con lo storico,
+  trigger che manda una notifica tipo `'star'` → push automatica dal meccanismo esistente).
+  **Recap settimanale "La tua settimana"** (`WeeklyRecapCard.jsx`, nessuna tabella nuova:
+  aggrega `participation_points`/`aurora_participation_points` degli ultimi 7 giorni).
+
+**Degrado senza rompere**: ogni nuovo hook (`participation.js`, `quiz.js`) traccia se la
+query/RPC è fallita (`unavailable`) e il componente si nasconde finché lo script SQL
+corrispondente non è stato eseguito, invece di mostrare un form che poi fallisce silenziosamente
+al salvataggio — lezione imparata dal bug reale della stessa giornata (autovalutazione di
+Aurora che falliva con "tabella non trovata" perché la migrazione non era mai stata eseguita).
+
+**Da eseguire nel SQL Editor**: `gamify-a.sql` → `gamify-b.sql` → `gamify-c.sql` → `gamify-d.sql`
+su Oasi (ognuno idempotente); `gamify-a.sql` → `gamify-d.sql` su Aurora, più
+`calendar-athlete-insert.sql` (permette ad Aurora di aggiungere lei stessa eventi al
+calendario — richiesta esplicita di Danilo lo stesso giorno, frontend già pronto in
+`Aurora Atleta360/src/Calendario.jsx`: `canAdd = canManage || role === "atleta"`).
+Consegnati a Danilo come file scaricabili, non incollati in chat (troppo lunghi).
+
 ## Bug reali di utilizzo, sistemati in giornata (2026-08-14)
 
 Segnalati da Danilo durante l'uso reale con Oasi Volley, in rapida successione. Tutti corretti,
