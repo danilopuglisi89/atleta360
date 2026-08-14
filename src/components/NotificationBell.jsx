@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { Bell, BellRing, MessageCircle, MessagesSquare, ClipboardPlus, CheckCircle2, Target, Smartphone } from "lucide-react";
+import { Bell, BellRing, MessageCircle, MessagesSquare, ClipboardPlus, CheckCircle2, Target, Smartphone, CalendarDays } from "lucide-react";
 import { C, font, display } from "../theme";
 import { usePush } from "../push";
 
-const ICON_BY_TYPE = { dm: MessageCircle, team_chat: MessagesSquare, assessment: ClipboardPlus, approval: CheckCircle2, goal: Target, reminder: BellRing };
+const ICON_BY_TYPE = { dm: MessageCircle, team_chat: MessagesSquare, assessment: ClipboardPlus, approval: CheckCircle2, goal: Target, reminder: BellRing, event: CalendarDays };
 
 // Riga in cima al menu della campanella: attiva/disattiva le push sul dispositivo.
 function PushRow({ userId }) {

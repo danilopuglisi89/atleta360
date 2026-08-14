@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState, useEffect, useMemo, useRef } from "react";
-import { Home, User, Users, TrendingUp, Info, Menu, X, ShieldCheck, LogOut, ClipboardList, ClipboardPlus, UserCircle, MessagesSquare, MoreHorizontal } from "lucide-react";
+import { Home, User, Users, TrendingUp, Info, Menu, X, ShieldCheck, LogOut, ClipboardList, ClipboardPlus, UserCircle, MessagesSquare, MoreHorizontal, CalendarDays } from "lucide-react";
 import { C, font, display, ringForRole } from "./theme";
 import { AuthProvider, useAuth } from "./auth";
 import { supabase, supabaseConfigured } from "./supabaseClient";
@@ -30,6 +30,7 @@ const ConfrontoView = lazy(() => import("./views/ConfrontoView"));
 const AndamentoView = lazy(() => import("./views/AndamentoView"));
 const StaffView = lazy(() => import("./views/StaffView"));
 const InfoView = lazy(() => import("./views/InfoView"));
+const CalendarioView = lazy(() => import("./views/CalendarioView"));
 
 function ViewFallback() {
   return <DashboardSkeleton />;
@@ -43,6 +44,7 @@ const BASE_NAV = [
   { id: "profilo", label: "Profilo Atleta", icon: User, comp: ProfiloView },
   { id: "confronto", label: "Confronto", icon: Users, comp: ConfrontoView },
   { id: "andamento", label: "Andamento", icon: TrendingUp, comp: AndamentoView },
+  { id: "calendario", label: "Calendario", icon: CalendarDays, comp: CalendarioView },
   { id: "info", label: "Info & Legenda", icon: Info, comp: InfoView },
 ];
 
@@ -62,6 +64,8 @@ function Dashboard() {
     athleteId: profile?.athlete_id || null,
     firstName: profile?.first_name || "",
     avatarUrl: profile?.avatar_url || "",
+    uid: profile?.id || null,
+    isStaff,
   };
   const NAV = [
     ...BASE_NAV,
@@ -76,7 +80,7 @@ function Dashboard() {
   // il service worker passa ?view=... nell'URL (vedi src/sw.js).
   const [view, setView] = useState(() => {
     const v = new URLSearchParams(window.location.search).get("view");
-    return ["home", "profilo", "chat", "andamento", "staff", "info"].includes(v) ? v : "home";
+    return ["home", "profilo", "chat", "andamento", "staff", "info", "calendario"].includes(v) ? v : "home";
   });
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cardTarget, setCardTarget] = useState(null);          // card social aperta cliccando un nome
@@ -97,6 +101,8 @@ function Dashboard() {
   // sempre visibile in ChatPage); quelle dei messaggi privati si segnano
   // conversazione per conversazione (vedi onConversationOpen in DirectMessages).
   useEffect(() => { if (view === "chat") markTypeRead(["team_chat"]); }, [view, markTypeRead]);
+  // Aprendo il calendario, le notifiche degli eventi risultano lette.
+  useEffect(() => { if (view === "calendario") markTypeRead(["event"]); }, [view, markTypeRead]);
   // L'atleta che apre il proprio profilo legge le notifiche di nuovo rilevamento e obiettivo raggiunto.
   useEffect(() => { if (view === "profilo" && viewCtx.restricted) markTypeRead(["assessment", "goal"]); }, [view, viewCtx.restricted, markTypeRead]);
 
