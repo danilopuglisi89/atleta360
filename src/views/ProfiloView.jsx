@@ -16,6 +16,8 @@ import CoachChat from "../CoachChat";
 import GoalsCard from "../components/GoalsCard";
 import SelfAssessmentCard from "../components/SelfAssessmentCard";
 import WellbeingCard from "../components/WellbeingCard";
+import { Heart } from "lucide-react";
+import { useReactions } from "../reactions";
 
 export default function ProfiloView({ d, auth, target, onOpenFullProfile, onReload }) {
   const { NOMI, atleti, overall, storico } = d;
@@ -54,29 +56,10 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
     }
   }, [sel, personal, hasData, improvement]);
 
-  // Atleta "semplice" senza profilo collegato / senza rilevamenti.
-  if (restricted && (!myId || !atleti[myId])) {
-    return (
-      <StatusBox
-        title={firstName ? `Ciao ${firstName}!` : "Profilo non ancora disponibile"}
-        message={myId
-          ? "Non risultano ancora rilevamenti per il tuo profilo: chiedi al mister di compilare il modulo."
-          : "Il tuo profilo non è ancora stato collegato dallo staff. Riprova più tardi o contatta lo staff."}
-      />
-    );
-  }
-
-  const scores = atleti[sel].scores;
-  const nota = atleti[sel].nota;
-  const position = atleti[sel].position;
-  const scoreRing = ringForScore(overall(sel));
+  // Badge, celebrazione e applausi: calcolati QUI, prima di ogni return
+  // condizionale — gli hook devono chiamarsi nello stesso ordine a ogni
+  // render, mai dopo un "return" che dipende dai dati.
   const badges = computeBadges(d, sel);
-  const level = levelFor(overall(sel));
-
-  // Celebrazione a tutto schermo quando compare un badge MAI visto prima su
-  // questo dispositivo (localStorage). Alla primissima apertura del profilo
-  // si registrano i badge esistenti senza festeggiare (altrimenti esploderebbe
-  // di coriandoli chiunque abbia già dei traguardi).
   const [celebrate, setCelebrate] = useState(null);
   const shareRef = useRef(null);
   const badgeIdsKey = badges.map((b) => b.id).sort().join(",");
@@ -97,6 +80,25 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [personal, hasData, sel, badgeIdsKey]);
+  const reactions = useReactions(atleti[sel]?.athleteId, auth?.uid);
+
+  // Atleta "semplice" senza profilo collegato / senza rilevamenti.
+  if (restricted && (!myId || !atleti[myId])) {
+    return (
+      <StatusBox
+        title={firstName ? `Ciao ${firstName}!` : "Profilo non ancora disponibile"}
+        message={myId
+          ? "Non risultano ancora rilevamenti per il tuo profilo: chiedi al mister di compilare il modulo."
+          : "Il tuo profilo non è ancora stato collegato dallo staff. Riprova più tardi o contatta lo staff."}
+      />
+    );
+  }
+
+  const scores = atleti[sel].scores;
+  const nota = atleti[sel].nota;
+  const position = atleti[sel].position;
+  const scoreRing = ringForScore(overall(sel));
+  const level = levelFor(overall(sel));
   const teamAvg = (k) => Math.round((NOMI.reduce((a, m) => a + (atleti[m].scores[k] ?? 0), 0) / Math.max(NOMI.length, 1)) * 10) / 10;
   const radar = SKILLS.map((k) => ({ skill: SHORT[k], valore: scores[k] ?? 0, media: teamAvg(k), full: 10 }));
   const ranked = SKILLS.map((k) => ({ k, v: scores[k] ?? 0 })).sort((a, b) => b.v - a.v);
@@ -144,6 +146,18 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
         <span title="Livello calcolato dal punteggio complessivo" style={{ ...font, fontSize: 12, fontWeight: 600, color: C.orange, background: C.orangeSoft, padding: "5px 11px", borderRadius: 99, display: "inline-flex", alignItems: "center", gap: 5 }}>
           {level.emoji} {level.label}
         </span>
+        {!personal && auth?.uid && (
+          <button className="a360-noprint" onClick={reactions.toggle} title={reactions.mine ? "Togli l'applauso" : `Applaudi ${sel}`}
+            style={{ ...font, fontSize: 12.5, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 99, cursor: "pointer",
+              border: `1px solid ${reactions.mine ? "#E11D74" : C.grid}`, background: reactions.mine ? "#FCE7F1" : "#fff", color: reactions.mine ? "#E11D74" : C.muted }}>
+            <Heart size={13} fill={reactions.mine ? "#E11D74" : "none"} /> {reactions.count}
+          </button>
+        )}
+        {personal && reactions.count > 0 && (
+          <span title="Applausi ricevuti dalle compagne" style={{ ...font, fontSize: 12.5, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 99, color: "#E11D74", background: "#FCE7F1" }}>
+            <Heart size={13} fill="#E11D74" /> {reactions.count}
+          </span>
+        )}
         <span ref={shareRef}>
           <ShareCard name={sel} position={position} scores={scores} keys={SKILLS} SHORT={SHORT} overall={overall(sel)} avatarUrl={personal ? avatarUrl : ""} />
         </span>

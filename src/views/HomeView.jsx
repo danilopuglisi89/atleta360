@@ -6,14 +6,27 @@ import Classifica from "../components/Classifica";
 import { MotivationCard } from "../components/bits";
 import NextEventCard from "../components/NextEventCard";
 import WeeklyChallengeCard from "../components/WeeklyChallengeCard";
+import PollsCard from "../components/PollsCard";
+import PhotoAlbumCard from "../components/PhotoAlbumCard";
+import { useTodaysBirthdays } from "../birthdays";
 
 export default function HomeView({ d, auth, onOpenCard }) {
   const { NOMI, atleti, overall, RANK, TEAM_AVG, lastPeriod } = d;
   const restricted = !!auth?.restricted;
   const myScores = restricted && auth?.athleteId ? atleti[auth.athleteId]?.scores : null;
+  const birthdays = useTodaysBirthdays();
 
   return (
     <div>
+      {birthdays.length > 0 && (
+        <div className="a360-reveal a360-noprint" style={{ background: "linear-gradient(120deg, #FFE9D5 0%, #FFF3E6 100%)", border: "1px solid #FFC98A", borderRadius: 14, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 22 }}>🎂</span>
+          <span style={{ ...font, fontSize: 14, color: "#7A3E00" }}>
+            Oggi è il compleanno di <b>{birthdays.join(", ")}</b>! Fatele gli auguri 🎉
+          </span>
+        </div>
+      )}
+
       <MotivationCard />
       <NextEventCard uid={auth?.uid} />
       {restricted && myScores && <WeeklyChallengeCard scores={myScores} />}
@@ -49,6 +62,9 @@ export default function HomeView({ d, auth, onOpenCard }) {
           <Classifica RANK={RANK} overall={overall} onOpen={onOpenCard} />
         </Card>
       </div>
+
+      <PollsCard uid={auth?.uid} isStaff={auth?.isStaff} />
+      <PhotoAlbumCard uid={auth?.uid} isStaff={auth?.isStaff} />
     </div>
   );
 }

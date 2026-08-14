@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip, ResponsiveContainer } from "recharts";
-import { Printer, Sparkles, Trash2, ChevronDown, ChevronUp, Megaphone, AlertTriangle } from "lucide-react";
+import { Printer, Sparkles, Trash2, ChevronDown, ChevronUp, Megaphone, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { C, font, display } from "../theme";
 import { supabase } from "../supabaseClient";
 import { CORE, TITLE, SKILL_META } from "../skills";
@@ -132,6 +132,43 @@ function ReminderCard() {
           <Megaphone size={16} /> {busy ? "Invio…" : mode === "all" ? "Invia alla squadra" : `Invia a ${chosenIds.length || "…"}`}
         </button>
         {feedback && <span style={{ ...font, fontSize: 13, color: feedback.err ? "#B4232A" : "#0F7A4E" }}>{feedback.text}</span>}
+      </div>
+    </Card>
+  );
+}
+
+// Compleanni: data di nascita per atleta (usata dal promemoria automatico
+// del giorno e dal banner in Home). Nessuna tabella nuova: colonna su athletes.
+function BirthdaysCard({ athletes }) {
+  const [dates, setDates] = useState({});
+  const [saved, setSaved] = useState(null);
+
+  const load = async () => {
+    const { data } = await supabase.from("athletes").select("id, birth_date").in("id", athletes.map((a) => a.id));
+    const map = {};
+    (data || []).forEach((r) => { if (r.birth_date) map[r.id] = r.birth_date; });
+    setDates(map);
+  };
+  useEffect(() => { load(); }, []);
+
+  const save = async (athleteId, value) => {
+    setDates((d) => ({ ...d, [athleteId]: value }));
+    await supabase.from("athletes").update({ birth_date: value || null }).eq("id", athleteId);
+    setSaved(athleteId);
+    setTimeout(() => setSaved(null), 1500);
+  };
+
+  return (
+    <Card title="Compleanni" subtitle="Data di nascita per il promemoria automatico del giorno" style={{ marginTop: 20 }} className="a360-noprint">
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {athletes.map((a) => (
+          <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ ...font, fontSize: 13.5, color: C.ink, flex: 1 }}>{a.identifier}</span>
+            <input type="date" value={dates[a.id] || ""} onChange={(e) => save(a.id, e.target.value)}
+              style={{ ...font, fontSize: 12.5, border: `1px solid ${C.grid}`, borderRadius: 8, padding: "6px 9px" }} />
+            {saved === a.id && <CheckCircle2 size={15} color="#0F7A4E" />}
+          </div>
+        ))}
       </div>
     </Card>
   );
@@ -274,6 +311,8 @@ export default function StaffView({ d, onOpenCard }) {
       )}
 
       <AttendanceCard athletes={athletes} rows={attendanceRows} onSave={saveSession} />
+
+      <BirthdaysCard athletes={athletes} />
 
       {selfGaps.length > 0 && (
         <Card title="Scostamenti autovalutazione" subtitle="Differenza tra come si vedono le atlete e come le valuta il mister" style={{ marginTop: 20 }}>
