@@ -19,6 +19,31 @@ const ALLOWED_ORIGINS = [
   "http://localhost:5173",
 ];
 
+// ---------- Limiti d'uso (protezione dei crediti Gemini) ----------
+// In memoria: sul VPS il processo PM2 è uno solo e vive a lungo, basta così.
+// Due livelli: per dispositivo (evita che una chat troppo entusiasta consumi
+// tutto) e globale giornaliero (tetto di spesa complessivo).
+const PER_IP_PER_HOUR = 15;
+const GLOBAL_PER_DAY = 300;
+const ipHits = new Map();          // ip -> [timestamp delle richieste nell'ultima ora]
+let dayKey = "", dayCount = 0;
+
+function rateCheck(ip) {
+  const now = Date.now();
+  const today = new Date().toISOString().slice(0, 10);
+  if (dayKey !== today) { dayKey = today; dayCount = 0; }
+  if (dayCount >= GLOBAL_PER_DAY) return "day";
+  const recent = (ipHits.get(ip) || []).filter((t) => now - t < 3600_000);
+  if (recent.length >= PER_IP_PER_HOUR) { ipHits.set(ip, recent); return "ip"; }
+  recent.push(now);
+  ipHits.set(ip, recent);
+  dayCount++;
+  if (ipHits.size > 500) {          // pulizia spicciola della mappa
+    for (const [k, v] of ipHits) if (!v.some((t) => now - t < 3600_000)) ipHits.delete(k);
+  }
+  return null;
+}
+
 export default async function handler(req, res) {
   const origin = req.headers.origin || "";
   if (ALLOWED_ORIGINS.includes(origin)) {
@@ -38,6 +63,18 @@ export default async function handler(req, res) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) {
     res.status(500).json({ error: "Coach IA non ancora configurato: manca GEMINI_API_KEY su Vercel." });
+    return;
+  }
+
+  // Limiti d'uso: messaggi onesti e amichevoli, mai risposte finte.
+  const ip = req.headers["x-real-ip"] || (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket?.remoteAddress || "?";
+  const limited = rateCheck(ip);
+  if (limited === "ip") {
+    res.status(429).json({ error: "Hai fatto tante domande di fila: il Coach fa una piccola pausa ⏸️ Riprova tra qualche minuto." });
+    return;
+  }
+  if (limited === "day") {
+    res.status(429).json({ error: "Il Coach IA ha dato tutti i consigli di oggi 🌙 Torna domani!" });
     return;
   }
 
@@ -121,7 +158,12 @@ ${regole}`;
     const data = await r.json().catch(() => ({}));
     if (!r.ok) {
       console.error("[coach] Gemini error:", JSON.stringify(data));
-      res.status(502).json({ error: "Il coach IA non è raggiungibile in questo momento." });
+      // 429 = quota/crediti Gemini esauriti: messaggio diverso, così chi legge
+      // capisce che non è un guasto e che si risolve da solo (o col rinnovo).
+      const msg = r.status === 429
+        ? "Il Coach IA è molto richiesto in questo momento: riprova tra qualche minuto. 🙏"
+        : "Il Coach IA sta riposando: riprova più tardi. Se continua, avvisa lo staff.";
+      res.status(502).json({ error: msg });
       return;
     }
 
