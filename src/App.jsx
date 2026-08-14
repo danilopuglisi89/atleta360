@@ -18,6 +18,7 @@ import Footer, { SiteLogo } from "./components/Footer";
 import { GateScreen, SetupNotice } from "./components/GateScreens";
 import NotificationBell from "./components/NotificationBell";
 import InstallPrompt from "./components/InstallPrompt";
+import SelfAssessmentWizard from "./components/SelfAssessmentWizard";
 import { useNotifications } from "./notifications";
 
 // Le viste con grafici (recharts) pesano parecchio: caricate on-demand così
@@ -312,6 +313,7 @@ function Dashboard() {
       <MobileTabBar />
 
       <InstallPrompt userId={profile?.id} />
+      <SelfAssessmentWizard profile={profile} isStaff={isStaff} onDone={reload} />
 
       {cardTarget && model?.atleti?.[cardTarget] && (
         <PublicProfileCard
