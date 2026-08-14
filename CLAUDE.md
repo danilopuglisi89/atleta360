@@ -216,6 +216,57 @@ errori tecnici; il 429 di Gemini (crediti finiti) ha un suo messaggio dedicato. 
 "finte" quando la generazione fallisce: solo errori onesti. La chiave Gemini è stata sostituita
 il 2026-08-14 (la vecchia aveva esaurito i crediti prepagati).
 
+## Le 5 ondate delle "24 domande" (2026-08-14)
+
+Danilo ha chiesto un'intervista stile "se fossi un'atleta/un allenatore" per novità/grafica/
+utilità, poi di implementare **tutte** le risposte in sequenza, con deploy dopo ogni ondata
+(non tutto insieme a rischio zero — vedi CLAUDE.md di root sul metodo "a ondate").
+
+- **Ondata 1 — Home rinnovata**: `NextEventCard` (countdown prossimo impegno + RSVP + bottone
+  "Prepara la testa" se è una partita), `WeeklyChallengeCard` (focus più debole, calcolato al
+  volo, nessuna tabella), `CelebrationOverlay` (festa a tutto schermo sui badge mai visti prima,
+  localStorage `a360-badges-seen-<atleta>`, propone "Vedi la tua card" → scrolla alla ShareCard).
+  **Bug reale scoperto e corretto in Ondata 4**: gli hook della celebrazione erano finiti dopo
+  un `return` condizionale in ProfiloView (violazione delle Rules of Hooks) — crash per atlete
+  senza dati collegati. Ora tutti gli hook stanno prima di ogni return.
+- **Ondata 2 — Strumenti del mister**: piano seduta (colonne `objective`/`exercises` su
+  `events`), appunti rapidi per atleta (`athlete_notes`, solo Oasi — non ha senso su Aurora) con
+  bottone "Genera bozza con IA" in `NewAssessment.jsx` (nuova modalità `noteDraft` in
+  `api/coach.js`, bypassa il system prompt normale), pannello "Da tenere d'occhio" in StaffView
+  (presenze in calo, punteggi in discesa da 2+ rilevamenti, autovalutazione mancante — calcolato
+  client-side) + promemoria push settimanale (pg_cron, lunedì 8:00).
+- **Ondata 3 — Mente e benessere**: diario privato (`athlete_diary`/`aurora_diary`, **solo
+  l'atleta e l'admin — mai il mister**, RLS con `is_admin()`), check-in energia pre-allenamento
+  (`checkins`, push pomeridiana ≥15:00 sugli allenamenti di oggi), routine pre-partita guidata
+  3 passi (`PreMatchRoutine.jsx`, respirazione animata CSS/visualizzazione/carica, push "tra poco
+  si gioca" 75 min prima), indisponibilità/infortuni (`unavailability`, sospende promemoria
+  evento/check-in per chi la imposta).
+- **Ondata 4 — Vita di squadra** (solo Oasi, tranne compleanni: con 3 persone in tutto su Aurora
+  le dinamiche di gruppo hanno poco senso): applausi sul profilo (`profile_reactions`, toggle
+  tipo "like", push a chi li riceve), compleanni (`athletes.birth_date`, promemoria automatico +
+  banner in Home, editabile da StaffView), sondaggi rapidi (`polls`/`poll_votes`, li crea
+  chiunque sia approvato — anche le atlete), album foto (`photos`, upload compresso lato client
+  canvas→dataURL come l'avatar, **nessun bucket Storage** da configurare).
+- **Ondata 5 — Utilità e stile**: dark mode (`theme.js` — `C` resta lo stesso oggetto condiviso,
+  `applyTheme()` ne muta le proprietà "sul posto" e un `bump` di stato forza il re-render:
+  **non serve toccare i colori inline sparsi in ogni file**, verificato che funziona davvero via
+  browser, non solo che compila), motto personale (RPC dedicata `set_my_motto`/
+  `aurora_set_motto` — mai un update diretto su `profiles`, per non rischiare `status`/`role`),
+  export evento in `.ics` (`src/ics.js`, client-only), scadenze certificati (`certificates`,
+  solo date + promemoria 30/7 giorni, **nessun documento caricato**, solo Oasi), cache offline di
+  base nel service worker (`workbox-routing`+`workbox-strategies`, `NetworkFirst` **solo sulle
+  GET** verso `/rest/v1/` di Supabase — le scritture non passano mai da lì).
+
+**Scope volutamente tagliato** (onestà prima di tutto): copertina profilo e colore preferito
+personalizzabile **non fatti** (avrebbero richiesto Storage + propagazione in ShareCard/
+PublicProfileCard, rischio/tempo non giustificati in questa ondata); il motto oggi è visibile
+**solo alla persona stessa** (la RLS di `profiles` permette la lettura solo di sé stessi o
+all'admin — mostrarlo alle compagne richiederebbe allargare quella policy, decisione da prendere
+a parte, non presa qui).
+
+**Da eseguire nel SQL Editor** (Oasi): `wave2.sql`, `wave3.sql`, `wave4.sql`, `wave5.sql`
+(richiedono `calendar.sql`/`push.sql` già eseguiti). Stesso nome file per Aurora, versioni ridotte.
+
 ## Calendario (2026-08-14)
 
 Vista **Calendario** su Oasi (`src/views/CalendarioView.jsx` + hook `src/calendar.js`) e Aurora
