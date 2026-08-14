@@ -311,6 +311,44 @@ Atleta360 (esagono arancio, fonte `atleta360-site/public/logo-icona.png`, come C
 Safe area iOS (stesso giorno): header mobile e drawer con `env(safe-area-inset-top)` — da
 app installata la barra finiva sotto l'orologio di sistema e il menu non era cliccabile.
 
+## Bug reali di utilizzo, sistemati in giornata (2026-08-14)
+
+Segnalati da Danilo durante l'uso reale con Oasi Volley, in rapida successione. Tutti corretti,
+buildati, committati/pushati (Oasi) o `scp`-ati (Aurora) e deployati sui due VPS lo stesso giorno.
+
+- **Album foto: il tap su una foto non apriva nulla** (`src/components/PhotoAlbumCard.jsx`).
+  Causa: `window.open(url, "_blank")` fallisce in silenzio quando l'app gira come **PWA
+  installata standalone** (niente "nuova scheda" del browser, specialmente su iOS) — esattamente
+  il contesto in cui gira sul telefono di Oasi. Fix: lightbox in-app (overlay full-screen con
+  l'immagine, niente `window.open`). Pattern da ricordare: **mai `window.open`/`target="_blank"`
+  per contenuti interni** in un'app pensata per girare installata — usare sempre un overlay/router.
+- **Registro presenze: nessun modo di cancellare una sessione sbagliata** (`src/attendance.js`,
+  `src/components/AttendanceCard.jsx`). Il salvataggio correggeva già i singoli check-in per la
+  STESSA data (upsert), ma non c'era modo di eliminare una sessione inserita per la data sbagliata.
+  Aggiunta `removeSession(sessionDate)` (delete su `attendance` filtrato per data, già coperto
+  dalla policy `attendance write` esistente, nessun nuovo SQL) + elenco sessioni con conferma a
+  due tap in fondo alla card.
+- **Autovalutazione invisibile finché il mister non valuta** (`src/data.js` `buildModel()`,
+  `src/views/ProfiloView.jsx`; stesso bug su Aurora, già risolto lì l'8/14 col wizard di benvenuto
+  ma il gate `!last` in `Panoramica` restava). Il profilo atleta nasce SOLO dai rilevamenti del
+  mister (`atleti[identifier]` costruito da `assessments`, non da `self_assessments`): un'atleta
+  che si autovaluta prima che il mister la valuti mai una volta finiva nel ramo "Ancora nessuna
+  valutazione", che ritornava PRIMA di arrivare al rendering di `SelfAssessmentCard` — la sua
+  autovalutazione spariva nel nulla anche se salvata correttamente sul DB. Fix: `buildModel()`
+  espone ora anche `selfOnly` (autovalutazioni di atlete senza ancora un `atleti[identifier]`);
+  `ProfiloView` ha un ramo intermedio tra "nessun profilo collegato" e "profilo completo" che
+  mostra comunque `SelfAssessmentCard` quando c'è un'autovalutazione (o quando è lo staff a poterla
+  compilare). Attenzione a mantenere l'ordine degli hook invariato (vedi bug Ondata 1 sopra) se si
+  ritocca ancora questo file.
+- **Frase "leggete solo tu e Danilo" tolta dal diario privato** (`WellbeingCard.jsx` su Oasi e
+  Aurora + guida in `InfoView.jsx`/App.jsx): su richiesta di Danilo, la lettura da parte sua è
+  solo per salvaguardia in caso di problemi, non serve dirlo esplicitamente alle atlete. Il diario
+  resta comunque non visibile al mister (unica cosa rilevante per loro).
+- **Rimosso il banner "Icona e nome nuovi"** (`RebrandNotice.jsx`, Oasi e Aurora): avviso una
+  tantum per il rebrand dell'8/14 che spiegava come reinstallare la PWA su iPhone per vedere la
+  nuova icona — tolto su richiesta di Danilo (comunicherà lui agli utenti quando serve un
+  aggiornamento). Il componente resta nel repo ma non è più importato/montato.
+
 ## Valutazione precedente a colpo d'occhio (2026-07-30)
 
 Su richiesta di Danilo: quando il mister apre **Nuovo rilevamento** (`src/NewAssessment.jsx`),
