@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Printer } from "lucide-react";
 import { C, font, display, ringForScore } from "../theme";
@@ -11,6 +11,7 @@ import { useGoals } from "../goals";
 import { fireConfetti } from "../effects";
 import { Avatar } from "../PersonalArea";
 import ShareCard from "../ShareCard";
+import CelebrationOverlay from "../components/CelebrationOverlay";
 import CoachChat from "../CoachChat";
 import GoalsCard from "../components/GoalsCard";
 import SelfAssessmentCard from "../components/SelfAssessmentCard";
@@ -70,6 +71,31 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
   const scoreRing = ringForScore(overall(sel));
   const badges = computeBadges(d, sel);
   const level = levelFor(overall(sel));
+
+  // Celebrazione a tutto schermo quando compare un badge MAI visto prima su
+  // questo dispositivo (localStorage). Alla primissima apertura del profilo
+  // si registrano i badge esistenti senza festeggiare (altrimenti esploderebbe
+  // di coriandoli chiunque abbia già dei traguardi).
+  const [celebrate, setCelebrate] = useState(null);
+  const shareRef = useRef(null);
+  const badgeIdsKey = badges.map((b) => b.id).sort().join(",");
+  useEffect(() => {
+    if (!personal || !hasData) return;
+    const SEEN_KEY = `a360-badges-seen-${sel}`;
+    let seen = null;
+    try { seen = JSON.parse(localStorage.getItem(SEEN_KEY) || "null"); } catch { seen = null; }
+    const currentIds = badges.map((b) => b.id);
+    if (seen === null) {
+      localStorage.setItem(SEEN_KEY, JSON.stringify(currentIds));
+      return;
+    }
+    const fresh = badges.find((b) => !seen.includes(b.id));
+    if (fresh) {
+      setCelebrate(fresh);
+      localStorage.setItem(SEEN_KEY, JSON.stringify(currentIds));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [personal, hasData, sel, badgeIdsKey]);
   const teamAvg = (k) => Math.round((NOMI.reduce((a, m) => a + (atleti[m].scores[k] ?? 0), 0) / Math.max(NOMI.length, 1)) * 10) / 10;
   const radar = SKILLS.map((k) => ({ skill: SHORT[k], valore: scores[k] ?? 0, media: teamAvg(k), full: 10 }));
   const ranked = SKILLS.map((k) => ({ k, v: scores[k] ?? 0 })).sort((a, b) => b.v - a.v);
@@ -77,6 +103,10 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
 
   return (
     <div className="a360-print-area">
+      {celebrate && (
+        <CelebrationOverlay badge={celebrate} onClose={() => setCelebrate(null)}
+          onShare={() => { setCelebrate(null); setTimeout(() => shareRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 150); }} />
+      )}
       <div className="a360-print-only" style={{ ...display, fontSize: 20, fontWeight: 700, color: C.navy, marginBottom: 2 }}>
         Atleta360 — Scheda soft skill
       </div>
@@ -113,7 +143,9 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
         <span title="Livello calcolato dal punteggio complessivo" style={{ ...font, fontSize: 12, fontWeight: 600, color: C.orange, background: C.orangeSoft, padding: "5px 11px", borderRadius: 99, display: "inline-flex", alignItems: "center", gap: 5 }}>
           {level.emoji} {level.label}
         </span>
-        <ShareCard name={sel} position={position} scores={scores} keys={SKILLS} SHORT={SHORT} overall={overall(sel)} avatarUrl={personal ? avatarUrl : ""} />
+        <span ref={shareRef}>
+          <ShareCard name={sel} position={position} scores={scores} keys={SKILLS} SHORT={SHORT} overall={overall(sel)} avatarUrl={personal ? avatarUrl : ""} />
+        </span>
         <button className="a360-noprint" onClick={() => window.print()}
           style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500,
             padding: "9px 13px", borderRadius: 10, border: `1px solid ${C.grid}`, background: "#fff", color: C.ink, cursor: "pointer" }}>

@@ -4,12 +4,20 @@ import { CORE } from "../skills";
 import { Card, tooltipStyle } from "../components/ui";
 import Classifica from "../components/Classifica";
 import { MotivationCard } from "../components/bits";
+import NextEventCard from "../components/NextEventCard";
+import WeeklyChallengeCard from "../components/WeeklyChallengeCard";
 
-export default function HomeView({ d, onOpenCard }) {
-  const { NOMI, overall, RANK, TEAM_AVG, lastPeriod } = d;
+export default function HomeView({ d, auth, onOpenCard }) {
+  const { NOMI, atleti, overall, RANK, TEAM_AVG, lastPeriod } = d;
+  const restricted = !!auth?.restricted;
+  const myScores = restricted && auth?.athleteId ? atleti[auth.athleteId]?.scores : null;
+
   return (
     <div>
       <MotivationCard />
+      <NextEventCard uid={auth?.uid} />
+      {restricted && myScores && <WeeklyChallengeCard scores={myScores} />}
+
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
         {[
           { l: "Atlete monitorate", v: NOMI.length },
