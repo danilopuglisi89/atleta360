@@ -216,6 +216,32 @@ errori tecnici; il 429 di Gemini (crediti finiti) ha un suo messaggio dedicato. 
 "finte" quando la generazione fallisce: solo errori onesti. La chiave Gemini è stata sostituita
 il 2026-08-14 (la vecchia aveva esaurito i crediti prepagati).
 
+## Calendario (2026-08-14)
+
+Vista **Calendario** su Oasi (`src/views/CalendarioView.jsx` + hook `src/calendar.js`) e Aurora
+(`src/Calendario.jsx` + `src/calendar.js`), scelte concordate via intervista: promemoria push la
+sera prima (~20:00), gestione staff (Aurora: admin+mister), allenamenti come **ricorrenza
+settimanale** + eventi singoli, conferme presenza, luogo→link Google Maps, risultati partite.
+
+- **`supabase/calendar.sql`** (e gemello in Aurora, tabelle `aurora_*`): `events` (kind
+  match/training/other, `reminder_sent`, `cancelled`, `result`, `recurrence_id`),
+  `event_recurrences` (weekday 0=domenica, orari, active), `event_rsvps` (unique event+user).
+  `generate_recurring_events()` materializza gli eventi delle prossime 5 settimane (unique
+  parziale su recurrence_id+starts_at → ri-eseguibile); `send_event_reminders()` gira via
+  **pg_cron ogni ora**: quando in Italia sono ≥ le 20 notifica gli eventi di domani (una volta
+  sola, flag `reminder_sent`) inserendo in `notifications` tipo **'event'** → push automatica dal
+  trigger esistente. Orari costruiti con `at time zone 'Europe/Rome'` (DST-proof).
+- Client: RSVP upsert `onConflict event_id,user_id`; spegnere/eliminare una routine cancella i
+  suoi eventi futuri; nomi delle conferme visibili solo allo staff. Nav: voce "Calendario" nel
+  drawer/sidebar (non nella tab bar mobile), notifica 'event' → icona CalendarDays, aprendo la
+  vista si marcano lette (`markTypeRead(["event"])`).
+- **Import da file**: Danilo può passare un CSV/Excel (data, ora, tipo, avversario, luogo, note)
+  in chat → Claude genera le INSERT da incollare nel SQL Editor. Nessun uploader nell'app.
+
+**Importante**: `supabase/calendar.sql` (Oasi) e `Aurora Atleta360/supabase/calendar.sql` vanno
+eseguiti da Danilo nel SQL Editor — richiedono i rispettivi push.sql già eseguiti (pg_cron viene
+attivato dallo script).
+
 ## Autovalutazione guidata di benvenuto (2026-08-14)
 
 `src/components/SelfAssessmentWizard.jsx`, montato in App.jsx accanto a InstallPrompt.
