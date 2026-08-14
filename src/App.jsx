@@ -17,6 +17,7 @@ import { StatusBox, DashboardSkeleton } from "./components/ui";
 import Footer, { SiteLogo } from "./components/Footer";
 import { GateScreen, SetupNotice } from "./components/GateScreens";
 import NotificationBell from "./components/NotificationBell";
+import InstallPrompt from "./components/InstallPrompt";
 import { useNotifications } from "./notifications";
 
 // Le viste con grafici (recharts) pesano parecchio: caricate on-demand così
@@ -309,6 +310,8 @@ function Dashboard() {
       </div>
 
       <MobileTabBar />
+
+      <InstallPrompt userId={profile?.id} />
 
       {cardTarget && model?.atleti?.[cardTarget] && (
         <PublicProfileCard
