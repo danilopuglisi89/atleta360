@@ -59,11 +59,14 @@ begin
     raise exception 'Il promemoria è vuoto';
   end if;
 
+  -- "Tutta la squadra" esclude chi invia; la selezione esplicita invece
+  -- può includere anche se stessi (utile per testare le push sul proprio telefono).
   insert into public.notifications (user_id, type, title, body, view)
   select p.id, 'reminder', 'Promemoria dallo staff 📣', trim(message), 'home'
   from public.profiles p
-  where p.status = 'approved' and p.id <> auth.uid()
-    and (recipients is null or p.id = any(recipients));
+  where p.status = 'approved'
+    and ((recipients is null and p.id <> auth.uid())
+      or (recipients is not null and p.id = any(recipients)));
   get diagnostics sent = row_count;
   return sent;
 end;
