@@ -20,6 +20,7 @@ import NotificationBell from "./components/NotificationBell";
 import InstallPrompt from "./components/InstallPrompt";
 import SelfAssessmentWizard from "./components/SelfAssessmentWizard";
 import RebrandNotice from "./components/RebrandNotice";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { useNotifications } from "./notifications";
 
 // Le viste con grafici (recharts) pesano parecchio: caricate on-demand così
@@ -267,7 +268,7 @@ function Dashboard() {
   } else {
     content = <ViewComp d={model} auth={viewCtx} target={profileTarget} onOpenCard={openCard} onOpenFullProfile={openFullProfile} onReload={reload} />;
   }
-  const needsSuspense = ["home", "profilo", "confronto", "andamento", "info", "staff"].includes(active.id);
+  const needsSuspense = ["home", "profilo", "confronto", "andamento", "info", "staff", "calendario"].includes(active.id);
 
   const isStaffViewer = isStaff;
 
@@ -312,7 +313,9 @@ function Dashboard() {
             </div>
             <NotificationBell items={notifications} unreadCount={unreadNotif.length} onOpenItem={openNotification} onMarkAllRead={markAllRead} userId={profile?.id} />
           </div>
-          {needsSuspense ? <Suspense fallback={<ViewFallback />}>{content}</Suspense> : content}
+          <ErrorBoundary key={active.id}>
+            {needsSuspense ? <Suspense fallback={<ViewFallback />}>{content}</Suspense> : content}
+          </ErrorBoundary>
         </main>
         <Footer />
       </div>
