@@ -7,6 +7,7 @@ import { CORE, TITLE, SKILL_META } from "../skills";
 import { Card, tooltipStyle, PrintStamp } from "../components/ui";
 import Classifica from "../components/Classifica";
 import AttendanceCard from "../components/AttendanceCard";
+import AwardStarCard from "../components/AwardStarCard";
 import CoachChat from "../CoachChat";
 import { useReports } from "../reports";
 import { useAttendance } from "../attendance";
@@ -364,6 +365,7 @@ export default function StaffView({ d, onOpenCard }) {
       )}
 
       <AttendanceCard athletes={athletes} rows={attendanceRows} onSave={saveSession} onRemoveSession={removeSession} />
+      <AwardStarCard athletes={athletes} />
 
       <BirthdaysCard athletes={athletes} />
 

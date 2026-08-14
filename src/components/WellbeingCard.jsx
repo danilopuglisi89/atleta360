@@ -26,7 +26,7 @@ export default function WellbeingCard({ athleteId, canSeeAll }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {/* Check-in di oggi */}
-      <div className="a360-reveal a360-noprint" style={{ background: C.card, border: `1px solid ${C.grid}`, borderRadius: 16, padding: 18 }}>
+      <div id="a360-checkin" className="a360-reveal a360-noprint" style={{ background: C.card, border: `1px solid ${C.grid}`, borderRadius: 16, padding: 18 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, ...font, fontSize: 12, color: C.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>
           <Zap size={14} /> Come stai oggi?
         </div>

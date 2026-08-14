@@ -91,6 +91,7 @@ function Dashboard() {
     athleteId: profile?.athlete_id || null,
     firstName: profile?.first_name || "",
     avatarUrl: profile?.avatar_url || "",
+    flair: profile?.flair || "",
     uid: profile?.id || null,
     isStaff,
     isAdmin,
@@ -132,7 +133,7 @@ function Dashboard() {
   // Aprendo il calendario, le notifiche degli eventi risultano lette.
   useEffect(() => { if (view === "calendario") markTypeRead(["event"]); }, [view, markTypeRead]);
   // L'atleta che apre il proprio profilo legge le notifiche di nuovo rilevamento e obiettivo raggiunto.
-  useEffect(() => { if (view === "profilo" && viewCtx.restricted) markTypeRead(["assessment", "goal"]); }, [view, viewCtx.restricted, markTypeRead]);
+  useEffect(() => { if (view === "profilo" && viewCtx.restricted) markTypeRead(["assessment", "goal", "star"]); }, [view, viewCtx.restricted, markTypeRead]);
 
   // Roster dei membri (nome, foto, collegamento atleta) per le card social.
   const [roster, setRoster] = useState([]);

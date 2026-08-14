@@ -95,6 +95,18 @@ export function buildModel(skills, athletes, assessments, selfAssessments = []) 
   };
 }
 
+// Risolve il vero uuid athletes.id a partire dall'identificatore (nome, la
+// chiave usata da "atleti"): serve nei punti dove va passato un athleteId
+// vero anche per atlete che il mister non ha ancora mai valutato (niente
+// voce in "atleti" finché non c'è un rilevamento, vedi "selfOnly" sopra).
+export function resolveAthleteId(d, identifier) {
+  if (!identifier || !d) return null;
+  return d.atleti?.[identifier]?.athleteId
+    ?? d.selfOnly?.[identifier]?.athleteId
+    ?? d.roster?.find((r) => r.identifier === identifier)?.id
+    ?? null;
+}
+
 // Legge atlete, focus e rilevamenti da Supabase e costruisce il modello.
 export async function fetchModel() {
   const [skillsRes, athletesRes, assessmentsRes, selfRes] = await Promise.all([

@@ -81,3 +81,23 @@ export function computeBadges(model, name) {
 
   return badges;
 }
+
+// Catalogo COMPLETO dei badge esistenti (conquistati o no), per la bacheca
+// "tutti i traguardi" con quelli non ancora sbloccati mostrati in grigio.
+// Stesso ordine/id di computeBadges, ma con un suggerimento generico invece
+// del dettaglio (che ha senso solo una volta conquistato).
+export function badgeCatalog(model) {
+  const { keys, SHORT } = model;
+  return [
+    { id: "regina", emoji: "👑", label: "Regina del campo", hint: "1ª nella classifica generale", color: "#E8A400" },
+    { id: "podio", emoji: "🏅", label: "Sul podio", hint: "Tra le prime 3 della classifica generale", color: C.orange },
+    ...keys.map((k) => ({ id: `top-${k}`, emoji: "⭐", label: `Regina di ${SHORT[k]}`, hint: `Miglior punteggio della squadra in ${SHORT[k]}`, color: C.navy2 })),
+    { id: "piu-migliorata", emoji: "🚀", label: "Più migliorata", hint: "Crescita complessiva più alta dal primo rilevamento", color: "#0F7A4E" },
+    { id: "in-crescita", emoji: "📈", label: "In crescita", hint: "Ultimo rilevamento migliore del precedente", color: "#0F7A4E" },
+    { id: "streak3", emoji: "🔥", label: "In fiamme", hint: "3 rilevamenti di fila in crescita", color: "#E11D74" },
+    { id: "streak5", emoji: "🔥🔥", label: "Serie leggendaria", hint: "5 rilevamenti di fila in crescita", color: "#E11D74" },
+    { id: "costanza", emoji: "🎯", label: "Costanza", hint: "Almeno 3 rilevamenti registrati", color: C.navy2 },
+    { id: "top10", emoji: "💎", label: "Punteggio pieno", hint: "Un focus a 10/10", color: "#0EA5E9" },
+    { id: "completa", emoji: "🌟", label: "Atleta completa", hint: "Tutti i focus almeno a 7/10", color: C.orange },
+  ];
+}

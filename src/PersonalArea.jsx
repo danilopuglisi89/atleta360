@@ -1,10 +1,24 @@
 import { useRef, useState } from "react";
-import { Camera, Save, CheckCircle2, AlertCircle } from "lucide-react";
+import { Camera, Save, CheckCircle2, AlertCircle, Lock } from "lucide-react";
 import { C, font, display } from "./theme";
 import { supabase } from "./supabaseClient";
 import { useAuth } from "./auth";
+import { useParticipation } from "./participation";
 
 const CATEGORY_LABEL = { direzione: "Direzione", staff: "Staff", atleta: "Atleta" };
+
+// Personalizzazione sbloccabile coi punti partecipazione (Ondata C
+// gamification): un'emoji decorativa accanto al nome, non serve Storage.
+const FLAIRS = [
+  { emoji: "⭐", min: 0 },
+  { emoji: "🔥", min: 15 },
+  { emoji: "💪", min: 15 },
+  { emoji: "🚀", min: 50 },
+  { emoji: "🌈", min: 50 },
+  { emoji: "💎", min: 120 },
+  { emoji: "👑", min: 250 },
+  { emoji: "🏆", min: 500 },
+];
 
 function Card({ title, subtitle, children, style }) {
   return (
@@ -48,11 +62,13 @@ export default function PersonalArea() {
   const [form, setForm] = useState({
     phone: profile?.phone || "", facebook: profile?.facebook || "", instagram: profile?.instagram || "",
     jersey_number: profile?.jersey_number || "", ruolo: profile?.ruolo || "", avatar_url: profile?.avatar_url || "",
-    motto: profile?.motto || "",
+    motto: profile?.motto || "", flair: profile?.flair || "",
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [flash, setFlash] = useState(null);
+  const { level } = useParticipation(null);
+  const points = level?.total_points ?? 0;
 
   const upd = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ");
@@ -86,6 +102,7 @@ export default function PersonalArea() {
       p_avatar_url: form.avatar_url || null,
     });
     if (!error) await supabase.rpc("set_my_motto", { p_motto: form.motto || "" });
+    if (!error) await supabase.rpc("set_my_flair", { p_flair: form.flair || "" });
     setBusy(false);
     if (error) { setError(error.message); return; }
     await refreshProfile();
@@ -133,6 +150,26 @@ export default function PersonalArea() {
           <Field label="Profilo Facebook" value={form.facebook} onChange={upd("facebook")} placeholder="link o nome utente" />
           <Field label="Profilo Instagram" value={form.instagram} onChange={upd("instagram")} placeholder="@nomeutente o link" />
           <Field label="Il tuo motto" value={form.motto} onChange={upd("motto")} placeholder="es. Punto dopo punto." />
+
+          <div>
+            <label style={labelStyle}>La tua emoji ({points} punti — se ne sbloccano di nuove salendo di livello)</label>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {FLAIRS.map((f) => {
+                const unlocked = points >= f.min;
+                const selected = form.flair === f.emoji;
+                return (
+                  <button key={f.emoji} type="button" disabled={!unlocked}
+                    onClick={() => setForm((v) => ({ ...v, flair: selected ? "" : f.emoji }))}
+                    title={unlocked ? f.emoji : `Sblocca a ${f.min} punti`}
+                    style={{ width: 42, height: 42, borderRadius: 11, fontSize: 19, cursor: unlocked ? "pointer" : "default",
+                      border: `2px solid ${selected ? C.orange : C.grid}`, background: selected ? C.orangeSoft : C.card,
+                      filter: unlocked ? "none" : "grayscale(1)", opacity: unlocked ? 1 : 0.45, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {unlocked ? f.emoji : <Lock size={14} color={C.muted} />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {error && (

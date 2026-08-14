@@ -11,6 +11,20 @@ import { C, font } from "./theme";
 const W = 1080, H = 1920;
 const IG_HANDLE = "@atleta360.volley";
 
+// Carta collezionabile che "evolve": la cornice e l'anello dell'avatar
+// cambiano colore col livello di partecipazione (Ondata B gamification),
+// dal grigio della prima card fino all'oro/magenta della leggenda. Il
+// punteggio soft-skill (radar, arancio) resta un concetto separato: qui
+// si premia la costanza nell'usare l'app, non la bravura in campo.
+const TIERS = [
+  { color: "#9AA0B4", glow: "rgba(154,160,180,0.22)" },  // 0 Nuova
+  { color: "#CD7F32", glow: "rgba(205,127,50,0.24)" },   // 1 Iniziata
+  { color: "#C0C0C0", glow: "rgba(192,192,192,0.24)" },  // 2 Attiva
+  { color: "#FFD700", glow: "rgba(255,215,0,0.26)" },    // 3 Presente
+  { color: "#4FD8EA", glow: "rgba(79,216,234,0.28)" },   // 4 Veterana
+  { color: "#E11D74", glow: "rgba(225,29,116,0.32)" },   // 5 Leggenda
+];
+
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
@@ -32,9 +46,11 @@ function loadImage(url) {
   });
 }
 
-async function drawCard({ name, position, scores, keys, SHORT, overall, avatarUrl }) {
+async function drawCard({ name, position, scores, keys, SHORT, overall, avatarUrl, level }) {
   // Assicura i font pronti prima di disegnare (Google Fonts).
   try { await document.fonts.ready; } catch { /* ignore */ }
+
+  const tier = Number.isInteger(level?.level) ? TIERS[level.level] : null;
 
   const canvas = document.createElement("canvas");
   canvas.width = W; canvas.height = H;
@@ -47,7 +63,7 @@ async function drawCard({ name, position, scores, keys, SHORT, overall, avatarUr
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
   const glow = ctx.createRadialGradient(W / 2, 1180, 60, W / 2, 1180, 640);
-  glow.addColorStop(0, "rgba(255,122,24,0.20)");
+  glow.addColorStop(0, tier ? tier.glow : "rgba(255,122,24,0.20)");
   glow.addColorStop(1, "rgba(255,122,24,0)");
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, W, H);
@@ -79,6 +95,15 @@ async function drawCard({ name, position, scores, keys, SHORT, overall, avatarUr
   ctx.fillText(IG_HANDLE, W - 90, 166);
   ctx.textAlign = "left";
 
+  // Livello di partecipazione (badge in alto a destra, sotto l'handle IG).
+  if (tier && level?.level_label) {
+    ctx.textAlign = "right";
+    ctx.fillStyle = tier.color;
+    ctx.font = "700 24px 'Inter', sans-serif";
+    ctx.fillText(`🏆 ${level.level_label}`, W - 90, 200);
+    ctx.textAlign = "left";
+  }
+
   // Avatar (o iniziali).
   const cx = W / 2, avY = 340, avR = 96;
   const avatar = await loadImage(avatarUrl);
@@ -87,7 +112,7 @@ async function drawCard({ name, position, scores, keys, SHORT, overall, avatarUr
   ctx.arc(cx, avY, avR, 0, Math.PI * 2);
   ctx.closePath();
   ctx.lineWidth = 8;
-  ctx.strokeStyle = C.orange;
+  ctx.strokeStyle = tier ? tier.color : C.orange;
   ctx.stroke();
   ctx.clip();
   if (avatar) {
@@ -188,6 +213,14 @@ async function drawCard({ name, position, scores, keys, SHORT, overall, avatarUr
   ctx.fillStyle = C.orange;
   ctx.font = "700 28px 'Inter', sans-serif";
   ctx.fillText(IG_HANDLE, cx, 1898);
+
+  // Cornice esterna nel colore del livello: più la usi, più la card "brilla".
+  if (tier) {
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = tier.color;
+    roundRect(ctx, 20, 20, W - 40, H - 40, 28);
+    ctx.stroke();
+  }
 
   return canvas;
 }

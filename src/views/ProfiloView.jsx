@@ -5,6 +5,7 @@ import { C, font, display, ringForScore } from "../theme";
 import { SKILLS, SHORT, SKILL_META } from "../skills";
 import { Card, Row, InitialsCircle, StatusBox, Select, tooltipStyle, PrintStamp } from "../components/ui";
 import { BadgeStrip } from "../components/bits";
+import BadgeBoard from "../components/BadgeBoard";
 import { computeBadges } from "../badges";
 import { levelFor } from "../gamification";
 import { useGoals } from "../goals";
@@ -16,6 +17,9 @@ import CoachChat from "../CoachChat";
 import GoalsCard from "../components/GoalsCard";
 import SelfAssessmentCard from "../components/SelfAssessmentCard";
 import WellbeingCard from "../components/WellbeingCard";
+import ParticipationCard from "../components/ParticipationCard";
+import StarsCard from "../components/StarsCard";
+import { useParticipation } from "../participation";
 import { Heart } from "lucide-react";
 import { useReactions } from "../reactions";
 
@@ -36,6 +40,7 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
   const effectiveAthleteId = atleti[sel]?.athleteId ?? selfOnlyEntry?.athleteId ?? roster?.find((r) => r.identifier === sel)?.id;
   const personal = restricted;                    // l'atleta guarda sempre sé stessa
   const { goals, addGoal, removeGoal } = useGoals(effectiveAthleteId);
+  const { level: participationLevel } = useParticipation(effectiveAthleteId);
 
   // Rileva un miglioramento tra gli ultimi due rilevamenti (per i coriandoli).
   const improvement = useMemo(() => {
@@ -109,6 +114,8 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
         <Card title="Ancora nessun rilevamento del mister" subtitle="Quando il mister salverà la prima valutazione, qui comparirà il profilo completo.">
           <div style={{ ...font, fontSize: 14, color: C.muted }}>Tutto pronto: si parte! 💪</div>
         </Card>
+        {personal && <ParticipationCard athleteId={effectiveAthleteId} />}
+        <StarsCard athleteId={effectiveAthleteId} personal={personal} />
         {effectiveAthleteId && (
           <SelfAssessmentCard athleteId={effectiveAthleteId} athleteName={sel} misterScores={null} self={selfOnlyEntry?.self} editable personal={personal} onSaved={onReload} />
         )}
@@ -141,7 +148,7 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
 
       {personal && firstName && (
         <div style={{ ...display, fontSize: 18, fontWeight: 700, color: C.ink, marginBottom: 14 }}>
-          Ciao {firstName}! 👋 <span style={{ ...font, fontSize: 14, fontWeight: 400, color: C.muted }}>Ecco il tuo profilo.</span>
+          Ciao {firstName}{auth?.flair ? ` ${auth.flair}` : ""}! 👋 <span style={{ ...font, fontSize: 14, fontWeight: 400, color: C.muted }}>Ecco il tuo profilo.</span>
         </div>
       )}
 
@@ -156,13 +163,15 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
         </div>
       )}
 
+      {personal && <ParticipationCard athleteId={effectiveAthleteId} />}
+
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
         {(personal && avatarUrl)
           ? <Avatar url={avatarUrl} name={firstName || sel} size={44} ring={scoreRing} />
           : <InitialsCircle name={sel} size={44} ring={scoreRing} />}
         <span style={{ ...font, fontSize: 13, color: C.muted }}>Atleta</span>
         {restricted
-          ? <span style={{ ...display, fontSize: 15, fontWeight: 600, color: C.ink }}>{sel}</span>
+          ? <span style={{ ...display, fontSize: 15, fontWeight: 600, color: C.ink }}>{personal && auth?.flair ? `${auth.flair} ` : ""}{sel}</span>
           : <Select value={sel} onChange={onOpenFullProfile} options={NOMI} className="a360-noprint" />}
         {position && <span style={{ ...font, fontSize: 12, fontWeight: 600, color: C.navy2, background: C.surface, border: `1px solid ${C.grid}`, padding: "5px 11px", borderRadius: 99 }}>{position}</span>}
         <span title="Livello calcolato dal punteggio complessivo" style={{ ...font, fontSize: 12, fontWeight: 600, color: C.orange, background: C.orangeSoft, padding: "5px 11px", borderRadius: 99, display: "inline-flex", alignItems: "center", gap: 5 }}>
@@ -181,7 +190,7 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
           </span>
         )}
         <span ref={shareRef}>
-          <ShareCard name={sel} position={position} scores={scores} keys={SKILLS} SHORT={SHORT} overall={overall(sel)} avatarUrl={personal ? avatarUrl : ""} />
+          <ShareCard name={sel} position={position} scores={scores} keys={SKILLS} SHORT={SHORT} overall={overall(sel)} avatarUrl={personal ? avatarUrl : ""} level={personal ? participationLevel : null} />
         </span>
         <button className="a360-noprint" onClick={() => window.print()}
           style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500,
@@ -193,11 +202,12 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
         </div>
       </div>
 
-      {badges.length > 0 && (
-        <Card title={personal ? "I tuoi traguardi" : "Traguardi"} subtitle={personal ? "Riconoscimenti calcolati dai tuoi rilevamenti" : `Riconoscimenti di ${sel}`} style={{ marginBottom: 20 }}>
-          <BadgeStrip badges={badges} />
-        </Card>
-      )}
+      <Card title={personal ? "I tuoi traguardi" : "Traguardi"} subtitle={personal ? "Riconoscimenti calcolati dai tuoi rilevamenti" : `Riconoscimenti di ${sel}`} style={{ marginBottom: 20 }}>
+        {badges.length > 0
+          ? <BadgeStrip badges={badges} />
+          : <div style={{ ...font, fontSize: 13.5, color: C.muted }}>Ancora nessun traguardo sbloccato: continua così!</div>}
+        <BadgeBoard model={d} name={sel} earned={badges} />
+      </Card>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
         <Card title="Profilo a 360°" subtitle="Competenze dell'atleta a confronto con la media squadra">
@@ -223,6 +233,8 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
           </Card>
         </div>
       </div>
+
+      <StarsCard athleteId={effectiveAthleteId} personal={personal} />
 
       <GoalsCard goals={goals} scores={scores} editable athleteName={sel} personal={personal} onAdd={addGoal} onRemove={removeGoal} />
 

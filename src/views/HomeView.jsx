@@ -1,19 +1,26 @@
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip, ResponsiveContainer } from "recharts";
 import { C, font, display } from "../theme";
 import { CORE } from "../skills";
+import { resolveAthleteId } from "../data";
 import { Card, tooltipStyle } from "../components/ui";
 import Classifica from "../components/Classifica";
 import { MotivationCard } from "../components/bits";
 import NextEventCard from "../components/NextEventCard";
 import WeeklyChallengeCard from "../components/WeeklyChallengeCard";
+import MissionCard from "../components/MissionCard";
 import PollsCard from "../components/PollsCard";
 import PhotoAlbumCard from "../components/PhotoAlbumCard";
+import DailyMomentCard from "../components/DailyMomentCard";
+import TriviaPill from "../components/TriviaPill";
+import QuizCard from "../components/QuizCard";
+import WeeklyRecapCard from "../components/WeeklyRecapCard";
 import { useTodaysBirthdays } from "../birthdays";
 
 export default function HomeView({ d, auth, onOpenCard }) {
   const { NOMI, atleti, overall, RANK, TEAM_AVG, lastPeriod } = d;
   const restricted = !!auth?.restricted;
   const myScores = restricted && auth?.athleteId ? atleti[auth.athleteId]?.scores : null;
+  const myAthleteId = restricted ? resolveAthleteId(d, auth?.athleteId) : null;
   const birthdays = useTodaysBirthdays();
 
   return (
@@ -28,8 +35,11 @@ export default function HomeView({ d, auth, onOpenCard }) {
       )}
 
       <MotivationCard />
+      <TriviaPill />
+      {restricted && <MissionCard uid={auth?.uid} athleteId={myAthleteId} />}
       <NextEventCard uid={auth?.uid} />
       {restricted && myScores && <WeeklyChallengeCard scores={myScores} />}
+      {restricted && <WeeklyRecapCard uid={auth?.uid} />}
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
         {[
@@ -63,6 +73,8 @@ export default function HomeView({ d, auth, onOpenCard }) {
         </Card>
       </div>
 
+      <DailyMomentCard uid={auth?.uid} />
+      <QuizCard uid={auth?.uid} />
       <PollsCard uid={auth?.uid} isStaff={auth?.isStaff} />
       <PhotoAlbumCard uid={auth?.uid} isStaff={auth?.isStaff} />
     </div>

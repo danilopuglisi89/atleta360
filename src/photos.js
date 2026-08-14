@@ -29,9 +29,17 @@ export function compressImage(file) {
 
 export function usePhotos(uid) {
   const [photos, setPhotos] = useState(null);
+  const [reactions, setReactions] = useState({});   // photo_id -> [user_id, ...]
   const load = useCallback(async () => {
     const { data } = await supabase.from("photos").select("*").order("created_at", { ascending: false }).limit(40);
     setPhotos(data || []);
+    const ids = (data || []).map((p) => p.id);
+    if (ids.length) {
+      const { data: rx } = await supabase.from("photo_reactions").select("photo_id,user_id").in("photo_id", ids);
+      const map = {};
+      (rx || []).forEach((r) => { (map[r.photo_id] ||= []).push(r.user_id); });
+      setReactions(map);
+    } else setReactions({});
   }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -48,5 +56,15 @@ export function usePhotos(uid) {
     await load();
     return null;
   };
-  return { photos, upload, remove };
+  const toggleReaction = async (photoId) => {
+    if (!uid) return;
+    const mine = (reactions[photoId] || []).includes(uid);
+    if (mine) {
+      await supabase.from("photo_reactions").delete().eq("photo_id", photoId).eq("user_id", uid);
+    } else {
+      await supabase.from("photo_reactions").insert({ photo_id: photoId, user_id: uid });
+    }
+    await load();
+  };
+  return { photos, reactions, upload, remove, toggleReaction };
 }
