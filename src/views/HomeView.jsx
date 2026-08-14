@@ -39,7 +39,7 @@ export default function HomeView({ d, auth, onOpenCard }) {
           { l: "Ultimo rilevamento", v: lastPeriod },
         ].map((s) => (
           <div key={s.l} style={{ flex: "1 1 140px", background: C.card, border: `1px solid ${C.grid}`, borderRadius: 14, padding: "16px 18px" }}>
-            <div style={{ ...display, fontSize: 26, fontWeight: 700, color: C.navy }}>{s.v}</div>
+            <div style={{ ...display, fontSize: 26, fontWeight: 700, color: C.ink }}>{s.v}</div>
             <div style={{ ...font, fontSize: 12.5, color: C.muted, marginTop: 2 }}>{s.l}</div>
           </div>
         ))}

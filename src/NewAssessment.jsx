@@ -242,7 +242,7 @@ export default function NewAssessment({ onSaved }) {
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {history.map((a) => (
               <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", borderBottom: `1px solid ${C.grid}`, padding: "10px 2px", background: editingId === a.id ? C.surface : "transparent", borderRadius: editingId === a.id ? 8 : 0 }}>
-                <span style={{ ...display, fontSize: 12.5, fontWeight: 600, color: C.navy, background: C.surface, borderRadius: 8, padding: "4px 10px", whiteSpace: "nowrap" }}>{fmt(a.created_at)}</span>
+                <span style={{ ...display, fontSize: 12.5, fontWeight: 600, color: C.ink, background: C.surface, borderRadius: 8, padding: "4px 10px", whiteSpace: "nowrap" }}>{fmt(a.created_at)}</span>
                 <span style={{ ...font, fontSize: 13, color: C.muted, flex: "1 1 160px", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.note || "—"}</span>
                 <button onClick={() => startEdit(a)} title="Modifica" style={{ ...font, display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, padding: "6px 11px", borderRadius: 9, border: `1px solid ${C.grid}`, background: C.card, color: C.navy2, cursor: "pointer" }}>
                   <Pencil size={14} /> Modifica

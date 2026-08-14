@@ -20,7 +20,7 @@ function ReportHistoryItem({ report, onRemove }) {
   return (
     <div style={{ border: `1px solid ${C.grid}`, borderRadius: 10, padding: "10px 12px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => setOpen((o) => !o)}>
-        <span style={{ ...display, fontSize: 12, fontWeight: 600, color: C.navy, background: C.surface, borderRadius: 8, padding: "3px 9px", whiteSpace: "nowrap" }}>{date}</span>
+        <span style={{ ...display, fontSize: 12, fontWeight: 600, color: C.ink, background: C.surface, borderRadius: 8, padding: "3px 9px", whiteSpace: "nowrap" }}>{date}</span>
         {!open && <span style={{ ...font, fontSize: 13, color: C.muted, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{preview}</span>}
         {open && <span style={{ flex: 1 }} />}
         {open ? <ChevronUp size={15} color={C.muted} /> : <ChevronDown size={15} color={C.muted} />}
@@ -322,7 +322,7 @@ export default function StaffView({ d, onOpenCard }) {
           { l: "Ultimo rilevamento", v: lastPeriod },
         ].map((s) => (
           <div key={s.l} style={{ flex: "1 1 140px", background: C.card, border: `1px solid ${C.grid}`, borderRadius: 14, padding: "16px 18px" }}>
-            <div style={{ ...display, fontSize: 26, fontWeight: 700, color: C.navy }}>{s.v}</div>
+            <div style={{ ...display, fontSize: 26, fontWeight: 700, color: C.ink }}>{s.v}</div>
             <div style={{ ...font, fontSize: 12.5, color: C.muted, marginTop: 2 }}>{s.l}</div>
           </div>
         ))}

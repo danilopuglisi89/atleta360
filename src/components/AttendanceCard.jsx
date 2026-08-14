@@ -77,7 +77,7 @@ export default function AttendanceCard({ athletes, rows, onSave }) {
               <div style={{ flex: 2, height: 7, background: C.surface, borderRadius: 99, overflow: "hidden" }}>
                 <div style={{ height: "100%", width: `${s.pct}%`, background: s.pct >= 80 ? "#0F7A4E" : s.pct >= 60 ? C.orange : "#B4232A", borderRadius: 99 }} />
               </div>
-              <span style={{ ...display, fontSize: 13, fontWeight: 700, color: C.navy, width: 40, textAlign: "right" }}>{s.pct}%</span>
+              <span style={{ ...display, fontSize: 13, fontWeight: 700, color: C.ink, width: 40, textAlign: "right" }}>{s.pct}%</span>
             </div>
           ))}
         </div>

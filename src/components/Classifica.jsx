@@ -24,7 +24,7 @@ function Podium({ names, overall, onOpen }) {
               {p.rank === 1 && <div style={{ position: "absolute", top: -16, left: "50%", transform: "translateX(-50%)", fontSize: 20 }}>👑</div>}
             </div>
             <div className={onOpen ? "a360-clickname" : undefined} style={{ ...font, fontSize: 12.5, color: C.ink, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
-            <div style={{ ...display, fontSize: 15, fontWeight: 700, color: C.navy, marginBottom: 6 }}>{overall(p.name).toFixed(1)}</div>
+            <div style={{ ...display, fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 6 }}>{overall(p.name).toFixed(1)}</div>
             <div style={{ height: p.h, borderRadius: "10px 10px 0 0", background: `linear-gradient(180deg, ${medal} 0%, ${medal}CC 100%)`,
               display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 8, ...display, fontWeight: 700, fontSize: 22, color: "#fff", boxShadow: "inset 0 2px 6px rgba(255,255,255,0.25)" }}>
               {p.rank}
@@ -54,7 +54,7 @@ export default function Classifica({ RANK, overall, onOpen }) {
                   <span className={onOpen ? "a360-clickname" : undefined} onClick={onOpen ? () => onOpen(n) : undefined}
                     title={onOpen ? `Apri il profilo di ${n}` : undefined}
                     style={{ ...font, fontSize: 13.5, color: C.ink }}>{n}</span>
-                  <span style={{ ...display, fontSize: 13.5, fontWeight: 600, color: C.navy }}>{overall(n).toFixed(1)}</span>
+                  <span style={{ ...display, fontSize: 13.5, fontWeight: 600, color: C.ink }}>{overall(n).toFixed(1)}</span>
                 </div>
                 <div style={{ height: 7, background: C.surface, borderRadius: 99, overflow: "hidden" }}>
                   <div className="a360-bar-fill" style={{ height: "100%", width: `${(overall(n) / max) * 100}%`, background: C.navy2, borderRadius: 99 }} />

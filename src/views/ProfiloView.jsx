@@ -110,7 +110,7 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
         <CelebrationOverlay badge={celebrate} onClose={() => setCelebrate(null)}
           onShare={() => { setCelebrate(null); setTimeout(() => shareRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 150); }} />
       )}
-      <div className="a360-print-only" style={{ ...display, fontSize: 20, fontWeight: 700, color: C.navy, marginBottom: 2 }}>
+      <div className="a360-print-only" style={{ ...display, fontSize: 20, fontWeight: 700, color: C.ink, marginBottom: 2 }}>
         Atleta360 — Scheda soft skill
       </div>
       <div className="a360-print-only" style={{ ...font, fontSize: 13.5, color: C.muted, marginBottom: 18 }}>

@@ -21,7 +21,7 @@ export default function InfoView() {
         <Card title="I focus allenati" subtitle="Le competenze monitorate a ogni rilevamento">
           {SKILL_META.map((s) => (
             <div key={s.key} style={{ paddingBottom: 12, marginBottom: 12, borderBottom: `1px solid ${C.grid}` }}>
-              <div style={{ ...display, fontSize: 14, fontWeight: 600, color: C.navy }}>{s.title}</div>
+              <div style={{ ...display, fontSize: 14, fontWeight: 600, color: C.ink }}>{s.title}</div>
               {s.description && <div style={{ ...font, fontSize: 13, color: C.muted, marginTop: 3, lineHeight: 1.5 }}>{s.description}</div>}
             </div>
           ))}
@@ -32,7 +32,7 @@ export default function InfoView() {
           <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
             {guide.map(([t, d]) => (
               <div key={t} style={{ ...font, fontSize: 13.5, color: C.ink, lineHeight: 1.5 }}>
-                <span style={{ ...display, fontWeight: 600, color: C.navy }}>{t}.</span> {d}
+                <span style={{ ...display, fontWeight: 600, color: C.ink }}>{t}.</span> {d}
               </div>
             ))}
           </div>

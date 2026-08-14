@@ -61,10 +61,15 @@ export default function AndamentoView({ d, onOpenCard }) {
               const up = diff > 0, down = diff < 0;
               const col = up ? "#0F7A4E" : down ? "#B4232A" : C.muted;
               const bg = up ? "#DDF3E7" : down ? "#FDECEC" : C.surface;
+              // Sfondo verde/rosso pallido fisso (non segue il tema): l'etichetta
+              // sopra deve restare scura sempre; solo il caso neutro (=) usa lo
+              // sfondo C.surface, quello sì si inverte col tema, quindi lì il
+              // testo segue con C.ink.
+              const labelCol = up || down ? C.navy : C.ink;
               return (
                 <div key={k} style={{ ...font, fontSize: 13, display: "inline-flex", alignItems: "center", gap: 6,
                   background: bg, color: col, borderRadius: 99, padding: "6px 12px", fontWeight: 600 }}>
-                  <span style={{ color: C.ink, fontWeight: 500 }}>{short}</span>
+                  <span style={{ color: labelCol, fontWeight: 500 }}>{short}</span>
                   {up ? "▲" : down ? "▼" : "="} {diff > 0 ? `+${diff}` : diff}
                 </div>
               );
