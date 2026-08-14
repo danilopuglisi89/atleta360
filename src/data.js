@@ -67,6 +67,17 @@ export function buildModel(skills, athletes, assessments, selfAssessments = []) 
     if (atleti[identifier]) atleti[identifier].self = entries[entries.length - 1];
   });
 
+  // Autovalutazioni di atlete che il mister non ha ancora mai valutato: non
+  // entrano in "atleti" (niente punteggio/radar/classifica finché non c'è un
+  // rilevamento del mister), ma restano consultabili a parte così il profilo
+  // può comunque mostrare l'autovalutazione già fatta dall'atleta.
+  const selfOnly = {};
+  Object.entries(selfById).forEach(([identifier, entries]) => {
+    if (atleti[identifier]) return;
+    const ath = athletes.find((a) => a.identifier === identifier);
+    selfOnly[identifier] = { id: identifier, athleteId: ath?.id, position: ath?.position || "", self: entries[entries.length - 1] };
+  });
+
   const NOMI = Object.keys(atleti);
   const overall = (n) =>
     Math.round((keys.reduce((a, k) => a + (atleti[n]?.scores[k] ?? 0), 0) / Math.max(keys.length, 1)) * 10) / 10;
@@ -80,7 +91,7 @@ export function buildModel(skills, athletes, assessments, selfAssessments = []) 
 
   return {
     keys, SHORT, TITLE, DESC, skills: active,
-    atleti, storico, lastPeriod, NOMI, roster, overall, RANK, TEAM_AVG,
+    atleti, storico, lastPeriod, NOMI, roster, overall, RANK, TEAM_AVG, selfOnly,
   };
 }
 

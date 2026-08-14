@@ -29,5 +29,13 @@ export function useAttendance() {
     return error;
   }, [load]);
 
-  return { rows, loading, saveSession };
+  // Elimina un'intera sessione (es. data sbagliata per errore): tutte le
+  // righe presenza/assenza di quel giorno, per tutte le atlete.
+  const removeSession = useCallback(async (sessionDate) => {
+    const { error } = await supabase.from("attendance").delete().eq("session_date", sessionDate);
+    if (!error) await load();
+    return error;
+  }, [load]);
+
+  return { rows, loading, saveSession, removeSession };
 }

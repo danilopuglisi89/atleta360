@@ -13,7 +13,7 @@ export default function InfoView() {
     ["Il tuo profilo", "Radar a 360° con punti di forza e aree di crescita, livello, traguardi conquistati e applausi ricevuti dalle compagne (👏 sul loro profilo)."],
     ["Autovalutazione e obiettivi", "Valutati tu stessa sugli stessi focus del mister e confronta i due punti di vista. Fissa un obiettivo su un focus e segui i progressi."],
     ["Calendario", "Partite e allenamenti con conto alla rovescia, conferma presenza (“Ci sarò/Non ci sarò”) e un tasto per aggiungerli al calendario del telefono."],
-    ["Come stai", "Nel tuo profilo: check-in veloce di energia, e un diario privato che leggete solo tu e Danilo — mai il mister. Prima di una partita, “Prepara la testa” apre una routine guidata di 3 minuti."],
+    ["Come stai", "Nel tuo profilo: check-in veloce di energia, e un diario privato che non vede il mister. Prima di una partita, “Prepara la testa” apre una routine guidata di 3 minuti."],
     ["Notifiche", "La campanella in alto mostra messaggi, rilevamenti nuovi e promemoria. Da lì puoi anche attivare le notifiche push sul telefono, così ti arrivano anche ad app chiusa."],
     ["Chat", "Scrivi nella bacheca di squadra o avvia messaggi privati con le compagne (anche con foto)."],
     ["Sondaggi e album foto", "In Home trovi i sondaggi della squadra (puoi crearne uno anche tu) e l'album foto: carica le tue foto di partite ed eventi."],

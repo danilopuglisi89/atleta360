@@ -20,7 +20,7 @@ import { Heart } from "lucide-react";
 import { useReactions } from "../reactions";
 
 export default function ProfiloView({ d, auth, target, onOpenFullProfile, onReload }) {
-  const { NOMI, atleti, overall, storico } = d;
+  const { NOMI, atleti, overall, storico, roster } = d;
   const restricted = !!auth?.restricted;
   const myId = auth?.athleteId;
   const firstName = auth?.firstName || "";
@@ -28,10 +28,14 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
 
   // Le atlete vedono SOLO il proprio profilo. Lo staff sceglie dalla rosa
   // (menu a tendina o "Vedi scheda completa" dalla card di un'atleta).
-  const sel = restricted ? myId : (target && atleti[target] ? target : NOMI[0]);
+  const sel = restricted ? myId : (target && atleti[target] ? target : (NOMI[0] || target));
   const hasData = !!atleti[sel];
+  // Autovalutazione già fatta ma il mister non ha ancora salvato un rilevamento:
+  // niente scores/radar del mister, ma l'autovalutazione va mostrata comunque.
+  const selfOnlyEntry = !hasData && sel ? d.selfOnly?.[sel] : null;
+  const effectiveAthleteId = atleti[sel]?.athleteId ?? selfOnlyEntry?.athleteId ?? roster?.find((r) => r.identifier === sel)?.id;
   const personal = restricted;                    // l'atleta guarda sempre sé stessa
-  const { goals, addGoal, removeGoal } = useGoals(atleti[sel]?.athleteId);
+  const { goals, addGoal, removeGoal } = useGoals(effectiveAthleteId);
 
   // Rileva un miglioramento tra gli ultimi due rilevamenti (per i coriandoli).
   const improvement = useMemo(() => {
@@ -80,17 +84,35 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [personal, hasData, sel, badgeIdsKey]);
-  const reactions = useReactions(atleti[sel]?.athleteId, auth?.uid);
+  const reactions = useReactions(effectiveAthleteId, auth?.uid);
 
-  // Atleta "semplice" senza profilo collegato / senza rilevamenti.
-  if (restricted && (!myId || !atleti[myId])) {
+  // Atleta "semplice" senza profilo collegato: niente da mostrare.
+  if (restricted && !myId) {
     return (
       <StatusBox
-        title={firstName ? `Ciao ${firstName}!` : "Profilo non ancora disponibile"}
-        message={myId
-          ? "Non risultano ancora rilevamenti per il tuo profilo: chiedi al mister di compilare il modulo."
-          : "Il tuo profilo non è ancora stato collegato dallo staff. Riprova più tardi o contatta lo staff."}
+        title="Profilo non ancora disponibile"
+        message="Il tuo profilo non è ancora stato collegato dallo staff. Riprova più tardi o contatta lo staff."
       />
+    );
+  }
+
+  // Il mister non ha ancora salvato un rilevamento: se però l'atleta si è già
+  // autovalutata, mostriamo quella invece di un semplice avviso vuoto.
+  if (!hasData) {
+    return (
+      <div className="a360-print-area" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        {personal && firstName && (
+          <div style={{ ...display, fontSize: 18, fontWeight: 700, color: C.ink, marginBottom: -6 }}>
+            Ciao {firstName}! 👋 <span style={{ ...font, fontSize: 14, fontWeight: 400, color: C.muted }}>Ecco il tuo profilo.</span>
+          </div>
+        )}
+        <Card title="Ancora nessun rilevamento del mister" subtitle="Quando il mister salverà la prima valutazione, qui comparirà il profilo completo.">
+          <div style={{ ...font, fontSize: 14, color: C.muted }}>Tutto pronto: si parte! 💪</div>
+        </Card>
+        {effectiveAthleteId && (
+          <SelfAssessmentCard athleteId={effectiveAthleteId} athleteName={sel} misterScores={null} self={selfOnlyEntry?.self} editable personal={personal} onSaved={onReload} />
+        )}
+      </div>
     );
   }
 

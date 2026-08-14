@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Camera, Trash2, Upload } from "lucide-react";
+import { Camera, Trash2, Upload, X } from "lucide-react";
 import { C, font, display } from "../theme";
 import { Card } from "./ui";
 import { usePhotos } from "../photos";
@@ -9,6 +9,9 @@ export default function PhotoAlbumCard({ uid, isStaff }) {
   const fileRef = useRef(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
+  // Lightbox in-app: window.open(url, "_blank") fallisce in silenzio quando
+  // l'app gira installata come PWA standalone (niente "nuova scheda" su iOS).
+  const [viewer, setViewer] = useState(null);
 
   if (!uid) return null;
 
@@ -39,7 +42,7 @@ export default function PhotoAlbumCard({ uid, isStaff }) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 8 }}>
           {photos.map((p) => (
             <div key={p.id} style={{ position: "relative", aspectRatio: "1", borderRadius: 10, overflow: "hidden", border: `1px solid ${C.grid}` }}>
-              <img src={p.url} alt="" onClick={() => window.open(p.url, "_blank")}
+              <img src={p.url} alt="" onClick={() => setViewer(p.url)}
                 style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} />
               {(p.uploaded_by === uid || isStaff) && (
                 <button onClick={() => remove(p.id)} title="Elimina"
@@ -49,6 +52,17 @@ export default function PhotoAlbumCard({ uid, isStaff }) {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {viewer && (
+        <div onClick={() => setViewer(null)} className="a360-noprint"
+          style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(6,10,30,0.92)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          <img src={viewer} alt="" style={{ maxWidth: "100%", maxHeight: "100%", borderRadius: 12, boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }} />
+          <button onClick={() => setViewer(null)} aria-label="Chiudi"
+            style={{ position: "fixed", top: 16, right: 16, width: 40, height: 40, borderRadius: 12, border: "none", background: "rgba(255,255,255,0.15)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <X size={20} />
+          </button>
         </div>
       )}
     </Card>

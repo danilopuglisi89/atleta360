@@ -20,7 +20,6 @@ import { GateScreen, SetupNotice } from "./components/GateScreens";
 import NotificationBell from "./components/NotificationBell";
 import InstallPrompt from "./components/InstallPrompt";
 import SelfAssessmentWizard from "./components/SelfAssessmentWizard";
-import RebrandNotice from "./components/RebrandNotice";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { useNotifications } from "./notifications";
 
@@ -355,7 +354,6 @@ function Dashboard() {
 
       <InstallPrompt userId={profile?.id} />
       <SelfAssessmentWizard profile={profile} isStaff={isStaff} onDone={reload} />
-      <RebrandNotice />
 
       {cardTarget && model?.atleti?.[cardTarget] && (
         <PublicProfileCard

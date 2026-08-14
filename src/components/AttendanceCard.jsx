@@ -1,18 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, XCircle, Save } from "lucide-react";
+import { CheckCircle2, XCircle, Save, Trash2 } from "lucide-react";
 import { C, font, display } from "../theme";
 import { Card } from "./ui";
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
+const fmtDate = (iso) => new Date(iso).toLocaleDateString("it-IT", { day: "2-digit", month: "short", year: "numeric" });
 
 // Registro presenze: check-in rapido per allenamento + percentuale di
 // presenza per atleta su tutte le sessioni registrate (tabella attendance,
 // vedi supabase/attendance.sql). Solo strumento di lavoro: non va in stampa.
-export default function AttendanceCard({ athletes, rows, onSave }) {
+export default function AttendanceCard({ athletes, rows, onSave, onRemoveSession }) {
   const [date, setDate] = useState(todayIso);
   const [presence, setPresence] = useState({});
   const [busy, setBusy] = useState(false);
   const [flash, setFlash] = useState(null);
+  const [removing, setRemoving] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   // Precompila dai dati già salvati per quella data; altrimenti tutte presenti
   // di default (il mister toglie le assenti, più veloce che spuntarle tutte).
@@ -33,7 +36,18 @@ export default function AttendanceCard({ athletes, rows, onSave }) {
     if (!err) { setFlash("Presenze salvate."); setTimeout(() => setFlash(null), 3000); }
   };
 
-  const sessionsCount = useMemo(() => new Set(rows.map((r) => r.session_date)).size, [rows]);
+  const sessions = useMemo(() =>
+    [...new Set(rows.map((r) => r.session_date))].sort((a, b) => b.localeCompare(a)),
+  [rows]);
+  const sessionsCount = sessions.length;
+
+  const removeSession = async (sessionDate) => {
+    if (!onRemoveSession) return;
+    setRemoving(sessionDate);
+    await onRemoveSession(sessionDate);
+    setRemoving(null);
+    setConfirmDelete(null);
+  };
 
   const summary = useMemo(() => athletes.map((a) => {
     const mine = rows.filter((r) => r.athlete_id === a.id);
@@ -78,6 +92,35 @@ export default function AttendanceCard({ athletes, rows, onSave }) {
                 <div style={{ height: "100%", width: `${s.pct}%`, background: s.pct >= 80 ? "#0F7A4E" : s.pct >= 60 ? C.orange : "#B4232A", borderRadius: 99 }} />
               </div>
               <span style={{ ...display, fontSize: 13, fontWeight: 700, color: C.ink, width: 40, textAlign: "right" }}>{s.pct}%</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {sessions.length > 0 && onRemoveSession && (
+        <div style={{ borderTop: `1px solid ${C.grid}`, marginTop: 16, paddingTop: 16, display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ ...font, fontSize: 12.5, fontWeight: 600, color: C.muted, marginBottom: 2 }}>Sessioni registrate — sbagliato un allenamento? Eliminalo qui</div>
+          {sessions.map((s) => (
+            <div key={s} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ ...font, fontSize: 13, color: C.ink, flex: 1 }}>{fmtDate(s)}</span>
+              {confirmDelete === s ? (
+                <>
+                  <span style={{ ...font, fontSize: 12, color: "#B4232A" }}>Eliminare tutte le presenze di questo giorno?</span>
+                  <button onClick={() => removeSession(s)} disabled={removing === s}
+                    style={{ ...font, fontSize: 12, fontWeight: 600, padding: "5px 10px", borderRadius: 8, border: "none", background: "#B4232A", color: "#fff", cursor: "pointer" }}>
+                    {removing === s ? "Elimino…" : "Conferma"}
+                  </button>
+                  <button onClick={() => setConfirmDelete(null)}
+                    style={{ ...font, fontSize: 12, fontWeight: 600, padding: "5px 10px", borderRadius: 8, border: `1px solid ${C.grid}`, background: C.card, color: C.muted, cursor: "pointer" }}>
+                    Annulla
+                  </button>
+                </>
+              ) : (
+                <button onClick={() => setConfirmDelete(s)} title="Elimina questa sessione"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: 8, border: "none", background: "transparent", color: C.muted, cursor: "pointer" }}>
+                  <Trash2 size={14} />
+                </button>
+              )}
             </div>
           ))}
         </div>

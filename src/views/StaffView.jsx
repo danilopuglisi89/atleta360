@@ -233,7 +233,7 @@ export default function StaffView({ d, onOpenCard }) {
   const [repBusy, setRepBusy] = useState(false);
   const [repErr, setRepErr] = useState(null);
   const { reports, saveReport, removeReport } = useReports();
-  const { rows: attendanceRows, saveSession } = useAttendance();
+  const { rows: attendanceRows, saveSession, removeSession } = useAttendance();
 
   const athletes = NOMI.map((n) => ({ id: atleti[n].athleteId, identifier: n })).filter((a) => a.id);
 
@@ -363,7 +363,7 @@ export default function StaffView({ d, onOpenCard }) {
         </Card>
       )}
 
-      <AttendanceCard athletes={athletes} rows={attendanceRows} onSave={saveSession} />
+      <AttendanceCard athletes={athletes} rows={attendanceRows} onSave={saveSession} onRemoveSession={removeSession} />
 
       <BirthdaysCard athletes={athletes} />
 

@@ -47,7 +47,6 @@ export default function WellbeingCard({ athleteId, canSeeAll }) {
         <div style={{ display: "flex", alignItems: "center", gap: 8, ...font, fontSize: 12, color: C.navy2, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>
           <BookHeart size={14} /> Il tuo diario {canSeeAll ? "" : "(privato)"}
         </div>
-        <p style={{ ...font, fontSize: 12, color: C.muted, marginTop: 4 }}>Solo tu e Danilo potete leggerlo — non lo vede il mister.</p>
 
         <div style={{ display: "flex", gap: 14, marginTop: 12, flexWrap: "wrap" }}>
           <div>
