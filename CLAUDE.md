@@ -193,13 +193,22 @@ da un solo meccanismo.
 `notifications.sql`). Su Vercel l'endpoint esiste ma non è configurato (env mancanti): la
 consegna push passa SOLO dal VPS, che è il dominio vero.
 
-**Push anche su Aurora** (stesso giorno): versione minima in `Aurora Atleta360/supabase/push.sql`
-— tabella `aurora_push_subscriptions`, trigger su `aurora_assessments` (push "Nuova valutazione
-del mister" a tutti tranne l'autore) e RPC `aurora_send_reminder(message, recipients text[] =
-email)` per i promemoria manuali (admin/mister; l'app non ha campanella, arriva SOLO come push).
-Toggle di attivazione in Area personale (`NotificheCard`), pannello promemoria in fondo alla
-vista Valutazione. Stesso endpoint e stesse chiavi VAPID di Oasi (nginx espone `/api/` anche su
-aurora.danilopuglisi.com). Chiara per ora esclusa per scelta di Danilo.
+**Push + campanella anche su Aurora** (stesso giorno, poi estesa): `Aurora Atleta360/supabase/push.sql`
+(versione completa, sostituisce la prima "solo push") — tabelle `aurora_push_subscriptions` e
+`aurora_notifications` (campanella con Realtime, come Oasi), trigger valutazione→notifica e
+notifica→push, RPC `aurora_send_reminder(message, recipients text[] = email)`. Client: `src/
+notifications.js` + `src/NotificationBell.jsx` (prop `dark` per l'header navy mobile), campanella
+montata su header mobile e in alto a destra su desktop. Toggle push anche in Area personale
+(`NotificheCard`) e pannello promemoria in fondo alla vista Valutazione. Stesso endpoint e chiavi
+VAPID di Oasi. Chiara per ora esclusa per scelta di Danilo.
+
+**Onboarding mobile (2026-08-14)**: `src/components/InstallPrompt.jsx` (Oasi) e `src/
+InstallPrompt.jsx` (Aurora, gemello) — al primo accesso da iPhone/Android non installato, banner
+guidato "Installa l'app" (prompt nativo `beforeinstallprompt` su Android, passaggi Condividi→
+Aggiungi a Home su iOS; "Non mostrare più" in localStorage). Ad app installata con push spente,
+popup guidato "Attiva le notifiche" ("Più tardi" = sessionStorage, riproposto alla prossima
+apertura). Viewport bloccato (`maximum-scale=1, user-scalable=no` in index.html di entrambe) per
+il problema di zoom segnalato da Danilo sull'app installata.
 
 **Coach IA — limiti d'uso (2026-08-14)**: in `api/coach.js`, in memoria nel processo:
 15 richieste/ora per IP + tetto globale 300/giorno, con messaggi amichevoli (429) invece di
