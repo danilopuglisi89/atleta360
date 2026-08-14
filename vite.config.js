@@ -13,8 +13,8 @@ export default defineConfig({
       filename: "sw.js",
       includeAssets: ["favicon.png", "apple-touch-icon.png", "logo-oasivolley.png"],
       manifest: {
-        name: "Atleta360 — Soft Skills",
-        short_name: "Atleta360",
+        name: "Oasi Volley Dashboard",
+        short_name: "Oasi Volley",
         description: "Dashboard delle soft skill della squadra Oasi Volley.",
         lang: "it",
         theme_color: "#0A1650",
