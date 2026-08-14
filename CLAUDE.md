@@ -216,6 +216,24 @@ errori tecnici; il 429 di Gemini (crediti finiti) ha un suo messaggio dedicato. 
 "finte" quando la generazione fallisce: solo errori onesti. La chiave Gemini è stata sostituita
 il 2026-08-14 (la vecchia aveva esaurito i crediti prepagati).
 
+## Autovalutazione guidata di benvenuto (2026-08-14)
+
+`src/components/SelfAssessmentWizard.jsx`, montato in App.jsx accanto a InstallPrompt.
+Richiesta di Danilo: prima l'autovalutazione era irraggiungibile finché il mister non faceva
+il primo rilevamento (il profilo atleta nasce dai rilevamenti) — ora alla prima apertura
+l'atleta trova un popup guidato ("conosciamoci"): un passo per ogni focus con spiegazione
+(dalla tabella `skills`) + voto 1-10, riepilogo, salvataggio diretto in `self_assessments`
+(athlete uuid risolto da `athletes.identifier`, senza passare dal modello). Proposto a ogni
+apertura finché non completato ("Più tardi" = sessionStorage); una volta salvato, mai più
+(il controllo è sull'esistenza di una riga in `self_assessments`). Staff/admin lo vedono in
+modalità "anteprima di prova" (nessun salvataggio, flag localStorage per non riproporlo).
+
+Icone (stesso giorno): favicon + set PWA di Oasi E Aurora sostituiti con l'icona ufficiale
+Atleta360 (esagono arancio, fonte `atleta360-site/public/logo-icona.png`, come Caterino IG);
+`favicon.svg` eliminata, `favicon.png` + `apple-touch-icon.png` nuovi, maskable con margine.
+Safe area iOS (stesso giorno): header mobile e drawer con `env(safe-area-inset-top)` — da
+app installata la barra finiva sotto l'orologio di sistema e il menu non era cliccabile.
+
 ## Valutazione precedente a colpo d'occhio (2026-07-30)
 
 Su richiesta di Danilo: quando il mister apre **Nuovo rilevamento** (`src/NewAssessment.jsx`),
