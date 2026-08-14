@@ -11,7 +11,7 @@ export default defineConfig({
       strategies: "injectManifest",      // service worker nostro (src/sw.js): precache + push
       srcDir: "src",
       filename: "sw.js",
-      includeAssets: ["favicon.svg", "logo-oasivolley.png"],
+      includeAssets: ["favicon.png", "apple-touch-icon.png", "logo-oasivolley.png"],
       manifest: {
         name: "Atleta360 — Soft Skills",
         short_name: "Atleta360",
