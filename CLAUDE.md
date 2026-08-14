@@ -163,8 +163,10 @@ rilevamenti, bacheca, DM, obiettivi, approvazioni e il nuovo tipo `reminder` son
 da un solo meccanismo.
 
 - **`supabase/push.sql`** — tabella `push_subscriptions` (RLS: ognuno le proprie), allarga il
-  check `type` con `'reminder'`, RPC `send_reminder(message)` (solo staff, una notifica a ogni
-  profilo approvato), e trigger `dispatch_push` su `notifications`: via **pg_net** POSTa a
+  check `type` con `'reminder'`, RPC `send_reminder(message, recipients uuid[] default null)`
+  (solo staff; `recipients` null = tutta la squadra, altrimenti solo gli id profilo scelti — il
+  pannello in StaffView ha i due modi), e trigger `dispatch_push` su `notifications`: via
+  **pg_net** POSTa a
   `https://oasi.danilopuglisi.com/api/push/dispatch` titolo/corpo/vista + le subscription del
   destinatario (così l'endpoint non ha bisogno di credenziali Supabase). Il segreto nel trigger
   deve combaciare con `PUSH_SECRET` in `.env.coach` sul VPS (valore a bassa criticità: protegge
@@ -190,6 +192,20 @@ da un solo meccanismo.
 **Importante**: `supabase/push.sql` va eseguito da Danilo nel SQL Editor (richiede
 `notifications.sql`). Su Vercel l'endpoint esiste ma non è configurato (env mancanti): la
 consegna push passa SOLO dal VPS, che è il dominio vero.
+
+**Push anche su Aurora** (stesso giorno): versione minima in `Aurora Atleta360/supabase/push.sql`
+— tabella `aurora_push_subscriptions`, trigger su `aurora_assessments` (push "Nuova valutazione
+del mister" a tutti tranne l'autore) e RPC `aurora_send_reminder(message, recipients text[] =
+email)` per i promemoria manuali (admin/mister; l'app non ha campanella, arriva SOLO come push).
+Toggle di attivazione in Area personale (`NotificheCard`), pannello promemoria in fondo alla
+vista Valutazione. Stesso endpoint e stesse chiavi VAPID di Oasi (nginx espone `/api/` anche su
+aurora.danilopuglisi.com). Chiara per ora esclusa per scelta di Danilo.
+
+**Coach IA — limiti d'uso (2026-08-14)**: in `api/coach.js`, in memoria nel processo:
+15 richieste/ora per IP + tetto globale 300/giorno, con messaggi amichevoli (429) invece di
+errori tecnici; il 429 di Gemini (crediti finiti) ha un suo messaggio dedicato. Niente risposte
+"finte" quando la generazione fallisce: solo errori onesti. La chiave Gemini è stata sostituita
+il 2026-08-14 (la vecchia aveva esaurito i crediti prepagati).
 
 ## Valutazione precedente a colpo d'occhio (2026-07-30)
 
