@@ -10,10 +10,16 @@ export default function InfoView() {
   const waText = encodeURIComponent(`Sono l'atleta ${firstName || "___"}, ho un problema con l'app Atleta360.`);
   const guide = [
     ["Accesso", "Registrati con nome, cognome, ruolo, email e password. Attendi l'approvazione dello staff, poi accedi. Se dimentichi la password, usa “Password dimenticata?”."],
-    ["Il tuo profilo", "Nella scheda Profilo Atleta vedi il tuo radar a 360°, con i tuoi punti di forza e le aree di crescita."],
+    ["Il tuo profilo", "Radar a 360° con punti di forza e aree di crescita, livello, traguardi conquistati e applausi ricevuti dalle compagne (👏 sul loro profilo)."],
+    ["Autovalutazione e obiettivi", "Valutati tu stessa sugli stessi focus del mister e confronta i due punti di vista. Fissa un obiettivo su un focus e segui i progressi."],
+    ["Calendario", "Partite e allenamenti con conto alla rovescia, conferma presenza (“Ci sarò/Non ci sarò”) e un tasto per aggiungerli al calendario del telefono."],
+    ["Come stai", "Nel tuo profilo: check-in veloce di energia, e un diario privato che leggete solo tu e Danilo — mai il mister. Prima di una partita, “Prepara la testa” apre una routine guidata di 3 minuti."],
+    ["Notifiche", "La campanella in alto mostra messaggi, rilevamenti nuovi e promemoria. Da lì puoi anche attivare le notifiche push sul telefono, così ti arrivano anche ad app chiusa."],
     ["Chat", "Scrivi nella bacheca di squadra o avvia messaggi privati con le compagne (anche con foto)."],
-    ["Area personale", "Aggiungi la tua foto profilo, il numero di maglia e i contatti quando vuoi."],
-    ["Installa sul telefono", "Dal menu del browser scegli “Aggiungi a schermata Home”: si apre come un'app, a schermo intero."],
+    ["Sondaggi e album foto", "In Home trovi i sondaggi della squadra (puoi crearne uno anche tu) e l'album foto: carica le tue foto di partite ed eventi."],
+    ["Area personale", "Aggiungi la tua foto profilo, il numero di maglia, i contatti e un motto personale quando vuoi."],
+    ["Tema scuro", "L'icona sole/luna in alto cambia il tema dell'app: automatico, chiaro o scuro."],
+    ["Installa sul telefono", "Dal menu del browser scegli “Aggiungi a schermata Home”: si apre come un'app, a schermo intero — te lo propone anche l'app stessa al primo accesso."],
   ];
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
