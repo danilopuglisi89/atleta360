@@ -15,6 +15,7 @@ import CelebrationOverlay from "../components/CelebrationOverlay";
 import CoachChat from "../CoachChat";
 import GoalsCard from "../components/GoalsCard";
 import SelfAssessmentCard from "../components/SelfAssessmentCard";
+import WellbeingCard from "../components/WellbeingCard";
 
 export default function ProfiloView({ d, auth, target, onOpenFullProfile, onReload }) {
   const { NOMI, atleti, overall, storico } = d;
@@ -190,6 +191,8 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
       <GoalsCard goals={goals} scores={scores} editable athleteName={sel} personal={personal} onAdd={addGoal} onRemove={removeGoal} />
 
       <SelfAssessmentCard athleteId={atleti[sel]?.athleteId} athleteName={sel} misterScores={scores} self={atleti[sel]?.self} editable personal={personal} onSaved={onReload} />
+
+      {personal && <WellbeingCard athleteId={atleti[sel]?.athleteId} />}
 
       {nota && (
         <Card title="Nota del mister" subtitle={`Ultimo rilevamento`} style={{ marginTop: 20 }}>

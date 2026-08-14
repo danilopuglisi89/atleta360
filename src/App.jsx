@@ -67,6 +67,7 @@ function Dashboard() {
     avatarUrl: profile?.avatar_url || "",
     uid: profile?.id || null,
     isStaff,
+    isAdmin,
   };
   const NAV = [
     ...BASE_NAV,

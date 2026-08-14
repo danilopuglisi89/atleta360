@@ -2,10 +2,11 @@
 // al volo. Sparisce da sola se non c'è nulla in programma o se il
 // calendario non è ancora attivo (nessun errore mostrato qui: la vista
 // Calendario dedicata già spiega come attivarlo).
-import { useMemo } from "react";
-import { CalendarDays, MapPin, CheckCircle2, XCircle } from "lucide-react";
+import { useMemo, useState } from "react";
+import { CalendarDays, MapPin, CheckCircle2, XCircle, Wind } from "lucide-react";
 import { C, font, display } from "../theme";
 import { useCalendar } from "../calendar";
+import PreMatchRoutine from "./PreMatchRoutine";
 
 const KIND_LABEL = { match: "Partita", training: "Allenamento", other: "Evento" };
 const fmtTime = (iso) => new Date(iso).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
@@ -21,6 +22,7 @@ function countdownLabel(iso) {
 
 export default function NextEventCard({ uid }) {
   const cal = useCalendar(uid);
+  const [routine, setRoutine] = useState(false);
   const next = useMemo(() => {
     if (!cal.events) return null;
     const now = new Date();
@@ -50,7 +52,7 @@ export default function NextEventCard({ uid }) {
         </a>
       )}
       {uid && (
-        <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+        <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
           <button onClick={() => cal.setRsvp(next.id, "yes")}
             style={{ ...font, display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600, padding: "7px 12px", borderRadius: 9, cursor: "pointer",
               border: "none", background: myRsvp === "yes" ? "#fff" : "rgba(255,255,255,0.16)", color: myRsvp === "yes" ? C.navy : "#fff" }}>
@@ -61,8 +63,16 @@ export default function NextEventCard({ uid }) {
               border: "none", background: myRsvp === "no" ? "#fff" : "rgba(255,255,255,0.16)", color: myRsvp === "no" ? C.navy : "#fff" }}>
             <XCircle size={14} /> Non ci sarò
           </button>
+          {next.kind === "match" && (
+            <button onClick={() => setRoutine(true)}
+              style={{ ...font, display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600, padding: "7px 12px", borderRadius: 9, cursor: "pointer",
+                border: "none", background: C.orange, color: "#fff" }}>
+              <Wind size={14} /> Prepara la testa
+            </button>
+          )}
         </div>
       )}
+      {routine && <PreMatchRoutine onClose={() => setRoutine(false)} />}
     </div>
   );
 }
