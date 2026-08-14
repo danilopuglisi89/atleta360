@@ -42,10 +42,12 @@ alter table public.notifications drop constraint if exists notifications_type_ch
 alter table public.notifications add constraint notifications_type_check
   check (type in ('dm', 'team_chat', 'assessment', 'approval', 'goal', 'reminder'));
 
--- ---------- RPC: lo staff invia un promemoria a tutta la squadra ----------
--- (una notifica in-app per ogni account approvato tranne chi invia;
---  la push parte da sola grazie al trigger qui sotto)
-create or replace function public.send_reminder(message text)
+-- ---------- RPC: lo staff invia un promemoria ----------
+-- A tutta la squadra (recipients = null) oppure solo ad alcune persone
+-- (recipients = lista di id profilo). Una notifica in-app per destinatario;
+-- la push parte da sola grazie al trigger qui sotto.
+drop function if exists public.send_reminder(text);
+create or replace function public.send_reminder(message text, recipients uuid[] default null)
 returns integer language plpgsql security definer set search_path = public as $$
 declare
   sent integer;
@@ -60,7 +62,8 @@ begin
   insert into public.notifications (user_id, type, title, body, view)
   select p.id, 'reminder', 'Promemoria dallo staff 📣', trim(message), 'home'
   from public.profiles p
-  where p.status = 'approved' and p.id <> auth.uid();
+  where p.status = 'approved' and p.id <> auth.uid()
+    and (recipients is null or p.id = any(recipients));
   get diagnostics sent = row_count;
   return sent;
 end;

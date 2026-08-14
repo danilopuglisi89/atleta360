@@ -59,33 +59,77 @@ function ReportBlock({ label, color, items, onOpen }) {
   );
 }
 
-// Promemoria a tutta la squadra: una notifica in-app (+ push, se attivata)
-// per ogni account approvato. Passa dall'RPC send_reminder (supabase/push.sql).
+// Promemoria: una notifica in-app (+ push, se attivata) a tutta la squadra
+// oppure solo alle persone scelte. Passa dall'RPC send_reminder (supabase/push.sql).
 function ReminderCard() {
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState(null);
+  const [mode, setMode] = useState("all");          // "all" | "some"
+  const [people, setPeople] = useState(null);        // profili approvati (caricati al bisogno)
+  const [picked, setPicked] = useState({});          // id -> true
+
+  const loadPeople = async () => {
+    if (people) return;
+    const { data } = await supabase.from("profiles")
+      .select("id, first_name, last_name, category, athlete_id")
+      .eq("status", "approved").order("first_name");
+    setPeople(data || []);
+  };
+
+  const chosenIds = Object.keys(picked).filter((id) => picked[id]);
 
   const send = async () => {
     if (!msg.trim()) return;
+    if (mode === "some" && chosenIds.length === 0) { setFeedback({ err: true, text: "Scegli almeno una persona." }); return; }
     setBusy(true); setFeedback(null);
-    const { data, error } = await supabase.rpc("send_reminder", { message: msg.trim() });
+    const { data, error } = await supabase.rpc("send_reminder", {
+      message: msg.trim(),
+      recipients: mode === "some" ? chosenIds : null,
+    });
     setBusy(false);
     if (error) { setFeedback({ err: true, text: error.message }); return; }
-    setFeedback({ err: false, text: `Promemoria inviato a ${data} persone.` });
-    setMsg("");
+    setFeedback({ err: false, text: `Promemoria inviato a ${data} ${data === 1 ? "persona" : "persone"}.` });
+    setMsg(""); setPicked({});
     setTimeout(() => setFeedback(null), 5000);
   };
 
+  const label = (p) => [p.first_name, p.last_name].filter(Boolean).join(" ") || p.athlete_id || "Senza nome";
+
   return (
-    <Card title="Invia promemoria" subtitle="Arriva a tutta la squadra: campanella in-app e notifica push sul telefono (a chi le ha attivate)" style={{ marginTop: 20 }} className="a360-noprint">
+    <Card title="Invia promemoria" subtitle="Campanella in-app + notifica push sul telefono (a chi le ha attivate)" style={{ marginTop: 20 }} className="a360-noprint">
       <textarea value={msg} onChange={(e) => setMsg(e.target.value)} rows={2}
         placeholder="Es. Domani allenamento alle 18:00, portate le ginocchiere…"
         style={{ ...font, fontSize: 14, color: C.ink, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 10, padding: "10px 12px", width: "100%", boxSizing: "border-box", resize: "vertical", outline: "none" }} />
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 10, flexWrap: "wrap" }}>
+
+      <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+        {[["all", "Tutta la squadra"], ["some", "Solo alcune persone"]].map(([m, l]) => (
+          <button key={m} onClick={() => { setMode(m); if (m === "some") loadPeople(); }}
+            style={{ ...font, fontSize: 12.5, fontWeight: 600, padding: "7px 12px", borderRadius: 9, cursor: "pointer",
+              border: `1px solid ${mode === m ? C.orange : C.grid}`, background: mode === m ? C.orangeSoft : "#fff", color: mode === m ? C.orange : C.muted }}>
+            {l}
+          </button>
+        ))}
+      </div>
+
+      {mode === "some" && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+          {people === null ? (
+            <span style={{ ...font, fontSize: 12.5, color: C.muted }}>Carico l'elenco…</span>
+          ) : people.map((p) => (
+            <button key={p.id} onClick={() => setPicked((s) => ({ ...s, [p.id]: !s[p.id] }))}
+              style={{ ...font, fontSize: 12.5, padding: "6px 11px", borderRadius: 99, cursor: "pointer",
+                border: `1px solid ${picked[p.id] ? C.navy2 : C.grid}`, background: picked[p.id] ? C.navy2 : "#fff", color: picked[p.id] ? "#fff" : C.ink }}>
+              {label(p)}{p.category && p.category !== "atleta" ? ` · ${p.category}` : ""}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 12, flexWrap: "wrap" }}>
         <button onClick={send} disabled={busy || !msg.trim()}
           style={{ ...font, display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px", borderRadius: 10, border: "none", background: C.orange, color: "#fff", fontSize: 14, fontWeight: 600, cursor: busy || !msg.trim() ? "default" : "pointer", opacity: busy || !msg.trim() ? 0.6 : 1 }}>
-          <Megaphone size={16} /> {busy ? "Invio…" : "Invia alla squadra"}
+          <Megaphone size={16} /> {busy ? "Invio…" : mode === "all" ? "Invia alla squadra" : `Invia a ${chosenIds.length || "…"}`}
         </button>
         {feedback && <span style={{ ...font, fontSize: 13, color: feedback.err ? "#B4232A" : "#0F7A4E" }}>{feedback.text}</span>}
       </div>
