@@ -91,7 +91,7 @@ export default function SelfAssessmentWizard({ profile, isStaff, onDone }) {
 
   return (
     <div className="a360-noprint" style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(10,19,48,0.62)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-      <div className="a360-reveal" style={{ width: "100%", maxWidth: 460, background: "#fff", borderRadius: 20, boxShadow: "0 24px 70px rgba(10,22,80,0.4)", padding: 24, position: "relative", maxHeight: "88vh", overflowY: "auto" }}>
+      <div className="a360-reveal" style={{ width: "100%", maxWidth: 460, background: C.card, borderRadius: 20, boxShadow: "0 24px 70px rgba(10,22,80,0.4)", padding: 24, position: "relative", maxHeight: "88vh", overflowY: "auto" }}>
         {!saved && (
           <button onClick={later} aria-label="Più tardi" style={{ position: "absolute", top: 12, right: 12, background: "none", border: "none", color: C.muted, cursor: "pointer", padding: 6 }}>
             <X size={18} />
@@ -170,7 +170,7 @@ export default function SelfAssessmentWizard({ profile, isStaff, onDone }) {
             {progress}
             <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
               <button onClick={() => setStep((s) => s - 1)}
-                style={{ ...font, display: "inline-flex", alignItems: "center", gap: 6, padding: "11px 15px", borderRadius: 11, border: `1px solid ${C.grid}`, background: "#fff", color: C.muted, fontSize: 13.5, cursor: "pointer" }}>
+                style={{ ...font, display: "inline-flex", alignItems: "center", gap: 6, padding: "11px 15px", borderRadius: 11, border: `1px solid ${C.grid}`, background: C.card, color: C.muted, fontSize: 13.5, cursor: "pointer" }}>
                 <ChevronLeft size={16} /> Indietro
               </button>
               <button onClick={() => setStep((s) => s + 1)}
@@ -196,7 +196,7 @@ export default function SelfAssessmentWizard({ profile, isStaff, onDone }) {
             {error && <div style={{ ...font, fontSize: 13, color: "#B4232A", marginTop: 12 }}>{error}</div>}
             <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
               <button onClick={() => setStep(total)}
-                style={{ ...font, display: "inline-flex", alignItems: "center", gap: 6, padding: "11px 15px", borderRadius: 11, border: `1px solid ${C.grid}`, background: "#fff", color: C.muted, fontSize: 13.5, cursor: "pointer" }}>
+                style={{ ...font, display: "inline-flex", alignItems: "center", gap: 6, padding: "11px 15px", borderRadius: 11, border: `1px solid ${C.grid}`, background: C.card, color: C.muted, fontSize: 13.5, cursor: "pointer" }}>
                 <ChevronLeft size={16} /> Indietro
               </button>
               <button onClick={finish} disabled={busy}

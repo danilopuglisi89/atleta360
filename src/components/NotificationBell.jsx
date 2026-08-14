@@ -66,7 +66,7 @@ export default function NotificationBell({ items, unreadCount, onOpenItem, onMar
     <div ref={ref} style={{ position: "relative" }}>
       <button onClick={() => setOpen((v) => !v)} aria-label="Notifiche"
         style={{ position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center",
-          width: 38, height: 38, borderRadius: 11, border: `1px solid ${C.grid}`, background: "#fff", color: C.ink, cursor: "pointer" }}>
+          width: 38, height: 38, borderRadius: 11, border: `1px solid ${C.grid}`, background: C.card, color: C.ink, cursor: "pointer" }}>
         <Bell size={18} />
         {unreadCount > 0 && (
           <span style={{ position: "absolute", top: -4, right: -4, minWidth: 17, height: 17, borderRadius: 99, background: "#E11D48",
@@ -96,8 +96,8 @@ export default function NotificationBell({ items, unreadCount, onOpenItem, onMar
               return (
                 <button key={n.id} onClick={() => { setOpen(false); onOpenItem(n); }}
                   style={{ display: "flex", gap: 10, alignItems: "flex-start", width: "100%", textAlign: "left", padding: "11px 14px",
-                    border: "none", borderBottom: `1px solid ${C.grid}`, cursor: "pointer", background: n.read ? "#fff" : C.orangeSoft }}>
-                  <div style={{ width: 30, height: 30, borderRadius: 9, background: n.read ? C.surface : "#fff", color: C.navy2,
+                    border: "none", borderBottom: `1px solid ${C.grid}`, cursor: "pointer", background: n.read ? C.card : C.orangeSoft }}>
+                  <div style={{ width: 30, height: 30, borderRadius: 9, background: n.read ? C.surface : C.card, color: C.navy2,
                     display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <Icon size={15} />
                   </div>

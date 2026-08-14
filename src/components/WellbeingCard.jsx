@@ -34,7 +34,7 @@ export default function WellbeingCard({ athleteId, canSeeAll }) {
           {[1, 2, 3, 4, 5].map((n) => (
             <button key={n} onClick={() => setEnergy(n)}
               style={{ flex: 1, padding: "10px 0", borderRadius: 10, cursor: "pointer", fontSize: 20,
-                border: `2px solid ${today === n ? C.orange : C.grid}`, background: today === n ? C.orangeSoft : "#fff" }}>
+                border: `2px solid ${today === n ? C.orange : C.grid}`, background: today === n ? C.orangeSoft : C.card }}>
               {["😴", "😕", "😐", "💪", "🔥"][n - 1]}
             </button>
           ))}
@@ -66,7 +66,7 @@ export default function WellbeingCard({ athleteId, canSeeAll }) {
             <div style={{ display: "flex", gap: 4 }}>
               {[1, 2, 3, 4, 5].map((n) => (
                 <button key={n} onClick={() => setEnergyDraft(n)}
-                  style={{ ...font, fontSize: 12, fontWeight: 700, width: 28, height: 28, borderRadius: 8, border: `2px solid ${energy === n ? C.orange : C.grid}`, background: energy === n ? C.orangeSoft : "#fff", color: energy === n ? C.orange : C.muted, cursor: "pointer" }}>
+                  style={{ ...font, fontSize: 12, fontWeight: 700, width: 28, height: 28, borderRadius: 8, border: `2px solid ${energy === n ? C.orange : C.grid}`, background: energy === n ? C.orangeSoft : C.card, color: energy === n ? C.orange : C.muted, cursor: "pointer" }}>
                   {n}
                 </button>
               ))}
@@ -124,7 +124,7 @@ export default function WellbeingCard({ athleteId, canSeeAll }) {
           </div>
         ) : (
           <button onClick={() => setShowUnavail(true)}
-            style={{ ...font, marginTop: 8, fontSize: 12.5, fontWeight: 600, padding: "7px 12px", borderRadius: 9, border: `1px solid ${C.grid}`, background: "#fff", color: C.ink, cursor: "pointer" }}>
+            style={{ ...font, marginTop: 8, fontSize: 12.5, fontWeight: 600, padding: "7px 12px", borderRadius: 9, border: `1px solid ${C.grid}`, background: C.card, color: C.ink, cursor: "pointer" }}>
             Segnala indisponibilità
           </button>
         )}

@@ -85,7 +85,7 @@ export default function PreMatchRoutine({ onClose }) {
           <span style={{ ...font, fontSize: 12, color: "#fff", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>{STEPS[step].title}</span>
         </div>
 
-        <div style={{ background: "#fff", borderRadius: 20, padding: "26px 22px" }}>
+        <div style={{ background: C.card, borderRadius: 20, padding: "26px 22px" }}>
           {step === 0 && <BreathingStep />}
           {step === 1 && <VisualizeStep />}
           {step === 2 && <ChargeStep />}

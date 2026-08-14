@@ -35,7 +35,7 @@ export function SiteLogo() {
     <a href="https://www.danilopuglisi.com" target="_blank" rel="noopener noreferrer" className="a360-noprint a360-sitelogo"
       title="Danilo Puglisi — Consulente e Formatore"
       style={{ position: "fixed", right: "clamp(10px, 2vw, 18px)", zIndex: 30,
-        background: "#fff", borderRadius: 10, border: `1px solid ${C.grid}`, boxShadow: "0 4px 14px rgba(10,22,80,0.14)",
+        background: C.card, borderRadius: 10, border: `1px solid ${C.grid}`, boxShadow: "0 4px 14px rgba(10,22,80,0.14)",
         padding: "5px 9px", display: "inline-flex", alignItems: "center", lineHeight: 0, textDecoration: "none" }}>
       <img src="/logo-danilo.jpg" alt="Danilo Puglisi — Consulente e Formatore"
         style={{ height: "clamp(20px, 4.5vw, 26px)", width: "auto", display: "block" }} />

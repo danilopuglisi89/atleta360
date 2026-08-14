@@ -170,7 +170,7 @@ export default function Chat() {
                   </div>
 
                   {pickerFor === m.id && (
-                    <div style={{ display: "flex", gap: 2, marginTop: 5, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 99, padding: "3px 5px", boxShadow: "0 6px 18px rgba(10,22,80,0.12)", width: "fit-content", marginLeft: mine ? "auto" : 0 }}>
+                    <div style={{ display: "flex", gap: 2, marginTop: 5, background: C.card, border: `1px solid ${C.grid}`, borderRadius: 99, padding: "3px 5px", boxShadow: "0 6px 18px rgba(10,22,80,0.12)", width: "fit-content", marginLeft: mine ? "auto" : 0 }}>
                       {REACTION_EMOJIS.map((e) => (
                         <button key={e} onClick={() => toggleReaction(m.id, e)} title={`Reagisci ${e}`}
                           style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, lineHeight: 1, padding: "3px 5px", borderRadius: 8 }}>{e}</button>
@@ -210,11 +210,11 @@ export default function Chat() {
       <form onSubmit={(e) => { e.preventDefault(); send(); }} style={{ display: "flex", gap: 8, marginTop: 14 }}>
         <input ref={fileRef} type="file" accept="image/*" onChange={pickImage} style={{ display: "none" }} />
         <button type="button" onClick={() => fileRef.current?.click()} title="Allega immagine"
-          style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, borderRadius: 10, border: `1px solid ${C.grid}`, background: "#fff", color: C.navy2, cursor: "pointer", flexShrink: 0 }}>
+          style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, borderRadius: 10, border: `1px solid ${C.grid}`, background: C.card, color: C.navy2, cursor: "pointer", flexShrink: 0 }}>
           <ImagePlus size={18} />
         </button>
         <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Scrivi un messaggio…"
-          style={{ ...font, flex: 1, fontSize: 14, color: C.ink, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 10, padding: "11px 13px", outline: "none" }} />
+          style={{ ...font, flex: 1, fontSize: 14, color: C.ink, background: C.card, border: `1px solid ${C.grid}`, borderRadius: 10, padding: "11px 13px", outline: "none" }} />
         <button type="submit" disabled={busy || (!text.trim() && !pendingImage)}
           style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, padding: "0 16px", borderRadius: 10, border: "none", background: C.orange, color: "#fff", fontSize: 14, fontWeight: 600, cursor: busy ? "default" : "pointer", opacity: busy || (!text.trim() && !pendingImage) ? 0.6 : 1 }}>
           <Send size={16} /> Invia

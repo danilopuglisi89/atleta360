@@ -35,7 +35,7 @@ export default function AndamentoView({ d, onOpenCard }) {
     return { name, g: Math.round((overallOf(h[h.length - 1]) - overallOf(h[0])) * 10) / 10 };
   }).filter(Boolean).sort((a, b) => b.g - a.g);
 
-  const selStyle = { ...font, fontSize: 13, color: C.ink, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 9, padding: "7px 10px", cursor: "pointer" };
+  const selStyle = { ...font, fontSize: 13, color: C.ink, background: C.card, border: `1px solid ${C.grid}`, borderRadius: 9, padding: "7px 10px", cursor: "pointer" };
 
   return (
     <div>

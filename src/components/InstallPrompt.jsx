@@ -30,7 +30,7 @@ const DISMISS_PUSH = "a360-push-later";             // solo per questa apertura 
 function Sheet({ children, onClose }) {
   return (
     <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 80, padding: "0 12px calc(14px + env(safe-area-inset-bottom))" }} className="a360-reveal a360-noprint">
-      <div style={{ maxWidth: 480, margin: "0 auto", background: "#fff", borderRadius: 18, border: `1px solid ${C.grid}`, boxShadow: "0 18px 50px rgba(10,22,80,0.28)", padding: 18, position: "relative" }}>
+      <div style={{ maxWidth: 480, margin: "0 auto", background: C.card, borderRadius: 18, border: `1px solid ${C.grid}`, boxShadow: "0 18px 50px rgba(10,22,80,0.28)", padding: 18, position: "relative" }}>
         <button onClick={onClose} aria-label="Chiudi" style={{ position: "absolute", top: 10, right: 10, background: "none", border: "none", color: C.muted, cursor: "pointer", padding: 6 }}>
           <X size={18} />
         </button>
@@ -145,7 +145,7 @@ export default function InstallPrompt({ userId }) {
           {busy ? "Un attimo…" : "Attiva le notifiche"}
         </button>
         <button onClick={dismissPush}
-          style={{ ...font, padding: "12px 16px", borderRadius: 11, border: `1px solid ${C.grid}`, background: "#fff", color: C.muted, fontSize: 14, cursor: "pointer" }}>
+          style={{ ...font, padding: "12px 16px", borderRadius: 11, border: `1px solid ${C.grid}`, background: C.card, color: C.muted, fontSize: 14, cursor: "pointer" }}>
           Più tardi
         </button>
       </div>

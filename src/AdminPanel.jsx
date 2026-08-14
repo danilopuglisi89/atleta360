@@ -22,8 +22,8 @@ function Card({ title, subtitle, children, style }) {
   );
 }
 
-const inp = { ...font, fontSize: 13.5, color: C.ink, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 9, padding: "8px 10px", outline: "none" };
-const iconBtn = (color) => ({ ...font, display: "inline-flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 9, border: `1px solid ${C.grid}`, background: "#fff", color, cursor: "pointer" });
+const inp = { ...font, fontSize: 13.5, color: C.ink, background: C.card, border: `1px solid ${C.grid}`, borderRadius: 9, padding: "8px 10px", outline: "none" };
+const iconBtn = (color) => ({ ...font, display: "inline-flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 9, border: `1px solid ${C.grid}`, background: C.card, color, cursor: "pointer" });
 
 function slugify(s) {
   return (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
@@ -147,7 +147,7 @@ export default function AdminPanel({ onChange }) {
                 </div>
                 <button onClick={() => setAssess(r.id, !r.can_assess)} title="Permesso di inserire rilevamenti (mister)"
                   style={{ ...font, fontSize: 12, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 99, cursor: "pointer",
-                    border: `1px solid ${r.can_assess ? "#0F7A4E" : C.grid}`, background: r.can_assess ? "#DDF3E7" : "#fff", color: r.can_assess ? "#0F7A4E" : C.muted }}>
+                    border: `1px solid ${r.can_assess ? "#0F7A4E" : C.grid}`, background: r.can_assess ? "#DDF3E7" : C.card, color: r.can_assess ? "#0F7A4E" : C.muted }}>
                   {r.can_assess ? "✓ Rilevamenti" : "Rilevamenti"}
                 </button>
                 <div style={{ display: "flex", gap: 8 }}>
@@ -189,7 +189,7 @@ export default function AdminPanel({ onChange }) {
                   </select>
                   <button onClick={() => setAssess(r.id, !r.can_assess)} title="Permesso di inserire rilevamenti (mister)"
                     style={{ ...font, fontSize: 12, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 99, cursor: "pointer",
-                      border: `1px solid ${r.can_assess ? "#0F7A4E" : C.grid}`, background: r.can_assess ? "#DDF3E7" : "#fff", color: r.can_assess ? "#0F7A4E" : C.muted }}>
+                      border: `1px solid ${r.can_assess ? "#0F7A4E" : C.grid}`, background: r.can_assess ? "#DDF3E7" : C.card, color: r.can_assess ? "#0F7A4E" : C.muted }}>
                     {r.can_assess ? "✓ Rilevamenti" : "Rilevamenti"}
                   </button>
                   <span style={{ ...font, fontSize: 12, fontWeight: 600, color: s.color, background: s.bg, padding: "4px 10px", borderRadius: 99 }}>{s.label}</span>
@@ -288,7 +288,7 @@ export default function AdminPanel({ onChange }) {
             </div>
             <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
               <button onClick={saveDetail} style={btn(C.orange)}><Save size={16} /> Salva</button>
-              <button onClick={() => setDetail(null)} style={{ ...font, padding: "8px 14px", borderRadius: 10, border: `1px solid ${C.grid}`, background: "#fff", color: C.muted, cursor: "pointer", fontSize: 13 }}>Chiudi</button>
+              <button onClick={() => setDetail(null)} style={{ ...font, padding: "8px 14px", borderRadius: 10, border: `1px solid ${C.grid}`, background: C.card, color: C.muted, cursor: "pointer", fontSize: 13 }}>Chiudi</button>
             </div>
           </div>
         </div>
@@ -308,7 +308,7 @@ function L({ label, children }) {
 
 const btn = (color, outline = false) => ({
   ...font, fontSize: 13, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 13px", borderRadius: 10, cursor: "pointer",
-  border: outline ? `1.5px solid ${color}` : "none", background: outline ? "#fff" : color, color: outline ? color : "#fff",
+  border: outline ? `1.5px solid ${color}` : "none", background: outline ? C.card : color, color: outline ? color : "#fff",
 });
 
 function fullName(r) {

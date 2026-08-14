@@ -47,7 +47,7 @@ export function Row({ label, value, color }) {
 export function Select({ value, onChange, options, className }) {
   return (
     <select value={value} onChange={(e) => onChange(e.target.value)} className={className}
-      style={{ ...font, fontSize: 14, color: C.ink, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 10, padding: "9px 12px", outline: "none", cursor: "pointer", minWidth: 180 }}>
+      style={{ ...font, fontSize: 14, color: C.ink, background: C.card, border: `1px solid ${C.grid}`, borderRadius: 10, padding: "9px 12px", outline: "none", cursor: "pointer", minWidth: 180 }}>
       {options.map((o) => <option key={o} value={o}>{o}</option>)}
     </select>
   );

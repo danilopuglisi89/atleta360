@@ -101,13 +101,13 @@ function ReminderCard() {
     <Card title="Invia promemoria" subtitle="Campanella in-app + notifica push sul telefono (a chi le ha attivate)" style={{ marginTop: 20 }} className="a360-noprint">
       <textarea value={msg} onChange={(e) => setMsg(e.target.value)} rows={2}
         placeholder="Es. Domani allenamento alle 18:00, portate le ginocchiere…"
-        style={{ ...font, fontSize: 14, color: C.ink, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 10, padding: "10px 12px", width: "100%", boxSizing: "border-box", resize: "vertical", outline: "none" }} />
+        style={{ ...font, fontSize: 14, color: C.ink, background: C.card, border: `1px solid ${C.grid}`, borderRadius: 10, padding: "10px 12px", width: "100%", boxSizing: "border-box", resize: "vertical", outline: "none" }} />
 
       <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
         {[["all", "Tutta la squadra"], ["some", "Solo alcune persone"]].map(([m, l]) => (
           <button key={m} onClick={() => { setMode(m); if (m === "some") loadPeople(); }}
             style={{ ...font, fontSize: 12.5, fontWeight: 600, padding: "7px 12px", borderRadius: 9, cursor: "pointer",
-              border: `1px solid ${mode === m ? C.orange : C.grid}`, background: mode === m ? C.orangeSoft : "#fff", color: mode === m ? C.orange : C.muted }}>
+              border: `1px solid ${mode === m ? C.orange : C.grid}`, background: mode === m ? C.orangeSoft : C.card, color: mode === m ? C.orange : C.muted }}>
             {l}
           </button>
         ))}
@@ -120,7 +120,7 @@ function ReminderCard() {
           ) : people.map((p) => (
             <button key={p.id} onClick={() => setPicked((s) => ({ ...s, [p.id]: !s[p.id] }))}
               style={{ ...font, fontSize: 12.5, padding: "6px 11px", borderRadius: 99, cursor: "pointer",
-                border: `1px solid ${picked[p.id] ? C.navy2 : C.grid}`, background: picked[p.id] ? C.navy2 : "#fff", color: picked[p.id] ? "#fff" : C.ink }}>
+                border: `1px solid ${picked[p.id] ? C.navy2 : C.grid}`, background: picked[p.id] ? C.navy2 : C.card, color: picked[p.id] ? "#fff" : C.ink }}>
               {label(p)}{p.category && p.category !== "atleta" ? ` · ${p.category}` : ""}
             </button>
           ))}
@@ -309,7 +309,7 @@ export default function StaffView({ d, onOpenCard }) {
           <div style={{ ...font, fontSize: 12.5, color: C.muted }}>Aggiornato al {lastPeriod}</div>
         </div>
         <button className="a360-noprint" onClick={() => window.print()}
-          style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500, padding: "9px 13px", borderRadius: 10, border: `1px solid ${C.grid}`, background: "#fff", color: C.ink, cursor: "pointer" }}>
+          style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500, padding: "9px 13px", borderRadius: 10, border: `1px solid ${C.grid}`, background: C.card, color: C.ink, cursor: "pointer" }}>
           <Printer size={16} /> Stampa / PDF
         </button>
       </div>

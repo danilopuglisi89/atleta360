@@ -45,7 +45,7 @@ export default function AttendanceCard({ athletes, rows, onSave }) {
     <Card title="Registro presenze" subtitle="Check-in rapido per allenamento" style={{ marginTop: 20 }} className="a360-noprint">
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-          style={{ ...font, fontSize: 13.5, color: C.ink, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 9, padding: "8px 10px" }} />
+          style={{ ...font, fontSize: 13.5, color: C.ink, background: C.card, border: `1px solid ${C.grid}`, borderRadius: 9, padding: "8px 10px" }} />
         <button onClick={save} disabled={busy}
           style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 14px", borderRadius: 9, border: "none",
             background: C.orange, color: "#fff", fontSize: 13, fontWeight: 600, cursor: busy ? "default" : "pointer", opacity: busy ? 0.7 : 1 }}>

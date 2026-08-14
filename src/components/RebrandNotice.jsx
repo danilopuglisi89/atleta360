@@ -23,7 +23,7 @@ export default function RebrandNotice() {
 
   return (
     <div className="a360-noprint" style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 75, padding: "0 12px calc(14px + env(safe-area-inset-bottom))" }}>
-      <div className="a360-reveal" style={{ maxWidth: 480, margin: "0 auto", background: "#fff", borderRadius: 18, border: `1px solid ${C.grid}`, boxShadow: "0 18px 50px rgba(10,22,80,0.28)", padding: 18, position: "relative" }}>
+      <div className="a360-reveal" style={{ maxWidth: 480, margin: "0 auto", background: C.card, borderRadius: 18, border: `1px solid ${C.grid}`, boxShadow: "0 18px 50px rgba(10,22,80,0.28)", padding: 18, position: "relative" }}>
         <button onClick={dismiss} aria-label="Chiudi" style={{ position: "absolute", top: 10, right: 10, background: "none", border: "none", color: C.muted, cursor: "pointer", padding: 6 }}>
           <X size={18} />
         </button>

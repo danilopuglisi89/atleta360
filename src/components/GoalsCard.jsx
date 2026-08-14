@@ -25,7 +25,7 @@ export default function GoalsCard({ goals, scores, editable, personal, athleteNa
     setAdding(false);
   };
 
-  const inp = { ...font, fontSize: 13.5, color: C.ink, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 9, padding: "8px 10px", outline: "none" };
+  const inp = { ...font, fontSize: 13.5, color: C.ink, background: C.card, border: `1px solid ${C.grid}`, borderRadius: 9, padding: "8px 10px", outline: "none" };
 
   const name = athleteName || "l'atleta";
 
@@ -91,14 +91,14 @@ export default function GoalsCard({ goals, scores, editable, personal, athleteNa
                 style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 14px", borderRadius: 9, border: "none", background: C.orange, color: "#fff", fontSize: 13, fontWeight: 600, cursor: busy ? "default" : "pointer", opacity: busy ? 0.7 : 1 }}>
                 <Target size={14} /> {busy ? "Salvo…" : "Salva obiettivo"}
               </button>
-              <button onClick={() => setAdding(false)} style={{ ...font, display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 12px", borderRadius: 9, border: `1px solid ${C.grid}`, background: "#fff", color: C.muted, fontSize: 13, cursor: "pointer" }}>
+              <button onClick={() => setAdding(false)} style={{ ...font, display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 12px", borderRadius: 9, border: `1px solid ${C.grid}`, background: C.card, color: C.muted, fontSize: 13, cursor: "pointer" }}>
                 <X size={14} /> Annulla
               </button>
             </div>
           </div>
         ) : (
           <button onClick={() => setAdding(true)}
-            style={{ ...font, display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px", borderRadius: 10, border: `1px solid ${C.grid}`, background: "#fff", color: C.navy2, fontSize: 13.5, fontWeight: 600, cursor: "pointer", marginTop: goals.length ? 16 : 0 }}>
+            style={{ ...font, display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px", borderRadius: 10, border: `1px solid ${C.grid}`, background: C.card, color: C.navy2, fontSize: 13.5, fontWeight: 600, cursor: "pointer", marginTop: goals.length ? 16 : 0 }}>
             <Plus size={16} /> Nuovo obiettivo
           </button>
         )

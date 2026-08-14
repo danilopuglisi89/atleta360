@@ -65,7 +65,7 @@ export default function PollsCard({ uid, isStaff }) {
                     return (
                       <button key={i} onClick={() => vote(p.id, i)}
                         style={{ position: "relative", textAlign: "left", ...font, fontSize: 12.5, padding: "8px 11px", borderRadius: 9, cursor: "pointer", overflow: "hidden",
-                          border: `1px solid ${myVote === i ? C.orange : C.grid}`, background: "#fff" }}>
+                          border: `1px solid ${myVote === i ? C.orange : C.grid}`, background: C.card }}>
                         <div style={{ position: "absolute", inset: 0, width: `${pct}%`, background: myVote === i ? C.orangeSoft : C.surface, zIndex: 0 }} />
                         <span style={{ position: "relative", zIndex: 1, color: C.ink, fontWeight: myVote === i ? 700 : 500 }}>{opt} — {pct}% ({n})</span>
                       </button>

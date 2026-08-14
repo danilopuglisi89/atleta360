@@ -149,7 +149,7 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
         {!personal && auth?.uid && (
           <button className="a360-noprint" onClick={reactions.toggle} title={reactions.mine ? "Togli l'applauso" : `Applaudi ${sel}`}
             style={{ ...font, fontSize: 12.5, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 99, cursor: "pointer",
-              border: `1px solid ${reactions.mine ? "#E11D74" : C.grid}`, background: reactions.mine ? "#FCE7F1" : "#fff", color: reactions.mine ? "#E11D74" : C.muted }}>
+              border: `1px solid ${reactions.mine ? "#E11D74" : C.grid}`, background: reactions.mine ? "#FCE7F1" : C.card, color: reactions.mine ? "#E11D74" : C.muted }}>
             <Heart size={13} fill={reactions.mine ? "#E11D74" : "none"} /> {reactions.count}
           </button>
         )}
@@ -163,7 +163,7 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
         </span>
         <button className="a360-noprint" onClick={() => window.print()}
           style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500,
-            padding: "9px 13px", borderRadius: 10, border: `1px solid ${C.grid}`, background: "#fff", color: C.ink, cursor: "pointer" }}>
+            padding: "9px 13px", borderRadius: 10, border: `1px solid ${C.grid}`, background: C.card, color: C.ink, cursor: "pointer" }}>
           <Printer size={16} /> Stampa / PDF
         </button>
         <div style={{ marginLeft: "auto", ...display, fontSize: 13, color: C.muted }}>

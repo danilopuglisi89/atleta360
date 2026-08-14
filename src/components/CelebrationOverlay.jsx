@@ -15,7 +15,7 @@ export default function CelebrationOverlay({ badge, onClose, onShare }) {
 
   return (
     <div className="a360-noprint" style={{ position: "fixed", inset: 0, zIndex: 95, background: "rgba(10,19,48,0.7)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-      <div className="a360-reveal" style={{ background: "#fff", borderRadius: 22, padding: 30, textAlign: "center", maxWidth: 360, position: "relative" }}>
+      <div className="a360-reveal" style={{ background: C.card, borderRadius: 22, padding: 30, textAlign: "center", maxWidth: 360, position: "relative" }}>
         <button onClick={onClose} aria-label="Chiudi" style={{ position: "absolute", top: 12, right: 12, background: "none", border: "none", color: C.muted, cursor: "pointer" }}>
           <X size={20} />
         </button>

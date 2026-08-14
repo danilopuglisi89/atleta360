@@ -60,7 +60,7 @@ export default function AdminChatLog() {
               return (
                 <div key={g.key} style={{ border: `1px solid ${C.grid}`, borderRadius: 12, overflow: "hidden" }}>
                   <button onClick={() => setOpen((o) => ({ ...o, [g.key]: !o[g.key] }))}
-                    style={{ ...font, width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", border: "none", background: "#fff", cursor: "pointer", textAlign: "left" }}>
+                    style={{ ...font, width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", border: "none", background: C.card, cursor: "pointer", textAlign: "left" }}>
                     {isOpen ? <ChevronDown size={16} color={C.muted} /> : <ChevronRight size={16} color={C.muted} />}
                     <span style={{ ...display, fontSize: 14, fontWeight: 600, color: C.ink, flex: 1 }}>{names}</span>
                     <span style={{ ...font, fontSize: 12, color: C.muted }}>{g.msgs.length} messaggi · {dt(new Date(g.last).toISOString())}</span>

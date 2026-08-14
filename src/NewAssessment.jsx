@@ -131,7 +131,7 @@ export default function NewAssessment({ onSaved }) {
         <div style={{ marginBottom: 18 }}>
           <label style={{ ...font, fontSize: 12.5, color: C.muted, fontWeight: 500, marginBottom: 6, display: "block" }}>Atleta</label>
           <select value={athleteId} onChange={(e) => setAthleteId(e.target.value)} disabled={!!editingId}
-            style={{ ...font, fontSize: 14, color: C.ink, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 10, padding: "10px 12px", minWidth: 220, cursor: editingId ? "not-allowed" : "pointer", opacity: editingId ? 0.7 : 1 }}>
+            style={{ ...font, fontSize: 14, color: C.ink, background: C.card, border: `1px solid ${C.grid}`, borderRadius: 10, padding: "10px 12px", minWidth: 220, cursor: editingId ? "not-allowed" : "pointer", opacity: editingId ? 0.7 : 1 }}>
             {athletes.map((a) => <option key={a.id} value={a.id}>{a.identifier}</option>)}
           </select>
         </div>
@@ -213,7 +213,7 @@ export default function NewAssessment({ onSaved }) {
             )}
           </div>
           <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} placeholder="Osservazioni del mister…"
-            style={{ ...font, fontSize: 14, color: C.ink, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 10, padding: "10px 12px", width: "100%", boxSizing: "border-box", resize: "vertical", outline: "none" }} />
+            style={{ ...font, fontSize: 14, color: C.ink, background: C.card, border: `1px solid ${C.grid}`, borderRadius: 10, padding: "10px 12px", width: "100%", boxSizing: "border-box", resize: "vertical", outline: "none" }} />
         </div>
 
         {error && (
@@ -228,7 +228,7 @@ export default function NewAssessment({ onSaved }) {
             <Save size={17} /> {busy ? "Salvo…" : editingId ? "Aggiorna rilevamento" : "Salva rilevamento"}
           </button>
           {editingId && (
-            <button onClick={resetForm} style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, padding: "12px 16px", borderRadius: 11, border: `1px solid ${C.grid}`, background: "#fff", color: C.muted, fontSize: 14, cursor: "pointer" }}>
+            <button onClick={resetForm} style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, padding: "12px 16px", borderRadius: 11, border: `1px solid ${C.grid}`, background: C.card, color: C.muted, fontSize: 14, cursor: "pointer" }}>
               <X size={16} /> Annulla modifica
             </button>
           )}
@@ -244,10 +244,10 @@ export default function NewAssessment({ onSaved }) {
               <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", borderBottom: `1px solid ${C.grid}`, padding: "10px 2px", background: editingId === a.id ? C.surface : "transparent", borderRadius: editingId === a.id ? 8 : 0 }}>
                 <span style={{ ...display, fontSize: 12.5, fontWeight: 600, color: C.navy, background: C.surface, borderRadius: 8, padding: "4px 10px", whiteSpace: "nowrap" }}>{fmt(a.created_at)}</span>
                 <span style={{ ...font, fontSize: 13, color: C.muted, flex: "1 1 160px", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.note || "—"}</span>
-                <button onClick={() => startEdit(a)} title="Modifica" style={{ ...font, display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, padding: "6px 11px", borderRadius: 9, border: `1px solid ${C.grid}`, background: "#fff", color: C.navy2, cursor: "pointer" }}>
+                <button onClick={() => startEdit(a)} title="Modifica" style={{ ...font, display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, padding: "6px 11px", borderRadius: 9, border: `1px solid ${C.grid}`, background: C.card, color: C.navy2, cursor: "pointer" }}>
                   <Pencil size={14} /> Modifica
                 </button>
-                <button onClick={() => del(a)} title="Elimina" style={{ ...font, display: "inline-flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 9, border: `1px solid ${C.grid}`, background: "#fff", color: "#B4232A", cursor: "pointer" }}>
+                <button onClick={() => del(a)} title="Elimina" style={{ ...font, display: "inline-flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 9, border: `1px solid ${C.grid}`, background: C.card, color: "#B4232A", cursor: "pointer" }}>
                   <Trash2 size={15} />
                 </button>
               </div>

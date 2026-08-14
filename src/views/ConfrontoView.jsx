@@ -26,7 +26,7 @@ export default function ConfrontoView({ d }) {
               <button key={n} onClick={() => toggle(n)}
                 style={{ ...font, fontSize: 13, padding: "8px 14px", borderRadius: 99, cursor: "pointer",
                   border: `1.5px solid ${on ? (SERIES[idx] || C.orange) : C.grid}`,
-                  background: on ? (SERIES[idx] || C.orange) : "#fff",
+                  background: on ? (SERIES[idx] || C.orange) : C.card,
                   color: on ? "#fff" : C.ink, fontWeight: on ? 600 : 400, transition: "all .15s" }}>
                 {n}
               </button>

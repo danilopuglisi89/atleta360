@@ -47,7 +47,7 @@ export default function PublicProfileCard({ identifier, model, entry, viewer, on
                 const Icon = s.icon;
                 return (
                   <a key={i} href={s.url} target="_blank" rel="noopener noreferrer" title={s.label}
-                    style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 10, border: `1px solid ${C.grid}`, background: "#fff", color: C.navy2 }}>
+                    style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 10, border: `1px solid ${C.grid}`, background: C.card, color: C.navy2 }}>
                     <Icon size={17} />
                   </a>
                 );
@@ -64,7 +64,7 @@ export default function PublicProfileCard({ identifier, model, entry, viewer, on
             )}
             {onFullProfile && (
               <button onClick={() => onFullProfile(identifier)}
-                style={{ ...font, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "10px 16px", borderRadius: 11, border: `1px solid ${C.grid}`, background: "#fff", color: C.navy2, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                style={{ ...font, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "10px 16px", borderRadius: 11, border: `1px solid ${C.grid}`, background: C.card, color: C.navy2, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
                 <ClipboardList size={16} /> Vedi scheda completa
               </button>
             )}

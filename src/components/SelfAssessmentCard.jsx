@@ -91,7 +91,7 @@ export default function SelfAssessmentCard({ athleteId, athleteName, misterScore
               <Save size={16} /> {busy ? "Salvo…" : "Salva"}
             </button>
             <button onClick={() => setEditing(false)}
-              style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.grid}`, background: "#fff", color: C.muted, fontSize: 13.5, cursor: "pointer" }}>
+              style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.grid}`, background: C.card, color: C.muted, fontSize: 13.5, cursor: "pointer" }}>
               <X size={15} /> Annulla
             </button>
           </div>

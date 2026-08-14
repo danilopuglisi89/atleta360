@@ -64,7 +64,7 @@ export default function CoachChat({ title = "Coach IA", subtitle, suggestions = 
               {suggestions.map((s) => (
                 <button key={s} onClick={() => send(s)} disabled={busy}
                   style={{ ...font, fontSize: 12.5, padding: "7px 12px", borderRadius: 99, cursor: "pointer",
-                    border: `1px solid ${C.grid}`, background: "#fff", color: C.navy2, textAlign: "left" }}>
+                    border: `1px solid ${C.grid}`, background: C.card, color: C.navy2, textAlign: "left" }}>
                   {s}
                 </button>
               ))}
@@ -100,7 +100,7 @@ export default function CoachChat({ title = "Coach IA", subtitle, suggestions = 
 
       <form onSubmit={(e) => { e.preventDefault(); send(); }} style={{ display: "flex", gap: 8 }}>
         <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Scrivi al coach…"
-          style={{ ...font, flex: 1, fontSize: 14, color: C.ink, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 10, padding: "11px 13px", outline: "none" }} />
+          style={{ ...font, flex: 1, fontSize: 14, color: C.ink, background: C.card, border: `1px solid ${C.grid}`, borderRadius: 10, padding: "11px 13px", outline: "none" }} />
         <button type="submit" disabled={busy || !input.trim()}
           style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, padding: "0 16px", borderRadius: 10, border: "none",
             background: C.orange, color: "#fff", fontSize: 14, fontWeight: 600, cursor: busy || !input.trim() ? "default" : "pointer", opacity: busy || !input.trim() ? 0.6 : 1 }}>

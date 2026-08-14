@@ -30,7 +30,7 @@ function EventCard({ ev, myRsvp, counts, names, isStaff, onRsvp, onResult, onCan
   const past = new Date(ev.starts_at) < new Date();
 
   return (
-    <div style={{ border: `1px solid ${C.grid}`, borderRadius: 14, padding: "14px 16px", background: ev.cancelled ? "#FAFAFC" : "#fff", opacity: ev.cancelled ? 0.65 : 1 }}>
+    <div style={{ border: `1px solid ${C.grid}`, borderRadius: 14, padding: "14px 16px", background: ev.cancelled ? "#FAFAFC" : C.card, opacity: ev.cancelled ? 0.65 : 1 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <KindBadge kind={ev.kind} />
         {ev.title && <span style={{ ...display, fontSize: 15, fontWeight: 700, color: C.ink }}>{ev.title}</span>}
@@ -63,19 +63,19 @@ function EventCard({ ev, myRsvp, counts, names, isStaff, onRsvp, onResult, onCan
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
           <button onClick={() => onRsvp(ev.id, "yes")}
             style={{ ...font, display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600, padding: "7px 12px", borderRadius: 9, cursor: "pointer",
-              border: `1px solid ${myRsvp === "yes" ? "#0F7A4E" : C.grid}`, background: myRsvp === "yes" ? "#DDF3E7" : "#fff", color: myRsvp === "yes" ? "#0F7A4E" : C.muted }}>
+              border: `1px solid ${myRsvp === "yes" ? "#0F7A4E" : C.grid}`, background: myRsvp === "yes" ? "#DDF3E7" : C.card, color: myRsvp === "yes" ? "#0F7A4E" : C.muted }}>
             <CheckCircle2 size={14} /> Ci sarò
           </button>
           <button onClick={() => onRsvp(ev.id, "no")}
             style={{ ...font, display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600, padding: "7px 12px", borderRadius: 9, cursor: "pointer",
-              border: `1px solid ${myRsvp === "no" ? "#B4232A" : C.grid}`, background: myRsvp === "no" ? "#FDECEC" : "#fff", color: myRsvp === "no" ? "#B4232A" : C.muted }}>
+              border: `1px solid ${myRsvp === "no" ? "#B4232A" : C.grid}`, background: myRsvp === "no" ? "#FDECEC" : C.card, color: myRsvp === "no" ? "#B4232A" : C.muted }}>
             <XCircle size={14} /> Non ci sarò
           </button>
           <span style={{ ...font, fontSize: 12, color: C.muted }}>
             {counts.yes} conferm{counts.yes === 1 ? "a" : "e"}{counts.no > 0 ? ` · ${counts.no} assenz${counts.no === 1 ? "a" : "e"}` : ""}
           </span>
           <button onClick={() => downloadEventICS(ev, "Oasi · ")} title="Aggiungi al calendario del telefono"
-            style={{ ...font, display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, padding: "6px 10px", borderRadius: 8, border: `1px solid ${C.grid}`, background: "#fff", color: C.muted, cursor: "pointer" }}>
+            style={{ ...font, display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, padding: "6px 10px", borderRadius: 8, border: `1px solid ${C.grid}`, background: C.card, color: C.muted, cursor: "pointer" }}>
             <Download size={12} /> Al calendario
           </button>
         </div>
@@ -102,12 +102,12 @@ function EventCard({ ev, myRsvp, counts, names, isStaff, onRsvp, onResult, onCan
           )}
           {!past && !ev.cancelled && (
             <button onClick={() => onCancel(ev.id)} title="Annulla evento"
-              style={{ ...font, display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, padding: "6px 10px", borderRadius: 8, border: `1px solid ${C.grid}`, background: "#fff", color: "#B4232A", cursor: "pointer" }}>
+              style={{ ...font, display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, padding: "6px 10px", borderRadius: 8, border: `1px solid ${C.grid}`, background: C.card, color: "#B4232A", cursor: "pointer" }}>
               <Ban size={13} /> Annulla
             </button>
           )}
           <button onClick={() => onDelete(ev.id)} title="Elimina"
-            style={{ ...font, display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 8, border: `1px solid ${C.grid}`, background: "#fff", color: C.muted, cursor: "pointer" }}>
+            style={{ ...font, display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 8, border: `1px solid ${C.grid}`, background: C.card, color: C.muted, cursor: "pointer" }}>
             <Trash2 size={13} />
           </button>
         </div>
@@ -187,7 +187,7 @@ export default function CalendarioView({ auth }) {
     setErr(e);
   };
 
-  const inputStyle = { ...font, fontSize: 13.5, color: C.ink, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 9, padding: "9px 11px", outline: "none", boxSizing: "border-box" };
+  const inputStyle = { ...font, fontSize: 13.5, color: C.ink, background: C.card, border: `1px solid ${C.grid}`, borderRadius: 9, padding: "9px 11px", outline: "none", boxSizing: "border-box" };
 
   if (cal.events === null) return <Card title="Carico il calendario…" />;
   if (cal.error) return <Card title="Calendario non disponibile" subtitle={`Va prima eseguito supabase/calendar.sql (${cal.error})`} />;
@@ -257,11 +257,11 @@ export default function CalendarioView({ auth }) {
                     {!r.active && " (in pausa)"}
                   </span>
                   <button onClick={() => cal.updateRecurrence(r.id, { active: !r.active })}
-                    style={{ ...font, fontSize: 12, fontWeight: 600, padding: "5px 10px", borderRadius: 8, border: `1px solid ${C.grid}`, background: "#fff", color: r.active ? C.muted : "#0F7A4E", cursor: "pointer" }}>
+                    style={{ ...font, fontSize: 12, fontWeight: 600, padding: "5px 10px", borderRadius: 8, border: `1px solid ${C.grid}`, background: C.card, color: r.active ? C.muted : "#0F7A4E", cursor: "pointer" }}>
                     {r.active ? "Metti in pausa" : "Riattiva"}
                   </button>
                   <button onClick={() => { if (window.confirm("Eliminare la routine e i suoi allenamenti futuri?")) cal.removeRecurrence(r.id); }}
-                    style={{ ...font, display: "inline-flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: 8, border: `1px solid ${C.grid}`, background: "#fff", color: "#B4232A", cursor: "pointer" }}>
+                    style={{ ...font, display: "inline-flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: 8, border: `1px solid ${C.grid}`, background: C.card, color: "#B4232A", cursor: "pointer" }}>
                     <Trash2 size={13} />
                   </button>
                 </div>

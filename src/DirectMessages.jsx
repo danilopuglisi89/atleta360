@@ -155,8 +155,8 @@ export default function DirectMessages({ initialToId, initialToName, onConversat
 
           <form onSubmit={(e) => { e.preventDefault(); send(); }} style={{ display: "flex", gap: 8, marginTop: 14 }}>
             <input ref={fileRef} type="file" accept="image/*" onChange={pickImage} style={{ display: "none" }} />
-            <button type="button" onClick={() => fileRef.current?.click()} title="Allega immagine" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, borderRadius: 10, border: `1px solid ${C.grid}`, background: "#fff", color: C.navy2, cursor: "pointer", flexShrink: 0 }}><ImagePlus size={18} /></button>
-            <input value={text} onChange={(e) => setText(e.target.value)} placeholder={`Scrivi a ${to?.name || ""}…`} style={{ ...font, flex: 1, fontSize: 14, color: C.ink, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 10, padding: "11px 13px", outline: "none" }} />
+            <button type="button" onClick={() => fileRef.current?.click()} title="Allega immagine" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, borderRadius: 10, border: `1px solid ${C.grid}`, background: C.card, color: C.navy2, cursor: "pointer", flexShrink: 0 }}><ImagePlus size={18} /></button>
+            <input value={text} onChange={(e) => setText(e.target.value)} placeholder={`Scrivi a ${to?.name || ""}…`} style={{ ...font, flex: 1, fontSize: 14, color: C.ink, background: C.card, border: `1px solid ${C.grid}`, borderRadius: 10, padding: "11px 13px", outline: "none" }} />
             <button type="submit" disabled={busy || (!text.trim() && !pendingImage)} style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, padding: "0 16px", borderRadius: 10, border: "none", background: C.orange, color: "#fff", fontSize: 14, fontWeight: 600, cursor: busy ? "default" : "pointer", opacity: busy || (!text.trim() && !pendingImage) ? 0.6 : 1 }}><Send size={16} /> Invia</button>
           </form>
         </>

@@ -18,7 +18,7 @@ function Card({ title, subtitle, children, style }) {
 }
 
 const labelStyle = { ...font, fontSize: 12.5, color: C.muted, fontWeight: 500, marginBottom: 6, display: "block" };
-const inputStyle = { ...font, fontSize: 14, color: C.ink, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 10, padding: "10px 12px", width: "100%", boxSizing: "border-box", outline: "none" };
+const inputStyle = { ...font, fontSize: 14, color: C.ink, background: C.card, border: `1px solid ${C.grid}`, borderRadius: 10, padding: "10px 12px", width: "100%", boxSizing: "border-box", outline: "none" };
 
 export function Avatar({ url, name, size = 96, ring }) {
   const initials = (name || "").split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "?";
@@ -115,7 +115,7 @@ export default function PersonalArea() {
           <Avatar url={form.avatar_url} name={fullName} size={72} />
           <div>
             <input ref={fileRef} type="file" accept="image/*" onChange={onFile} style={{ display: "none" }} />
-            <button onClick={() => fileRef.current?.click()} style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500, padding: "9px 13px", borderRadius: 10, border: `1px solid ${C.grid}`, background: "#fff", color: C.ink, cursor: "pointer" }}>
+            <button onClick={() => fileRef.current?.click()} style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500, padding: "9px 13px", borderRadius: 10, border: `1px solid ${C.grid}`, background: C.card, color: C.ink, cursor: "pointer" }}>
               <Camera size={16} /> {form.avatar_url ? "Cambia foto" : "Aggiungi foto"}
             </button>
             {form.avatar_url && (
