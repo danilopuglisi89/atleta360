@@ -8,6 +8,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      strategies: "injectManifest",      // service worker nostro (src/sw.js): precache + push
+      srcDir: "src",
+      filename: "sw.js",
       includeAssets: ["favicon.svg", "logo-oasivolley.png"],
       manifest: {
         name: "Atleta360 — Soft Skills",

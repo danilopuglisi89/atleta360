@@ -69,7 +69,12 @@ function Dashboard() {
     ...(isAdmin ? [{ id: "admin", label: "Admin", icon: ShieldCheck, comp: AdminPanel }] : []),
   ];
 
-  const [view, setView] = useState("home");
+  // Vista iniziale: se l'app è stata aperta toccando una notifica push,
+  // il service worker passa ?view=... nell'URL (vedi src/sw.js).
+  const [view, setView] = useState(() => {
+    const v = new URLSearchParams(window.location.search).get("view");
+    return ["home", "profilo", "chat", "andamento", "staff", "info"].includes(v) ? v : "home";
+  });
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cardTarget, setCardTarget] = useState(null);          // card social aperta cliccando un nome
   const [profileTarget, setProfileTarget] = useState(null);    // scheda completa (solo staff)
@@ -296,7 +301,7 @@ function Dashboard() {
               <div style={{ ...font, fontSize: 12.5, color: C.orange, fontWeight: 600, letterSpacing: 0.6, textTransform: "uppercase" }}>Dashboard soft skills</div>
               <h1 style={{ ...display, fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 700, color: C.ink, margin: "4px 0 0", letterSpacing: -0.5 }}>{active.label}</h1>
             </div>
-            <NotificationBell items={notifications} unreadCount={unreadNotif.length} onOpenItem={openNotification} onMarkAllRead={markAllRead} />
+            <NotificationBell items={notifications} unreadCount={unreadNotif.length} onOpenItem={openNotification} onMarkAllRead={markAllRead} userId={profile?.id} />
           </div>
           {needsSuspense ? <Suspense fallback={<ViewFallback />}>{content}</Suspense> : content}
         </main>

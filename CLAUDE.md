@@ -89,9 +89,7 @@ solo, in modo idempotente.
   ChatPage); quelle private conversazione per conversazione (`onConversationOpen` in
   `DirectMessages.jsx`, che marca lette solo le DM di quel mittente). Puntino rosso anche sulle
   singole compagne nel selettore "A chi vuoi scrivere?".
-- **Push PWA rimandata**: richiederebbe una tabella subscription + endpoint Vercel con firma
-  VAPID (pg_net/webhook non basta per il protocollo Web Push) — troppo per questa ondata. Badge +
-  campanella + le email Resend già esistenti (`notify-email.sql`) coprono il bisogno per ora.
+- ~~Push PWA rimandata~~ → **fatta il 2026-08-14**, vedi sezione "Notifiche push" sotto.
 
 **Importante**: `supabase/notifications.sql` va incollato ed eseguito da Danilo nel SQL Editor di
 Supabase (stesso flusso manuale degli altri script in `supabase/`) — non è stato eseguito da
@@ -152,6 +150,42 @@ per via del trigger su obiettivo raggiunto) — non eseguiti da Claude Code.
 
 **Importante**: `supabase/reports.sql` e `supabase/attendance.sql` vanno eseguiti da Danilo nel
 SQL Editor di Supabase — non eseguiti da Claude Code.
+
+## Notifiche push (2026-08-14)
+
+Web Push vere (arrivano a app chiusa), costruite sopra il sistema notifiche esistente:
+**ogni INSERT in `public.notifications` fa partire una push** al destinatario, quindi
+rilevamenti, bacheca, DM, obiettivi, approvazioni e il nuovo tipo `reminder` sono coperti
+da un solo meccanismo.
+
+- **`supabase/push.sql`** — tabella `push_subscriptions` (RLS: ognuno le proprie), allarga il
+  check `type` con `'reminder'`, RPC `send_reminder(message)` (solo staff, una notifica a ogni
+  profilo approvato), e trigger `dispatch_push` su `notifications`: via **pg_net** POSTa a
+  `https://oasi.danilopuglisi.com/api/push/dispatch` titolo/corpo/vista + le subscription del
+  destinatario (così l'endpoint non ha bisogno di credenziali Supabase). Il segreto nel trigger
+  deve combaciare con `PUSH_SECRET` in `.env.coach` sul VPS (valore a bassa criticità: protegge
+  solo il relay).
+- **`api/push.js`** — endpoint stile Vercel montato in `coach-server.mjs` su
+  `/api/push/dispatch` (quindi gira nel processo PM2 `atleta360-coach` già esistente, dietro
+  nginx `/api/`). Usa il pacchetto **`web-push`** (VAPID). Env: `VAPID_PUBLIC_KEY`,
+  `VAPID_PRIVATE_KEY`, `PUSH_SECRET` in `.env.coach`. `/api/health` ora riporta anche
+  `push: true/false`.
+- **Service worker custom**: `vite.config.js` è passato da `generateSW` a **`injectManifest`**
+  con `src/sw.js` (precache Workbox come prima + listener `push` e `notificationclick`; il
+  click apre l'app su `/?view=...`, che App.jsx legge all'avvio per la vista iniziale).
+- **`src/push.js`** — `usePush(userId)`: stati `unsupported / ios-install / denied / on / off`,
+  `enable()` (permesso + subscribe + upsert su Supabase), `disable()`. Su iOS le push PWA
+  esistono solo da 16.4 **e solo se l'app è installata sulla Home** — lo stato `ios-install`
+  mostra l'istruzione. La chiave pubblica VAPID sta nel sorgente (è pubblica per definizione).
+- **UI**: riga "Attiva notifiche sul telefono" in cima al menu della campanella
+  (`NotificationBell.jsx`, prop nuova `userId`); pannello staff "Invia promemoria" in
+  `StaffView.jsx` (`ReminderCard`, chiama l'RPC).
+- Le chiavi VAPID sono state generate una volta con `npx web-push generate-vapid-keys` e vivono
+  in `.env.coach` sul VPS (mai committate; la privata esiste solo lì).
+
+**Importante**: `supabase/push.sql` va eseguito da Danilo nel SQL Editor (richiede
+`notifications.sql`). Su Vercel l'endpoint esiste ma non è configurato (env mancanti): la
+consegna push passa SOLO dal VPS, che è il dominio vero.
 
 ## Valutazione precedente a colpo d'occhio (2026-07-30)
 

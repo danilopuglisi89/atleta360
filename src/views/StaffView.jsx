@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip, ResponsiveContainer } from "recharts";
-import { Printer, Sparkles, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Printer, Sparkles, Trash2, ChevronDown, ChevronUp, Megaphone } from "lucide-react";
 import { C, font, display } from "../theme";
+import { supabase } from "../supabaseClient";
 import { CORE, TITLE, SKILL_META } from "../skills";
 import { Card, tooltipStyle, PrintStamp } from "../components/ui";
 import Classifica from "../components/Classifica";
@@ -55,6 +56,40 @@ function ReportBlock({ label, color, items, onOpen }) {
         }) : <span style={{ ...font, fontSize: 13, color: C.muted }}>—</span>}
       </div>
     </div>
+  );
+}
+
+// Promemoria a tutta la squadra: una notifica in-app (+ push, se attivata)
+// per ogni account approvato. Passa dall'RPC send_reminder (supabase/push.sql).
+function ReminderCard() {
+  const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+
+  const send = async () => {
+    if (!msg.trim()) return;
+    setBusy(true); setFeedback(null);
+    const { data, error } = await supabase.rpc("send_reminder", { message: msg.trim() });
+    setBusy(false);
+    if (error) { setFeedback({ err: true, text: error.message }); return; }
+    setFeedback({ err: false, text: `Promemoria inviato a ${data} persone.` });
+    setMsg("");
+    setTimeout(() => setFeedback(null), 5000);
+  };
+
+  return (
+    <Card title="Invia promemoria" subtitle="Arriva a tutta la squadra: campanella in-app e notifica push sul telefono (a chi le ha attivate)" style={{ marginTop: 20 }} className="a360-noprint">
+      <textarea value={msg} onChange={(e) => setMsg(e.target.value)} rows={2}
+        placeholder="Es. Domani allenamento alle 18:00, portate le ginocchiere…"
+        style={{ ...font, fontSize: 14, color: C.ink, background: "#fff", border: `1px solid ${C.grid}`, borderRadius: 10, padding: "10px 12px", width: "100%", boxSizing: "border-box", resize: "vertical", outline: "none" }} />
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 10, flexWrap: "wrap" }}>
+        <button onClick={send} disabled={busy || !msg.trim()}
+          style={{ ...font, display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px", borderRadius: 10, border: "none", background: C.orange, color: "#fff", fontSize: 14, fontWeight: 600, cursor: busy || !msg.trim() ? "default" : "pointer", opacity: busy || !msg.trim() ? 0.6 : 1 }}>
+          <Megaphone size={16} /> {busy ? "Invio…" : "Invia alla squadra"}
+        </button>
+        {feedback && <span style={{ ...font, fontSize: 13, color: feedback.err ? "#B4232A" : "#0F7A4E" }}>{feedback.text}</span>}
+      </div>
+    </Card>
   );
 }
 
@@ -201,6 +236,8 @@ export default function StaffView({ d, onOpenCard }) {
           )}
         </div>
       </Card>
+
+      <ReminderCard />
 
       <Card title="Storico report" subtitle={reports.length ? `${reports.length} salvati` : "Nessun report salvato ancora"} style={{ marginTop: 20 }} className="a360-noprint">
         {reports.length === 0 ? (

@@ -1,8 +1,47 @@
 import { useEffect, useRef, useState } from "react";
-import { Bell, MessageCircle, MessagesSquare, ClipboardPlus, CheckCircle2, Target } from "lucide-react";
+import { Bell, BellRing, MessageCircle, MessagesSquare, ClipboardPlus, CheckCircle2, Target, Smartphone } from "lucide-react";
 import { C, font, display } from "../theme";
+import { usePush } from "../push";
 
-const ICON_BY_TYPE = { dm: MessageCircle, team_chat: MessagesSquare, assessment: ClipboardPlus, approval: CheckCircle2, goal: Target };
+const ICON_BY_TYPE = { dm: MessageCircle, team_chat: MessagesSquare, assessment: ClipboardPlus, approval: CheckCircle2, goal: Target, reminder: BellRing };
+
+// Riga in cima al menu della campanella: attiva/disattiva le push sul dispositivo.
+function PushRow({ userId }) {
+  const { status, busy, enable, disable } = usePush(userId);
+  if (status === "loading" || status === "unsupported") return null;
+
+  let label, action = null, hint = null;
+  if (status === "ios-install") {
+    label = "Notifiche sul telefono";
+    hint = "Su iPhone: prima aggiungi l'app alla schermata Home (Condividi → Aggiungi a Home), poi riapri da lì.";
+  } else if (status === "denied") {
+    label = "Notifiche bloccate dal browser";
+    hint = "Riattivale dalle impostazioni del sito nel browser.";
+  } else if (status === "on") {
+    label = "Notifiche push attive ✓";
+    action = { text: busy ? "…" : "Disattiva", fn: disable };
+  } else {
+    label = "Attiva notifiche sul telefono";
+    action = { text: busy ? "…" : "Attiva", fn: enable };
+  }
+
+  return (
+    <div style={{ padding: "10px 14px", borderBottom: `1px solid ${C.grid}`, background: C.surface }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <Smartphone size={14} color={C.navy2} style={{ flexShrink: 0 }} />
+        <span style={{ ...font, fontSize: 12.5, color: C.ink, fontWeight: 600, flex: 1 }}>{label}</span>
+        {action && (
+          <button onClick={action.fn} disabled={busy}
+            style={{ ...font, fontSize: 12, fontWeight: 700, color: "#fff", background: status === "on" ? C.muted : C.orange,
+              border: "none", borderRadius: 8, padding: "5px 10px", cursor: busy ? "default" : "pointer" }}>
+            {action.text}
+          </button>
+        )}
+      </div>
+      {hint && <div style={{ ...font, fontSize: 11.5, color: C.muted, marginTop: 5, lineHeight: 1.4 }}>{hint}</div>}
+    </div>
+  );
+}
 
 const timeLabel = (iso) => {
   const d = new Date(iso), now = new Date();
@@ -12,7 +51,7 @@ const timeLabel = (iso) => {
 
 // Campanella con pallino rosso + elenco a tendina. Un click su una notifica
 // la segna come letta e naviga alla vista collegata (gestito dal chiamante).
-export default function NotificationBell({ items, unreadCount, onOpenItem, onMarkAllRead }) {
+export default function NotificationBell({ items, unreadCount, onOpenItem, onMarkAllRead, userId }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -40,6 +79,7 @@ export default function NotificationBell({ items, unreadCount, onOpenItem, onMar
       {open && (
         <div className="a360-reveal" style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", zIndex: 45, width: 320, maxWidth: "88vw",
           background: C.card, borderRadius: 14, border: `1px solid ${C.grid}`, boxShadow: "0 16px 40px rgba(10,22,80,0.18)", overflow: "hidden" }}>
+          <PushRow userId={userId} />
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", borderBottom: `1px solid ${C.grid}` }}>
             <span style={{ ...display, fontSize: 14, fontWeight: 700, color: C.ink }}>Notifiche</span>
             {unreadCount > 0 && (

@@ -3,11 +3,17 @@
 // res.status().json(): API compatibili con Express, quindi il wrapper e' diretto.
 import express from "express";
 import handler from "./api/coach.js";
+import pushHandler from "./api/push.js";
 
 const app = express();
 app.use(express.json({ limit: "1mb" }));
 app.all("/api/coach", (req, res) => handler(req, res));
-app.get("/api/health", (_req, res) => res.json({ status: "ok", coach: Boolean(process.env.GEMINI_API_KEY) }));
+app.all("/api/push/dispatch", (req, res) => pushHandler(req, res));
+app.get("/api/health", (_req, res) => res.json({
+  status: "ok",
+  coach: Boolean(process.env.GEMINI_API_KEY),
+  push: Boolean(process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY),
+}));
 
 const port = process.env.PORT || 4100;
 app.listen(port, () => console.log(`[atleta360-coach] su http://localhost:${port}`));
