@@ -277,7 +277,7 @@ function Dashboard() {
       {mobileOpen && (
         <div style={{ position: "fixed", inset: 0, zIndex: 50 }} onClick={() => setMobileOpen(false)}>
           <div style={{ position: "absolute", inset: 0, background: "rgba(10,19,48,0.5)" }} />
-          <aside onClick={(e) => e.stopPropagation()} style={{ position: "absolute", left: 0, top: 0, height: "100%", width: 260, background: C.navy, display: "flex", flexDirection: "column" }}>
+          <aside onClick={(e) => e.stopPropagation()} style={{ position: "absolute", left: 0, top: 0, height: "100%", width: 260, background: C.navy, display: "flex", flexDirection: "column", paddingTop: "env(safe-area-inset-top, 0px)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <Brand />
               <button onClick={() => setMobileOpen(false)} aria-label="Chiudi menu" style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", padding: 22 }}><X size={22} /></button>
@@ -291,7 +291,7 @@ function Dashboard() {
       {/* Colonna principale */}
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
         {/* Topbar mobile */}
-        <header className="a360-mobilebar" style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 18px", background: C.navy, position: "sticky", top: 0, zIndex: 20 }}>
+        <header className="a360-mobilebar" style={{ display: "flex", alignItems: "center", gap: 14, padding: "calc(14px + env(safe-area-inset-top, 0px)) 18px 14px", background: C.navy, position: "sticky", top: 0, zIndex: 20 }}>
           <button onClick={() => setMobileOpen(true)} aria-label="Apri menu" style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", display: "flex" }}><Menu size={24} /></button>
           <div style={{ ...display, color: "#fff", fontWeight: 700, fontSize: 16 }}>Atleta360</div>
         </header>
