@@ -2,11 +2,12 @@
 // luogo cliccabile su Google Maps, risultati; per lo staff anche gestione
 // eventi e routine settimanali. Dati: src/calendar.js + supabase/calendar.sql.
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, MapPin, Plus, Trash2, CheckCircle2, XCircle, Repeat, Trophy, Ban } from "lucide-react";
+import { CalendarDays, MapPin, Plus, Trash2, CheckCircle2, XCircle, Repeat, Trophy, Ban, Download } from "lucide-react";
 import { C, font, display } from "../theme";
 import { Card } from "../components/ui";
 import { supabase } from "../supabaseClient";
 import { useCalendar } from "../calendar";
+import { downloadEventICS } from "../ics";
 
 const WEEKDAYS = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
 const KIND_LABEL = { match: "Partita", training: "Allenamento", other: "Evento" };
@@ -73,6 +74,10 @@ function EventCard({ ev, myRsvp, counts, names, isStaff, onRsvp, onResult, onCan
           <span style={{ ...font, fontSize: 12, color: C.muted }}>
             {counts.yes} conferm{counts.yes === 1 ? "a" : "e"}{counts.no > 0 ? ` · ${counts.no} assenz${counts.no === 1 ? "a" : "e"}` : ""}
           </span>
+          <button onClick={() => downloadEventICS(ev, "Oasi · ")} title="Aggiungi al calendario del telefono"
+            style={{ ...font, display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, padding: "6px 10px", borderRadius: 8, border: `1px solid ${C.grid}`, background: "#fff", color: C.muted, cursor: "pointer" }}>
+            <Download size={12} /> Al calendario
+          </button>
         </div>
       )}
       {isStaff && !past && !ev.cancelled && names.yes.length + names.no.length > 0 && (

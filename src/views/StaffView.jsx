@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip, ResponsiveContainer } from "recharts";
-import { Printer, Sparkles, Trash2, ChevronDown, ChevronUp, Megaphone, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Printer, Sparkles, Trash2, ChevronDown, ChevronUp, Megaphone, AlertTriangle, CheckCircle2, FileClock, Plus } from "lucide-react";
 import { C, font, display } from "../theme";
 import { supabase } from "../supabaseClient";
 import { CORE, TITLE, SKILL_META } from "../skills";
@@ -10,6 +10,7 @@ import AttendanceCard from "../components/AttendanceCard";
 import CoachChat from "../CoachChat";
 import { useReports } from "../reports";
 import { useAttendance } from "../attendance";
+import { useCertificates } from "../certificates";
 
 // Riga collassabile di uno storico report: data + anteprima, clic per aprire.
 function ReportHistoryItem({ report, onRemove }) {
@@ -174,6 +175,58 @@ function BirthdaysCard({ athletes }) {
   );
 }
 
+// Scadenze certificati: solo date, nessun documento caricato.
+function CertificatesCard({ athletes }) {
+  const { rows, addCert, removeCert } = useCertificates();
+  const [athleteId, setAthleteId] = useState(athletes[0]?.id || "");
+  const [label, setLabel] = useState("Certificato medico");
+  const [expires, setExpires] = useState("");
+  const [err, setErr] = useState(null);
+
+  const nameOf = (id) => athletes.find((a) => a.id === id)?.identifier || "?";
+  const daysLeft = (d) => Math.ceil((new Date(d) - new Date()) / 86400000);
+
+  const submit = async () => {
+    if (!athleteId || !expires) return;
+    const e = await addCert(athleteId, label, expires);
+    setErr(e);
+    if (!e) setExpires("");
+  };
+
+  return (
+    <Card title="Scadenze certificati" subtitle="Promemoria automatico 30 e 7 giorni prima" style={{ marginTop: 20 }} className="a360-noprint">
+      {rows.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
+          {rows.map((c) => {
+            const dl = daysLeft(c.expires_on);
+            return (
+              <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.grid}`, padding: "8px 2px" }}>
+                <FileClock size={14} color={dl <= 7 ? "#B4232A" : dl <= 30 ? C.orange : C.muted} />
+                <span style={{ ...font, fontSize: 13, color: C.ink, flex: 1 }}>{nameOf(c.athlete_id)} · {c.label}</span>
+                <span style={{ ...font, fontSize: 12, color: dl <= 7 ? "#B4232A" : C.muted }}>
+                  {new Date(c.expires_on).toLocaleDateString("it-IT")} ({dl >= 0 ? `tra ${dl}g` : "scaduto"})
+                </span>
+                <button onClick={() => removeCert(c.id)} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer" }}><Trash2 size={13} /></button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        <select value={athleteId} onChange={(e) => setAthleteId(e.target.value)} style={{ ...font, fontSize: 13, border: `1px solid ${C.grid}`, borderRadius: 8, padding: "7px 10px" }}>
+          {athletes.map((a) => <option key={a.id} value={a.id}>{a.identifier}</option>)}
+        </select>
+        <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Es. Certificato medico" style={{ ...font, fontSize: 13, border: `1px solid ${C.grid}`, borderRadius: 8, padding: "7px 10px", flex: "1 1 140px" }} />
+        <input type="date" value={expires} onChange={(e) => setExpires(e.target.value)} style={{ ...font, fontSize: 13, border: `1px solid ${C.grid}`, borderRadius: 8, padding: "7px 10px" }} />
+        <button onClick={submit} style={{ ...font, display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600, padding: "7px 13px", borderRadius: 8, border: "none", background: C.navy2, color: "#fff", cursor: "pointer" }}>
+          <Plus size={13} /> Aggiungi
+        </button>
+      </div>
+      {err && <div style={{ ...font, fontSize: 12.5, color: "#B4232A", marginTop: 8 }}>{err}</div>}
+    </Card>
+  );
+}
+
 export default function StaffView({ d, onOpenCard }) {
   const { NOMI, atleti, overall, RANK, TEAM_AVG, lastPeriod } = d;
   const [report, setReport] = useState(null);
@@ -313,6 +366,8 @@ export default function StaffView({ d, onOpenCard }) {
       <AttendanceCard athletes={athletes} rows={attendanceRows} onSave={saveSession} />
 
       <BirthdaysCard athletes={athletes} />
+
+      <CertificatesCard athletes={athletes} />
 
       {selfGaps.length > 0 && (
         <Card title="Scostamenti autovalutazione" subtitle="Differenza tra come si vedono le atlete e come le valuta il mister" style={{ marginTop: 20 }}>

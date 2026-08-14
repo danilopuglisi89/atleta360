@@ -48,6 +48,7 @@ export default function PersonalArea() {
   const [form, setForm] = useState({
     phone: profile?.phone || "", facebook: profile?.facebook || "", instagram: profile?.instagram || "",
     jersey_number: profile?.jersey_number || "", ruolo: profile?.ruolo || "", avatar_url: profile?.avatar_url || "",
+    motto: profile?.motto || "",
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -84,6 +85,7 @@ export default function PersonalArea() {
       p_ruolo: form.ruolo.trim() || null,
       p_avatar_url: form.avatar_url || null,
     });
+    if (!error) await supabase.rpc("set_my_motto", { p_motto: form.motto || "" });
     setBusy(false);
     if (error) { setError(error.message); return; }
     await refreshProfile();
@@ -130,6 +132,7 @@ export default function PersonalArea() {
           </div>
           <Field label="Profilo Facebook" value={form.facebook} onChange={upd("facebook")} placeholder="link o nome utente" />
           <Field label="Profilo Instagram" value={form.instagram} onChange={upd("instagram")} placeholder="@nomeutente o link" />
+          <Field label="Il tuo motto" value={form.motto} onChange={upd("motto")} placeholder="es. Punto dopo punto." />
         </div>
 
         {error && (

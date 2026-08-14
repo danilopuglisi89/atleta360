@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState, useEffect, useMemo, useRef } from "react";
 import { Home, User, Users, TrendingUp, Info, Menu, X, ShieldCheck, LogOut, ClipboardList, ClipboardPlus, UserCircle, MessagesSquare, MoreHorizontal, CalendarDays } from "lucide-react";
-import { C, font, display, ringForRole } from "./theme";
+import { C, font, display, ringForRole, applyTheme, getStoredThemeMode, setStoredThemeMode } from "./theme";
+import ThemeToggle from "./components/ThemeToggle";
 import { AuthProvider, useAuth } from "./auth";
 import { supabase, supabaseConfigured } from "./supabaseClient";
 import { fetchModel } from "./data";
@@ -52,8 +53,34 @@ const BASE_NAV = [
 // Le voci che entrano nella tab bar mobile (le altre restano nel drawer "Altro").
 const MOBILE_TAB_IDS = ["home", "profilo", "chat", "andamento"];
 
+// Tema chiaro/scuro/automatico: mutando gli hex condivisi in theme.js e
+// forzando un re-render, ogni schermata legge da sola i colori nuovi.
+function useThemeToggle() {
+  const [mode, setMode] = useState(() => getStoredThemeMode());
+  const [, bump] = useState(0);
+
+  useEffect(() => {
+    applyTheme(mode);
+    bump((v) => v + 1);
+    if (mode !== "auto") return;
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => { applyTheme("auto"); bump((v) => v + 1); };
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, [mode]);
+
+  const cycle = () => {
+    const next = mode === "auto" ? "light" : mode === "light" ? "dark" : "auto";
+    setStoredThemeMode(next);
+    setMode(next);
+  };
+  const dark = mode === "dark" || (mode === "auto" && window.matchMedia?.("(prefers-color-scheme: dark)").matches);
+  return { mode, cycle, dark };
+}
+
 function Dashboard() {
   const { profile, signOut } = useAuth();
+  const theme = useThemeToggle();
   const isAdmin = profile?.role === "admin";
   const isStaff = isAdmin || ["direzione", "staff"].includes(profile?.category);
   const canAssess = isAdmin || !!profile?.can_assess;   // può inserire rilevamenti (mister)
@@ -312,7 +339,10 @@ function Dashboard() {
               <div style={{ ...font, fontSize: 12.5, color: C.orange, fontWeight: 600, letterSpacing: 0.6, textTransform: "uppercase" }}>Dashboard soft skills</div>
               <h1 style={{ ...display, fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 700, color: C.ink, margin: "4px 0 0", letterSpacing: -0.5 }}>{active.label}</h1>
             </div>
-            <NotificationBell items={notifications} unreadCount={unreadNotif.length} onOpenItem={openNotification} onMarkAllRead={markAllRead} userId={profile?.id} />
+            <div className="a360-noprint" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <ThemeToggle mode={theme.mode} onCycle={theme.cycle} />
+              <NotificationBell items={notifications} unreadCount={unreadNotif.length} onOpenItem={openNotification} onMarkAllRead={markAllRead} userId={profile?.id} />
+            </div>
           </div>
           <ErrorBoundary key={active.id}>
             {needsSuspense ? <Suspense fallback={<ViewFallback />}>{content}</Suspense> : content}

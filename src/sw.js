@@ -3,11 +3,24 @@
    in modalità injectManifest. */
 import { precacheAndRoute, cleanupOutdatedCaches } from "workbox-precaching";
 import { clientsClaim } from "workbox-core";
+import { registerRoute } from "workbox-routing";
+import { NetworkFirst } from "workbox-strategies";
 
 self.skipWaiting();
 clientsClaim();
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
+
+// ---------- Modalità offline: ultimi dati visti, senza rete ----------
+// Solo LETTURE verso Supabase (GET su /rest/v1/): prova la rete, se non
+// risponde entro 4s usa l'ultima risposta salvata. Le SCRITTURE (POST/
+// PATCH/DELETE, cioè quando l'atleta o il mister salvano qualcosa) non
+// passano MAI da qui — solo il browser decide se sono possibili offline,
+// mai dati vecchi spacciati per nuovi.
+registerRoute(
+  ({ url, request }) => request.method === "GET" && url.pathname.startsWith("/rest/v1/"),
+  new NetworkFirst({ cacheName: "a360-data-cache", networkTimeoutSeconds: 4 })
+);
 
 // ---------- Push in arrivo: mostra la notifica di sistema ----------
 self.addEventListener("push", (event) => {
