@@ -35,9 +35,13 @@ pm2 restart atleta360-coach   # ricarica api/coach.js nel processo Coach IA (Nod
 ```
 Sulla stessa VPS girano anche `caterino-yt-backend/-frontend`, `caterino-ig-backend/-frontend` e
 `caterino-casa-backend` (altri progetti dell'ecosistema, vedi CLAUDE.md di root): **mai** `pm2
-restart all` o toccare processi diversi da `atleta360-coach`. `ecosystem.prod.config.js` (config
-PM2, path `/opt/atleta360/coach-server.mjs`, env da `.env.coach`) vive solo sul server, non è
-tracciato da git.
+restart all` o toccare processi diversi da `atleta360-coach`. `ecosystem.prod.config.cjs` (config
+PM2, path `/opt/atleta360/coach-server.mjs`) vive solo sul server, non è tracciato da git.
+Attenzione (scoperto 2026-08-14): era `.js` ma **non poteva funzionare** (CommonJS in un package
+`"type":"module"`) — rinominato in `.cjs`. L'opzione `env_file` lì dentro è **ignorata da PM2**:
+le env si caricano esportandole nella shell prima di `pm2 start`
+(`set -a && . ./.env.coach && set +a && pm2 start ecosystem.prod.config.cjs && pm2 save`);
+un semplice `pm2 restart --update-env` NON basta per env nuove.
 
 Il 2026-07-20 il checkout sulla VPS era fermo al commit *prima* del refactoring (mai più aggiornato
 dopo una patch manuale a `api/coach.js` per il CORS di Aurora, mai committata lì) — da qui la
