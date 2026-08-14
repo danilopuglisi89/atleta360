@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip, ResponsiveContainer } from "recharts";
-import { Printer, Sparkles, Trash2, ChevronDown, ChevronUp, Megaphone } from "lucide-react";
+import { Printer, Sparkles, Trash2, ChevronDown, ChevronUp, Megaphone, AlertTriangle } from "lucide-react";
 import { C, font, display } from "../theme";
 import { supabase } from "../supabaseClient";
 import { CORE, TITLE, SKILL_META } from "../skills";
@@ -166,6 +166,26 @@ export default function StaffView({ d, onOpenCard }) {
     return { n, avg: Math.round((diffs.reduce((a, b) => a + b, 0) / diffs.length) * 10) / 10 };
   }).filter(Boolean).sort((a, b) => Math.abs(b.avg) - Math.abs(a.avg));
 
+  // "Da tenere d'occhio": presenze in calo, punteggi in discesa da 2+
+  // rilevamenti consecutivi, nessuna autovalutazione mai fatta.
+  const overallOf = (e) => { const vs = CORE.map((k) => e[k]).filter((v) => typeof v === "number"); return vs.length ? vs.reduce((a, b) => a + b, 0) / vs.length : 0; };
+  const attentionAlerts = NOMI.map((n) => {
+    const reasons = [];
+    const aid = atleti[n].athleteId;
+    const myRows = aid ? attendanceRows.filter((r) => r.athlete_id === aid).slice(0, 6) : [];
+    if (myRows.length >= 3) {
+      const rate = myRows.filter((r) => r.present).length / myRows.length;
+      if (rate < 0.5) reasons.push(`presenze in calo (${Math.round(rate * 100)}%)`);
+    }
+    const hist = d.storico[n] || [];
+    if (hist.length >= 3) {
+      const last3 = hist.slice(-3).map(overallOf);
+      if (last3[2] < last3[1] && last3[1] < last3[0]) reasons.push("punteggi in calo da 2 rilevamenti");
+    }
+    if (!atleti[n].self) reasons.push("nessuna autovalutazione");
+    return reasons.length ? { n, reasons } : null;
+  }).filter(Boolean);
+
   const team = {
     count: NOMI.length,
     lastPeriod,
@@ -235,6 +255,23 @@ export default function StaffView({ d, onOpenCard }) {
           <Classifica RANK={RANK} overall={overall} onOpen={onOpenCard} />
         </Card>
       </div>
+
+      {attentionAlerts.length > 0 && (
+        <Card title="Da tenere d'occhio" subtitle="Segnali automatici calcolati dai dati esistenti" style={{ marginTop: 20 }} className="a360-noprint">
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {attentionAlerts.map(({ n, reasons }) => (
+              <div key={n} style={{ display: "flex", alignItems: "flex-start", gap: 10, background: "#FDECEC", borderRadius: 10, padding: "9px 13px" }}>
+                <AlertTriangle size={15} color="#B4232A" style={{ flexShrink: 0, marginTop: 2 }} />
+                <div>
+                  <span className={onOpenCard ? "a360-clickname" : undefined} onClick={onOpenCard ? () => onOpenCard(n) : undefined}
+                    style={{ ...display, fontSize: 13.5, fontWeight: 700, color: C.ink }}>{n}</span>
+                  <div style={{ ...font, fontSize: 12.5, color: "#8A2A2E", marginTop: 2 }}>{reasons.join(" · ")}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <AttendanceCard athletes={athletes} rows={attendanceRows} onSave={saveSession} />
 

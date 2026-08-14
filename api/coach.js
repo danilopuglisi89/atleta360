@@ -79,9 +79,39 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { messages, athlete, team, skills, club } = req.body || {};
+    const { messages, athlete, team, skills, club, noteDraft } = req.body || {};
     if (!Array.isArray(messages) || messages.length === 0) {
       res.status(400).json({ error: "Nessun messaggio." });
+      return;
+    }
+
+    // Modalità "bozza nota rilevamento": niente chat, un solo testo pronto
+    // da incollare nel campo nota, a partire dagli appunti presi in palestra.
+    if (noteDraft) {
+      const notesList = (noteDraft.notes || []).map((n) => `- ${n}`).join("\n") || "(nessun appunto)";
+      const scoreLines = noteDraft.scores
+        ? Object.entries(noteDraft.scores).map(([k, v]) => `- ${k}: ${v}/10`).join("\n")
+        : "(nessun punteggio)";
+      const sys = `Sei l'assistente del mister di una squadra di pallavolo femminile. Il mister ha preso appunti veloci in palestra su ${noteDraft.athleteName || "un'atleta"} nei giorni scorsi. Scrivi UNA bozza di nota (2-4 frasi, tono costruttivo e concreto, in italiano) da inserire nel rilevamento di oggi, basata su questi appunti e sui punteggi attuali. Restituisci SOLO il testo della nota, senza titoli né virgolette.
+
+Appunti raccolti in palestra:
+${notesList}
+
+Punteggi attuali (scala 1-10):
+${scoreLines}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(key)}`;
+      const r = await fetch(url, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: sys }] },
+          contents: [{ role: "user", parts: [{ text: "Scrivi la bozza." }] }],
+          generationConfig: { maxOutputTokens: 300, temperature: 0.6, thinkingConfig: { thinkingBudget: 0 } },
+        }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) { res.status(502).json({ error: "Il coach IA non è raggiungibile in questo momento." }); return; }
+      const text = (data.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("").trim();
+      res.status(200).json({ reply: text || "Non ho una bozza da proporre." });
       return;
     }
 

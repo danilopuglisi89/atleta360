@@ -50,6 +50,12 @@ function EventCard({ ev, myRsvp, counts, names, isStaff, onRsvp, onResult, onCan
         </a>
       )}
       {ev.notes && <div style={{ ...font, fontSize: 12.5, color: C.muted, marginTop: 5 }}>{ev.notes}</div>}
+      {(ev.objective || ev.exercises) && (
+        <div style={{ background: C.surface, borderRadius: 10, padding: "9px 12px", marginTop: 8 }}>
+          {ev.objective && <div style={{ ...font, fontSize: 12.5, color: C.ink }}><b>Obiettivo:</b> {ev.objective}</div>}
+          {ev.exercises && <div style={{ ...font, fontSize: 12.5, color: C.ink, marginTop: ev.objective ? 4 : 0 }}><b>Esercizi:</b> {ev.exercises}</div>}
+        </div>
+      )}
 
       {/* Conferma presenza (solo eventi futuri non annullati) */}
       {!past && !ev.cancelled && (
@@ -111,7 +117,7 @@ export default function CalendarioView({ auth }) {
   const cal = useCalendar(uid);
   const [people, setPeople] = useState({});      // user_id -> nome (per i nomi delle conferme, staff)
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ kind: "match", title: "", date: "", time: "", endTime: "", location: "", notes: "" });
+  const [form, setForm] = useState({ kind: "match", title: "", date: "", time: "", endTime: "", location: "", notes: "", objective: "", exercises: "" });
   const [recForm, setRecForm] = useState({ weekday: 2, start: "18:00", end: "20:00", location: "" });
   const [err, setErr] = useState(null);
 
@@ -158,9 +164,11 @@ export default function CalendarioView({ auth }) {
       ends_at: ends ? ends.toISOString() : null,
       location: form.location.trim() || null,
       notes: form.notes.trim() || null,
+      objective: form.objective.trim() || null,
+      exercises: form.exercises.trim() || null,
     });
     setErr(e);
-    if (!e) { setShowAdd(false); setForm({ kind: "match", title: "", date: "", time: "", endTime: "", location: "", notes: "" }); }
+    if (!e) { setShowAdd(false); setForm({ kind: "match", title: "", date: "", time: "", endTime: "", location: "", notes: "", objective: "", exercises: "" }); }
   };
 
   const submitRecurrence = async () => {
@@ -207,6 +215,12 @@ export default function CalendarioView({ auth }) {
             </div>
             <input value={form.location} onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} placeholder="Luogo (es. Pardini Sporting Center, Lido di Camaiore)" style={inputStyle} />
             <input value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Note (es. ritrovo 30 minuti prima)" style={inputStyle} />
+            {form.kind === "training" && (
+              <>
+                <input value={form.objective} onChange={(e) => setForm((f) => ({ ...f, objective: e.target.value }))} placeholder="Obiettivo della seduta (es. lavoro sulla comunicazione in ricezione)" style={inputStyle} />
+                <input value={form.exercises} onChange={(e) => setForm((f) => ({ ...f, exercises: e.target.value }))} placeholder="Esercizi (facoltativo)" style={inputStyle} />
+              </>
+            )}
             <button onClick={submitEvent}
               style={{ ...font, alignSelf: "flex-start", padding: "10px 16px", borderRadius: 10, border: "none", background: "#0F7A4E", color: "#fff", fontSize: 13.5, fontWeight: 600, cursor: "pointer" }}>
               Salva evento
