@@ -1,4 +1,4 @@
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Instagram } from "lucide-react";
 import { C, font, display } from "../theme";
 import { SKILL_META } from "../skills";
 import { useAuth } from "../auth";
@@ -44,6 +44,17 @@ export default function InfoView() {
           </div>
         </Card>
       </div>
+
+      <Card title="Seguici su Instagram" subtitle="@atleta360.volley">
+        <div style={{ ...font, fontSize: 13.5, color: C.muted, lineHeight: 1.6, marginBottom: 14 }}>
+          Le card che scarichi dal tuo profilo sono già pronte per le storie: taggano @atleta360.volley in automatico.
+        </div>
+        <a href="https://www.instagram.com/atleta360.volley/" target="_blank" rel="noopener noreferrer"
+          style={{ ...font, display: "inline-flex", alignItems: "center", gap: 8, padding: "11px 18px", borderRadius: 11, textDecoration: "none",
+            background: "linear-gradient(135deg, #F58529, #DD2A7B, #8134AF)", color: "#fff", fontSize: 14.5, fontWeight: 600 }}>
+          <Instagram size={18} /> Segui @atleta360.volley
+        </a>
+      </Card>
 
       <Card title="Problemi con l'app?" subtitle="Assistenza diretta">
         <div style={{ ...font, fontSize: 13.5, color: C.muted, lineHeight: 1.6, marginBottom: 14 }}>

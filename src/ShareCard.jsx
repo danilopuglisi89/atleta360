@@ -9,6 +9,7 @@ import { C, font } from "./theme";
 // ============================================================
 
 const W = 1080, H = 1920;
+const IG_HANDLE = "@atleta360.volley";
 
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
@@ -71,6 +72,12 @@ async function drawCard({ name, position, scores, keys, SHORT, overall, avatarUr
   ctx.fillStyle = "rgba(255,255,255,0.55)";
   ctx.font = "500 26px 'Inter', sans-serif";
   ctx.fillText("Oasi Volley", 184, 202);
+  // Handle Instagram, in alto a destra: primo tag visto da chi guarda la storia.
+  ctx.textAlign = "right";
+  ctx.fillStyle = "rgba(255,255,255,0.7)";
+  ctx.font = "600 28px 'Inter', sans-serif";
+  ctx.fillText(IG_HANDLE, W - 90, 166);
+  ctx.textAlign = "left";
 
   // Avatar (o iniziali).
   const cx = W / 2, avY = 340, avR = 96;
@@ -173,10 +180,14 @@ async function drawCard({ name, position, scores, keys, SHORT, overall, avatarUr
   ctx.font = "700 120px 'Space Grotesk', sans-serif";
   ctx.fillText(overall.toFixed(1), cx, 1810);
 
-  // Firma.
+  // Firma + tag Instagram (di nuovo in basso: resta visibile anche se
+  // Instagram ritaglia la parte alta della storia sull'interfaccia).
   ctx.fillStyle = "rgba(255,255,255,0.4)";
   ctx.font = "500 24px 'Inter', sans-serif";
-  ctx.fillText("Atleta360 · dashboard soft skills · danilopuglisi.com", cx, 1880);
+  ctx.fillText("Atleta360 · dashboard soft skills · danilopuglisi.com", cx, 1862);
+  ctx.fillStyle = C.orange;
+  ctx.font = "700 28px 'Inter', sans-serif";
+  ctx.fillText(IG_HANDLE, cx, 1898);
 
   return canvas;
 }
@@ -196,8 +207,12 @@ export default function ShareCard(props) {
       const file = new File([blob], fileName, { type: "image/png" });
 
       // Web Share (mobile) se disponibile e capace di condividere file.
+      // La didascalia non arriva sempre nelle Storie Instagram (dipende dal
+      // telefono), ma su WhatsApp/altre app sì: comunque pronta, mai da
+      // scrivere a mano.
+      const caption = `Il mio profilo su Atleta360! ${IG_HANDLE} #Atleta360 #OasiVolley`;
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: "Il mio profilo Atleta360" });
+        await navigator.share({ files: [file], title: "Il mio profilo Atleta360", text: caption });
       } else {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
