@@ -8,6 +8,7 @@ import { Card } from "../components/ui";
 import { supabase } from "../supabaseClient";
 import { useCalendar } from "../calendar";
 import { downloadEventICS } from "../ics";
+import { ShareButton } from "../components/ShareSheet";
 
 const WEEKDAYS = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
 const KIND_LABEL = { match: "Partita", training: "Allenamento", other: "Evento" };
@@ -39,6 +40,16 @@ function EventCard({ ev, myRsvp, counts, names, isStaff, onRsvp, onResult, onCan
           <span style={{ ...display, fontSize: 13, fontWeight: 700, color: "#0F7A4E", display: "inline-flex", alignItems: "center", gap: 5 }}>
             <Trophy size={14} /> {ev.result}
           </span>
+        )}
+        {ev.result && !ev.cancelled && (
+          <ShareButton kind="match" label="Condividi" variant="ghost"
+            style={{ padding: "5px 10px", fontSize: 12 }}
+            data={{
+              title: ev.title || (ev.kind === "match" ? "Partita" : "Evento"),
+              result: ev.result,
+              dateLabel: fmtDay(ev.starts_at),
+              location: ev.location || "",
+            }} />
         )}
       </div>
       <div style={{ ...font, fontSize: 13.5, color: C.ink, marginTop: 7, textTransform: "capitalize" }}>

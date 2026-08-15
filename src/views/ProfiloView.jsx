@@ -11,7 +11,7 @@ import { levelFor } from "../gamification";
 import { useGoals } from "../goals";
 import { fireConfetti } from "../effects";
 import { Avatar } from "../PersonalArea";
-import ShareCard from "../ShareCard";
+import { ShareButton } from "../components/ShareSheet";
 import CelebrationOverlay from "../components/CelebrationOverlay";
 import CoachChat from "../CoachChat";
 import GoalsCard from "../components/GoalsCard";
@@ -137,7 +137,8 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
     <div className="a360-print-area">
       {celebrate && (
         <CelebrationOverlay badge={celebrate} onClose={() => setCelebrate(null)}
-          onShare={() => { setCelebrate(null); setTimeout(() => shareRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 150); }} />
+          shareData={{ name: sel, avatarUrl: personal ? avatarUrl : "", level: personal ? participationLevel : null,
+            bgUrl: personal ? auth?.cardBg : "", bgStyle: auth?.cardBgStyle }} />
       )}
       <div className="a360-print-only" style={{ ...display, fontSize: 20, fontWeight: 700, color: C.ink, marginBottom: 2 }}>
         Atleta360 — Scheda soft skill
@@ -190,7 +191,10 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
           </span>
         )}
         <span ref={shareRef}>
-          <ShareCard name={sel} position={position} scores={scores} keys={SKILLS} SHORT={SHORT} overall={overall(sel)} avatarUrl={personal ? avatarUrl : ""} level={personal ? participationLevel : null} />
+          <ShareButton kind="profile" label="Condividi profilo"
+            data={{ name: sel, position, scores, keys: SKILLS, SHORT, overall: overall(sel),
+              avatarUrl: personal ? avatarUrl : "", level: personal ? participationLevel : null,
+              bgUrl: personal ? auth?.cardBg : "", bgStyle: auth?.cardBgStyle }} />
         </span>
         <button className="a360-noprint" onClick={() => window.print()}
           style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500,

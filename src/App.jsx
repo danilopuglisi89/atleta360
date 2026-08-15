@@ -92,6 +92,8 @@ function Dashboard() {
     firstName: profile?.first_name || "",
     avatarUrl: profile?.avatar_url || "",
     flair: profile?.flair || "",
+    cardBg: profile?.card_bg || "",
+    cardBgStyle: profile?.card_bg_style || "sfumata",
     uid: profile?.id || null,
     isStaff,
     isAdmin,

@@ -5,6 +5,8 @@ import { Sparkles } from "lucide-react";
 import { C, font, display } from "../theme";
 import { Card } from "./ui";
 import { supabase } from "../supabaseClient";
+import { ShareButton } from "./ShareSheet";
+import { useParticipation } from "../participation";
 
 const ACTION_LABEL = {
   checkin: "check-in energia",
@@ -15,8 +17,10 @@ const ACTION_LABEL = {
   quiz: "risposte al quiz",
 };
 
-export default function WeeklyRecapCard({ uid }) {
+export default function WeeklyRecapCard({ uid, athleteId, name, avatarUrl, bgUrl, bgStyle }) {
   const [rows, setRows] = useState(null);   // null = caricamento, [] = niente questa settimana
+  // Hook prima di ogni return condizionale (Rules of Hooks).
+  const { streak, level } = useParticipation(athleteId);
 
   useEffect(() => {
     if (!uid) return;
@@ -31,6 +35,10 @@ export default function WeeklyRecapCard({ uid }) {
   const byAction = {};
   rows.forEach((r) => { byAction[r.action] = (byAction[r.action] || 0) + 1; });
   const top = Object.entries(byAction).sort((a, b) => b[1] - a[1])[0];
+  // Per la card condivisibile servono le etichette in chiaro, non i codici.
+  const byLabel = Object.fromEntries(
+    Object.entries(byAction).map(([a, n]) => [ACTION_LABEL[a] || a, n])
+  );
 
   return (
     <Card title="La tua settimana" subtitle="Ultimi 7 giorni sull'app" style={{ marginTop: 16 }} className="a360-noprint">
@@ -50,6 +58,10 @@ export default function WeeklyRecapCard({ uid }) {
           La tua attività più frequente: <b style={{ color: C.ink }}>{ACTION_LABEL[top[0]] || top[0]}</b>. Continua così! 💪
         </div>
       )}
+      <div style={{ marginTop: 14 }}>
+        <ShareButton kind="recap" label="Condividi la settimana"
+          data={{ name, avatarUrl, total, byAction: byLabel, streak, level, bgUrl, bgStyle }} />
+      </div>
     </Card>
   );
 }

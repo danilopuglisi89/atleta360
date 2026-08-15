@@ -1,12 +1,17 @@
 // Celebrazione a tutto schermo per un traguardo nuovo (badge appena
 // sbloccato). Chi la mostra tiene la logica di "cos'è nuovo" (localStorage);
-// qui solo la festa + l'invito a vedere/condividere la card.
+// qui solo la festa + la condivisione del traguardo.
+//
+// È il momento con più probabilità di condivisione (entusiasmo appena
+// sbloccato), quindi la card del traguardo si genera direttamente da qui:
+// niente rimbalzo ad altre schermate.
 import { useEffect } from "react";
 import { PartyPopper, X } from "lucide-react";
 import { C, font, display } from "../theme";
 import { fireConfetti } from "../effects";
+import { ShareButton } from "./ShareSheet";
 
-export default function CelebrationOverlay({ badge, onClose, onShare }) {
+export default function CelebrationOverlay({ badge, onClose, shareData }) {
   useEffect(() => {
     if (badge) fireConfetti({ count: 140, duration: 3000 });
   }, [badge?.id]);
@@ -23,9 +28,15 @@ export default function CelebrationOverlay({ badge, onClose, onShare }) {
         <div style={{ ...font, fontSize: 12, color: C.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, marginTop: 10 }}>Nuovo traguardo!</div>
         <div style={{ ...display, fontSize: 20, fontWeight: 700, color: C.ink, marginTop: 4 }}>{badge.label}</div>
         <p style={{ ...font, fontSize: 13.5, color: C.muted, marginTop: 6 }}>{badge.desc}</p>
-        <button onClick={onShare}
-          style={{ ...font, marginTop: 18, display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, border: "none", background: C.orange, color: "#fff", fontSize: 14.5, fontWeight: 600, cursor: "pointer" }}>
-          <PartyPopper size={17} /> Vedi la tua card
+
+        <div style={{ display: "flex", justifyContent: "center", marginTop: 18 }}>
+          <ShareButton kind="badge" label="Condividi il traguardo" icon={PartyPopper}
+            data={{ ...shareData, badge }}
+            style={{ padding: "12px 22px", borderRadius: 12, fontSize: 14.5 }} />
+        </div>
+        <button onClick={onClose}
+          style={{ ...font, marginTop: 10, background: "none", border: "none", color: C.muted, fontSize: 13, cursor: "pointer" }}>
+          Più tardi
         </button>
       </div>
     </div>

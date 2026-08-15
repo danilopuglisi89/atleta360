@@ -63,7 +63,9 @@ export default function PersonalArea() {
     phone: profile?.phone || "", facebook: profile?.facebook || "", instagram: profile?.instagram || "",
     jersey_number: profile?.jersey_number || "", ruolo: profile?.ruolo || "", avatar_url: profile?.avatar_url || "",
     motto: profile?.motto || "", flair: profile?.flair || "",
+    card_bg: profile?.card_bg || "", card_bg_style: profile?.card_bg_style || "sfumata",
   });
+  const bgRef = useRef(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [flash, setFlash] = useState(null);
@@ -91,6 +93,29 @@ export default function PersonalArea() {
     reader.readAsDataURL(file);
   };
 
+  // Sfondo della card: la foto viene comunque velata di navy e (in modalità
+  // sfumata) sfocata, quindi 760px bastano — teniamo leggera la riga sul
+  // database, che è testo come l'avatar.
+  const onBgFile = (e) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const maxW = 760;
+        const scale = Math.min(1, maxW / img.width);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        setForm((f) => ({ ...f, card_bg: canvas.toDataURL("image/jpeg", 0.72) }));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
   const save = async () => {
     setBusy(true); setError(null);
     const { error } = await supabase.rpc("update_my_profile", {
@@ -103,6 +128,7 @@ export default function PersonalArea() {
     });
     if (!error) await supabase.rpc("set_my_motto", { p_motto: form.motto || "" });
     if (!error) await supabase.rpc("set_my_flair", { p_flair: form.flair || "" });
+    if (!error) await supabase.rpc("set_my_card_bg", { p_bg: form.card_bg || "", p_style: form.card_bg_style || "sfumata" });
     setBusy(false);
     if (error) { setError(error.message); return; }
     await refreshProfile();
@@ -150,6 +176,44 @@ export default function PersonalArea() {
           <Field label="Profilo Facebook" value={form.facebook} onChange={upd("facebook")} placeholder="link o nome utente" />
           <Field label="Profilo Instagram" value={form.instagram} onChange={upd("instagram")} placeholder="@nomeutente o link" />
           <Field label="Il tuo motto" value={form.motto} onChange={upd("motto")} placeholder="es. Punto dopo punto." />
+
+          {/* Sfondo delle card condivisibili */}
+          <div>
+            <label style={labelStyle}>Sfondo delle tue card da condividere</label>
+            <input ref={bgRef} type="file" accept="image/*" onChange={onBgFile} style={{ display: "none" }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+              <div style={{ width: 74, height: 96, borderRadius: 10, overflow: "hidden", border: `1px solid ${C.grid}`, background: "#0A1650", flexShrink: 0,
+                display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {form.card_bg
+                  ? <img src={form.card_bg} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", filter: form.card_bg_style === "nitida" ? "blur(1px)" : "blur(5px)", opacity: 0.85 }} />
+                  : <span style={{ ...font, fontSize: 10, color: "rgba(255,255,255,0.5)", textAlign: "center", padding: 4 }}>nessuna foto</span>}
+              </div>
+              <div style={{ flex: "1 1 180px" }}>
+                <button onClick={() => bgRef.current?.click()}
+                  style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500, padding: "9px 13px", borderRadius: 10, border: `1px solid ${C.grid}`, background: C.card, color: C.ink, cursor: "pointer" }}>
+                  <Camera size={16} /> {form.card_bg ? "Cambia foto" : "Carica la tua foto"}
+                </button>
+                {form.card_bg && (
+                  <button onClick={() => setForm((f) => ({ ...f, card_bg: "" }))}
+                    style={{ ...font, fontSize: 12.5, color: C.muted, background: "none", border: "none", cursor: "pointer", marginLeft: 8 }}>Togli</button>
+                )}
+                <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                  {[["sfumata", "Sfumata"], ["nitida", "Nitida"]].map(([k, lab]) => (
+                    <button key={k} onClick={() => setForm((f) => ({ ...f, card_bg_style: k }))}
+                      style={{ ...font, fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 8, cursor: "pointer",
+                        border: `1.5px solid ${form.card_bg_style === k ? C.orange : C.grid}`,
+                        background: form.card_bg_style === k ? C.orangeSoft : C.card, color: form.card_bg_style === k ? C.orange : C.muted }}>
+                      {lab}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div style={{ ...font, fontSize: 11.5, color: C.muted, marginTop: 7, lineHeight: 1.45 }}>
+              Compare dietro alle card che condividi su Instagram. <b>Sfumata</b>: la foto resta uno sfondo di colore.
+              <b> Nitida</b>: si riconosce il soggetto. Ricordati che la card diventa pubblica quando la pubblichi.
+            </div>
+          </div>
 
           <div>
             <label style={labelStyle}>La tua emoji ({points} punti — se ne sbloccano di nuove salendo di livello)</label>

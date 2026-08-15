@@ -13,6 +13,7 @@ import PhotoAlbumCard from "../components/PhotoAlbumCard";
 import DailyMomentCard from "../components/DailyMomentCard";
 import TriviaPill from "../components/TriviaPill";
 import QuizCard from "../components/QuizCard";
+import { ShareButton } from "../components/ShareSheet";
 import WeeklyRecapCard from "../components/WeeklyRecapCard";
 import { useTodaysBirthdays } from "../birthdays";
 
@@ -39,7 +40,8 @@ export default function HomeView({ d, auth, onOpenCard }) {
       {restricted && <MissionCard uid={auth?.uid} athleteId={myAthleteId} />}
       <NextEventCard uid={auth?.uid} />
       {restricted && myScores && <WeeklyChallengeCard scores={myScores} />}
-      {restricted && <WeeklyRecapCard uid={auth?.uid} />}
+      {restricted && <WeeklyRecapCard uid={auth?.uid} athleteId={myAthleteId} name={auth?.athleteId || auth?.firstName}
+        avatarUrl={auth?.avatarUrl} bgUrl={auth?.cardBg} bgStyle={auth?.cardBgStyle} />}
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
         {[
@@ -66,6 +68,16 @@ export default function HomeView({ d, auth, onOpenCard }) {
               <Tooltip contentStyle={tooltipStyle} />
             </RadarChart>
           </ResponsiveContainer>
+          {NOMI.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <ShareButton kind="team" label="Condividi la squadra" variant="ghost"
+                data={{
+                  teamName: "Oasi Volley", keys: CORE, SHORT: d.SHORT, athleteCount: NOMI.length, lastPeriod,
+                  avg: Object.fromEntries(CORE.map((k) => [k,
+                    Math.round((NOMI.reduce((a, n) => a + (atleti[n].scores[k] ?? 0), 0) / Math.max(NOMI.length, 1)) * 10) / 10])),
+                }} />
+            </div>
+          )}
         </Card>
 
         <Card title="Classifica generale" subtitle="Tocca un nome per vedere il profilo">
