@@ -27,7 +27,7 @@ export default function QuizCard({ uid }) {
   };
 
   return (
-    <Card title="Quiz della settimana" subtitle="5 domande sulla pallavolo, un tentativo a settimana" style={{ marginTop: 16 }} className="a360-noprint">
+    <Card id="a360-quiz" title="Quiz della settimana" subtitle="5 domande sulla pallavolo, un tentativo a settimana" style={{ marginTop: 16 }} className="a360-noprint">
       {mine ? (
         <div style={{ ...font, fontSize: 13.5, color: C.ink, display: "flex", alignItems: "center", gap: 8 }}>
           <HelpCircle size={16} color={C.orange} /> Hai risposto <b>{mine.score}/{mine.total}</b> questa settimana — torna la prossima settimana per un nuovo quiz!

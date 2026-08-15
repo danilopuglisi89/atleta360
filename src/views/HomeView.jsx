@@ -11,18 +11,28 @@ import MissionCard from "../components/MissionCard";
 import PollsCard from "../components/PollsCard";
 import PhotoAlbumCard from "../components/PhotoAlbumCard";
 import DailyMomentCard from "../components/DailyMomentCard";
-import TriviaPill from "../components/TriviaPill";
+import DailyPill from "../components/DailyPill";
+import TodayStrip from "../components/TodayStrip";
+import TeamFeedCard from "../components/TeamFeedCard";
 import QuizCard from "../components/QuizCard";
 import { ShareButton } from "../components/ShareSheet";
 import WeeklyRecapCard from "../components/WeeklyRecapCard";
 import { useTodaysBirthdays } from "../birthdays";
+import { useWeeklyQuiz } from "../quiz";
 
-export default function HomeView({ d, auth, onOpenCard }) {
+export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile }) {
   const { NOMI, atleti, overall, RANK, TEAM_AVG, lastPeriod } = d;
   const restricted = !!auth?.restricted;
   const myScores = restricted && auth?.athleteId ? atleti[auth.athleteId]?.scores : null;
   const myAthleteId = restricted ? resolveAthleteId(d, auth?.athleteId) : null;
   const birthdays = useTodaysBirthdays();
+  const { mine: quizMine } = useWeeklyQuiz(auth?.uid);
+
+  const goCheckin = () => {
+    onOpenFullProfile?.();
+    setTimeout(() => document.getElementById("a360-checkin")?.scrollIntoView({ behavior: "smooth", block: "center" }), 200);
+  };
+  const goQuiz = () => document.getElementById("a360-quiz")?.scrollIntoView({ behavior: "smooth", block: "center" });
 
   return (
     <div>
@@ -35,13 +45,17 @@ export default function HomeView({ d, auth, onOpenCard }) {
         </div>
       )}
 
+      {restricted && <TodayStrip uid={auth?.uid} athleteId={myAthleteId} onGoCheckin={goCheckin} onGoQuiz={goQuiz} />}
+
       <MotivationCard />
-      <TriviaPill />
+      <DailyPill quizDone={quizMine} onOpenQuiz={goQuiz} />
       {restricted && <MissionCard uid={auth?.uid} athleteId={myAthleteId} />}
       <NextEventCard uid={auth?.uid} />
       {restricted && myScores && <WeeklyChallengeCard scores={myScores} />}
       {restricted && <WeeklyRecapCard uid={auth?.uid} athleteId={myAthleteId} name={auth?.athleteId || auth?.firstName}
         avatarUrl={auth?.avatarUrl} bgUrl={auth?.cardBg} bgStyle={auth?.cardBgStyle} />}
+
+      <TeamFeedCard />
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
         {[

@@ -26,6 +26,7 @@ export default function WellbeingCard({ athleteId, canSeeAll }) {
 
   const onSetEnergy = async (n) => {
     setCheckinError(null);
+    navigator.vibrate?.(12);
     const error = await setEnergy(n);
     if (error) setCheckinError(error);
   };

@@ -13,7 +13,7 @@ import { ShareButton } from "./ShareSheet";
 
 export default function CelebrationOverlay({ badge, onClose, shareData }) {
   useEffect(() => {
-    if (badge) fireConfetti({ count: 140, duration: 3000 });
+    if (badge) { fireConfetti({ count: 140, duration: 3000 }); navigator.vibrate?.([20, 40, 20]); }
   }, [badge?.id]);
 
   if (!badge) return null;

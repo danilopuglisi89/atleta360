@@ -5,9 +5,9 @@ import { C, font, display } from "../theme";
    avatar a iniziali, select, stati, skeleton).
    ============================================================ */
 
-export function Card({ title, subtitle, children, style, className = "" }) {
+export function Card({ id, title, subtitle, children, style, className = "" }) {
   return (
-    <div className={`a360-reveal ${className}`.trim()} style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.grid}`, boxShadow: "0 1px 2px rgba(12,19,48,0.04)", padding: 20, ...style }}>
+    <div id={id} className={`a360-reveal ${className}`.trim()} style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.grid}`, boxShadow: "0 1px 2px rgba(12,19,48,0.04)", padding: 20, ...style }}>
       {title && <h3 style={{ ...display, fontSize: 15, fontWeight: 600, color: C.ink, margin: 0 }}>{title}</h3>}
       {subtitle && <p style={{ ...font, fontSize: 13, color: C.muted, margin: "4px 0 0" }}>{subtitle}</p>}
       {(title || subtitle) && <div style={{ height: 16 }} />}
