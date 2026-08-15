@@ -371,6 +371,46 @@ calendario — richiesta esplicita di Danilo lo stesso giorno, frontend già pro
 `Aurora Atleta360/src/Calendario.jsx`: `canAdd = canManage || role === "atleta"`).
 Consegnati a Danilo come file scaricabili, non incollati in chat (troppo lunghi).
 
+## ⚠️ Script SQL: trappole scoperte eseguendoli in blocco (2026-08-15)
+
+Eseguendo insieme gli script accumulati in mesi diversi sono venute a galla tre
+incoerenze che si mascheravano a vicenda. Valgono come regole per ogni script nuovo.
+
+- **Non fidarsi di "già eseguito"**: questo CLAUDE.md dava per eseguiti
+  `self-assessments.sql` e `goals.sql`, ma quelle tabelle **non esistevano** sul
+  progetto di produzione — gli script fallivano e il SQL Editor annullava tutto
+  (una transazione sola). Nessuno se n'era accorto perché l'app degrada in
+  silenzio. Verificare sempre con
+  `select to_regclass('public.<tabella>');` prima di dare per scontato lo stato
+  del database.
+- **Nelle policy, qualificare SEMPRE la colonna della riga**: scritto
+  `a.id = athlete_id` dentro una subquery che ha `profiles` nel FROM, Postgres
+  risolve `athlete_id` con `profiles.athlete_id` (**text**) invece che con la riga
+  in inserimento (**uuid**) → `operator does not exist: uuid = text`, e l'intero
+  script va in rollback. Va scritto `a.id = <tabella>.athlete_id`. Colpiva solo le
+  policy di INSERT: quelle di select/update/delete erano già qualificate, per
+  questo il bug è rimasto nascosto a lungo.
+- **Vincoli ricreati da zero = liste da tenere allineate**: sei script diversi
+  facevano `drop constraint` + `add constraint` su `notifications_type_check`,
+  ognuno con la lista dei tipi di quando era stato scritto (5 tipi in `goals.sql`,
+  6 in `push.sql`, 9 in `gamify-d.sql`). Eseguirne uno "vecchio" dopo uno "nuovo"
+  **restringe** il vincolo e fallisce con `is violated by some row`. Ora tutti
+  dichiarano la stessa lista completa: aggiungendo un tipo, aggiornarla in **tutti**
+  i file che toccano quel vincolo.
+- **Trigger su tabelle di altri script → guardia**: in `gamify-a.sql` i trigger su
+  `checkins`/`event_rsvps`/`self_assessments` sono dentro un
+  `do $$ ... if exists (select 1 from information_schema.tables ...) ... $$` che
+  salta il singolo pezzo con un `raise notice` se la tabella manca, invece di far
+  fallire tutto lo script. Pattern da riusare quando un file dipende da un altro.
+
+**Quota Supabase condivisa (stessa giornata)**: il progetto di Oasi mostrava
+"EXCEEDING USAGE LIMITS" pur avendo un database sotto 1 MB. I limiti del piano
+gratuito valgono **per organizzazione, non per progetto**: a saturarli è il bucket
+`post-media` di **Caterino IG** (~1 GB di immagini/video generati, mai ripuliti
+perché `deletePost` lì non cancella i file). Se ricompare quel badge su una
+qualsiasi app dell'ecosistema, guardare prima **quale** progetto consuma davvero —
+non è detto sia quello che mostra l'avviso.
+
 ## Bug reali di utilizzo, sistemati in giornata (2026-08-14)
 
 Segnalati da Danilo durante l'uso reale con Oasi Volley, in rapida successione. Tutti corretti,
