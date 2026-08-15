@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
 import { Camera, Save, CheckCircle2, AlertCircle, Lock } from "lucide-react";
-import { C, font, display } from "./theme";
+import { C, font, display, ACCENTS } from "./theme";
 import { supabase } from "./supabaseClient";
 import { useAuth } from "./auth";
 import { useParticipation } from "./participation";
+import AvatarBuilder from "./components/AvatarBuilder";
 
 const CATEGORY_LABEL = { direzione: "Direzione", staff: "Staff", atleta: "Atleta" };
 
@@ -56,7 +57,7 @@ function Field({ label, ...props }) {
   );
 }
 
-export default function PersonalArea() {
+export default function PersonalArea({ accent, onPickAccent }) {
   const { profile, refreshProfile } = useAuth();
   const fileRef = useRef(null);
   const [form, setForm] = useState({
@@ -64,6 +65,8 @@ export default function PersonalArea() {
     jersey_number: profile?.jersey_number || "", ruolo: profile?.ruolo || "", avatar_url: profile?.avatar_url || "",
     motto: profile?.motto || "", flair: profile?.flair || "",
     card_bg: profile?.card_bg || "", card_bg_style: profile?.card_bg_style || "sfumata",
+    song_title: profile?.song_title || "", song_artist: profile?.song_artist || "",
+    ritual: profile?.ritual || "", nickname: profile?.nickname || "",
   });
   const bgRef = useRef(null);
   const [busy, setBusy] = useState(false);
@@ -129,6 +132,10 @@ export default function PersonalArea() {
     if (!error) await supabase.rpc("set_my_motto", { p_motto: form.motto || "" });
     if (!error) await supabase.rpc("set_my_flair", { p_flair: form.flair || "" });
     if (!error) await supabase.rpc("set_my_card_bg", { p_bg: form.card_bg || "", p_style: form.card_bg_style || "sfumata" });
+    if (!error) await supabase.rpc("set_my_cameretta", {
+      p_song_title: form.song_title || "", p_song_artist: form.song_artist || "",
+      p_ritual: form.ritual || "", p_nickname: form.nickname || "", p_showcase: profile?.showcase_badges ?? null,
+    });
     setBusy(false);
     if (error) { setError(error.message); return; }
     await refreshProfile();
@@ -176,6 +183,12 @@ export default function PersonalArea() {
           <Field label="Profilo Facebook" value={form.facebook} onChange={upd("facebook")} placeholder="link o nome utente" />
           <Field label="Profilo Instagram" value={form.instagram} onChange={upd("instagram")} placeholder="@nomeutente o link" />
           <Field label="Il tuo motto" value={form.motto} onChange={upd("motto")} placeholder="es. Punto dopo punto." />
+          <Field label="Il tuo soprannome" value={form.nickname} onChange={upd("nickname")} placeholder="come ti chiamano le compagne" />
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <div style={{ flex: "1 1 160px" }}><Field label="La canzone che ti carica" value={form.song_title} onChange={upd("song_title")} placeholder="titolo" /></div>
+            <div style={{ flex: "1 1 140px" }}><Field label="Artista" value={form.song_artist} onChange={upd("song_artist")} placeholder="es. Elodie" /></div>
+          </div>
+          <Field label="Il tuo rito / portafortuna" value={form.ritual} onChange={upd("ritual")} placeholder="es. calzini fortunati, treccia prima del match" />
 
           {/* Sfondo delle card condivisibili */}
           <div>
@@ -215,6 +228,31 @@ export default function PersonalArea() {
             </div>
           </div>
 
+          {onPickAccent && (
+            <div>
+              <label style={labelStyle}>Colore dell'app ({points} punti — se ne sbloccano di nuovi salendo di livello)</label>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {Object.entries(ACCENTS).map(([key, a]) => {
+                  const unlocked = points >= a.minPoints;
+                  const selected = accent === key;
+                  return (
+                    <button key={key} type="button" disabled={!unlocked}
+                      onClick={() => onPickAccent(key)}
+                      title={unlocked ? a.label : `Sblocca a ${a.minPoints} punti`}
+                      style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 12px", borderRadius: 10, cursor: unlocked ? "pointer" : "default",
+                        border: `2px solid ${selected ? a.light.orange : C.grid}`, background: selected ? `${a.light.orange}18` : C.card,
+                        opacity: unlocked ? 1 : 0.45 }}>
+                      <span style={{ width: 16, height: 16, borderRadius: 99, background: a.light.orange, flexShrink: 0, filter: unlocked ? "none" : "grayscale(1)" }} />
+                      <span style={{ ...font, fontSize: 12.5, fontWeight: 600, color: unlocked ? C.ink : C.muted }}>
+                        {unlocked ? a.label : <Lock size={11} style={{ verticalAlign: -1 }} />}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div>
             <label style={labelStyle}>La tua emoji ({points} punti — se ne sbloccano di nuove salendo di livello)</label>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -251,6 +289,8 @@ export default function PersonalArea() {
           <Save size={17} /> {busy ? "Salvo…" : "Salva"}
         </button>
       </Card>
+
+      <AvatarBuilder initial={profile?.avatar_config} onSaved={refreshProfile} />
     </div>
   );
 }

@@ -35,10 +35,25 @@ const DARK = {
 export const C = { ...LIGHT };
 
 const THEME_KEY = "a360-theme";  // "light" | "dark" | "auto" (default)
+const ACCENT_KEY = "a360-accent";  // preferenza SOLO sul dispositivo, come il tema
 
-export function applyTheme(mode) {
+// Colori sbloccabili coi punti partecipazione (personalizzazione, Ondata 2
+// del mondo magico): cambiano SOLO l'accento (orange/orangeSoft), il resto
+// della palette resta quello del tema chiaro/scuro. minPoints=0 = sempre
+// disponibile senza dover salire di livello.
+export const ACCENTS = {
+  arancio: { label: "Arancio", minPoints: 0, light: { orange: "#FF7A18", orangeSoft: "#FFE9D5" }, dark: { orange: "#FF9142", orangeSoft: "#3A2A16" } },
+  rosa:    { label: "Rosa",    minPoints: 15, light: { orange: "#F0439B", orangeSoft: "#FDE1F0" }, dark: { orange: "#FF6FBD", orangeSoft: "#3A1A2E" } },
+  viola:   { label: "Viola",   minPoints: 15, light: { orange: "#8B5CF6", orangeSoft: "#EDE5FE" }, dark: { orange: "#A78BFA", orangeSoft: "#2E2140" } },
+  verde:   { label: "Verde acqua", minPoints: 50, light: { orange: "#0EA394", orangeSoft: "#DBF5F1" }, dark: { orange: "#2DD4BF", orangeSoft: "#123A30" } },
+  notte:   { label: "Notte neon", minPoints: 120, light: { orange: "#4F6FF0", orangeSoft: "#E3E9FE" }, dark: { orange: "#7C9CFF", orangeSoft: "#1A2740" } },
+};
+
+export function applyTheme(mode, accentKey) {
   const dark = mode === "dark" || (mode === "auto" && window.matchMedia?.("(prefers-color-scheme: dark)").matches);
   Object.assign(C, dark ? DARK : LIGHT);
+  const accent = ACCENTS[accentKey];
+  if (accent) Object.assign(C, dark ? accent.dark : accent.light);
   document.body.style.background = C.surface;
   return dark;
 }
@@ -49,6 +64,14 @@ export function getStoredThemeMode() {
 
 export function setStoredThemeMode(mode) {
   try { localStorage.setItem(THEME_KEY, mode); } catch { /* ignora */ }
+}
+
+export function getStoredAccent() {
+  try { return localStorage.getItem(ACCENT_KEY) || "arancio"; } catch { return "arancio"; }
+}
+
+export function setStoredAccent(key) {
+  try { localStorage.setItem(ACCENT_KEY, key); } catch { /* ignora */ }
 }
 
 export const font = { fontFamily: "'Inter', system-ui, sans-serif" };

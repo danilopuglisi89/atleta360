@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState, useEffect, useMemo, useRef } from "react";
 import { Home, User, Users, TrendingUp, Info, Menu, X, ShieldCheck, LogOut, ClipboardList, ClipboardPlus, UserCircle, MessagesSquare, MoreHorizontal, CalendarDays } from "lucide-react";
-import { C, font, display, ringForRole, applyTheme, getStoredThemeMode, setStoredThemeMode } from "./theme";
+import { C, font, display, ringForRole, applyTheme, getStoredThemeMode, setStoredThemeMode, getStoredAccent, setStoredAccent } from "./theme";
 import ThemeToggle from "./components/ThemeToggle";
 import { AuthProvider, useAuth } from "./auth";
 import { supabase, supabaseConfigured } from "./supabaseClient";
@@ -56,25 +56,27 @@ const MOBILE_TAB_IDS = ["home", "profilo", "chat", "andamento"];
 // forzando un re-render, ogni schermata legge da sola i colori nuovi.
 function useThemeToggle() {
   const [mode, setMode] = useState(() => getStoredThemeMode());
+  const [accent, setAccent] = useState(() => getStoredAccent());
   const [, bump] = useState(0);
 
   useEffect(() => {
-    applyTheme(mode);
+    applyTheme(mode, accent);
     bump((v) => v + 1);
     if (mode !== "auto") return;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const onChange = () => { applyTheme("auto"); bump((v) => v + 1); };
+    const onChange = () => { applyTheme("auto", accent); bump((v) => v + 1); };
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
-  }, [mode]);
+  }, [mode, accent]);
 
   const cycle = () => {
     const next = mode === "auto" ? "light" : mode === "light" ? "dark" : "auto";
     setStoredThemeMode(next);
     setMode(next);
   };
+  const pickAccent = (key) => { setStoredAccent(key); setAccent(key); };
   const dark = mode === "dark" || (mode === "auto" && window.matchMedia?.("(prefers-color-scheme: dark)").matches);
-  return { mode, cycle, dark };
+  return { mode, cycle, dark, accent, pickAccent };
 }
 
 function Dashboard() {
@@ -92,6 +94,11 @@ function Dashboard() {
     firstName: profile?.first_name || "",
     avatarUrl: profile?.avatar_url || "",
     flair: profile?.flair || "",
+    avatarConfig: profile?.avatar_config || null,
+    nickname: profile?.nickname || "",
+    songTitle: profile?.song_title || "",
+    songArtist: profile?.song_artist || "",
+    ritual: profile?.ritual || "",
     cardBg: profile?.card_bg || "",
     cardBgStyle: profile?.card_bg_style || "sfumata",
     uid: profile?.id || null,
@@ -283,7 +290,7 @@ function Dashboard() {
   } else if (active.id === "rilevamento") {
     content = <NewAssessment onSaved={reload} />;
   } else if (active.id === "personale") {
-    content = <PersonalArea />;
+    content = <PersonalArea accent={theme.accent} onPickAccent={theme.pickAccent} />;
   } else if (active.id === "chat") {
     content = <ChatPage dmTarget={dmTarget} onMarkDmRead={markFromRead} unreadDmFromIds={unreadDmFromIds} />;
   } else if (errore) {

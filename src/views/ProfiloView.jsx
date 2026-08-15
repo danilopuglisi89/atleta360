@@ -11,6 +11,7 @@ import { levelFor } from "../gamification";
 import { useGoals } from "../goals";
 import { fireConfetti } from "../effects";
 import { Avatar } from "../PersonalArea";
+import Avatar2D, { avatarSvgDataUrl } from "../components/Avatar2D";
 import { ShareButton } from "../components/ShareSheet";
 import CelebrationOverlay from "../components/CelebrationOverlay";
 import CoachChat from "../CoachChat";
@@ -29,6 +30,9 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
   const myId = auth?.athleteId;
   const firstName = auth?.firstName || "";
   const avatarUrl = auth?.avatarUrl || "";
+  // La foto vera vince se c'è; altrimenti l'avatar disegnato è "usabile
+  // ovunque" per davvero, incluse le card condivisibili.
+  const shareAvatarUrl = avatarUrl || (auth?.avatarConfig ? avatarSvgDataUrl(auth.avatarConfig) : "");
 
   // Le atlete vedono SOLO il proprio profilo. Lo staff sceglie dalla rosa
   // (menu a tendina o "Vedi scheda completa" dalla card di un'atleta).
@@ -137,7 +141,7 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
     <div className="a360-print-area">
       {celebrate && (
         <CelebrationOverlay badge={celebrate} onClose={() => setCelebrate(null)}
-          shareData={{ name: sel, avatarUrl: personal ? avatarUrl : "", level: personal ? participationLevel : null,
+          shareData={{ name: sel, avatarUrl: personal ? shareAvatarUrl : "", level: personal ? participationLevel : null,
             bgUrl: personal ? auth?.cardBg : "", bgStyle: auth?.cardBgStyle }} />
       )}
       <div className="a360-print-only" style={{ ...display, fontSize: 20, fontWeight: 700, color: C.ink, marginBottom: 2 }}>
@@ -167,12 +171,17 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
       {personal && <ParticipationCard athleteId={effectiveAthleteId} />}
 
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
-        {(personal && avatarUrl)
-          ? <Avatar url={avatarUrl} name={firstName || sel} size={44} ring={scoreRing} />
-          : <InitialsCircle name={sel} size={44} ring={scoreRing} />}
+        {(personal && auth?.avatarConfig)
+          ? <Avatar2D config={auth.avatarConfig} size={44} ring={scoreRing} />
+          : (personal && avatarUrl)
+            ? <Avatar url={avatarUrl} name={firstName || sel} size={44} ring={scoreRing} />
+            : <InitialsCircle name={sel} size={44} ring={scoreRing} />}
         <span style={{ ...font, fontSize: 13, color: C.muted }}>Atleta</span>
         {restricted
-          ? <span style={{ ...display, fontSize: 15, fontWeight: 600, color: C.ink }}>{personal && auth?.flair ? `${auth.flair} ` : ""}{sel}</span>
+          ? <span style={{ ...display, fontSize: 15, fontWeight: 600, color: C.ink }}>
+              {personal && auth?.flair ? `${auth.flair} ` : ""}{sel}
+              {personal && auth?.nickname && <span style={{ ...font, fontSize: 13, fontWeight: 400, color: C.muted }}> “{auth.nickname}”</span>}
+            </span>
           : <Select value={sel} onChange={onOpenFullProfile} options={NOMI} className="a360-noprint" />}
         {position && <span style={{ ...font, fontSize: 12, fontWeight: 600, color: C.navy2, background: C.surface, border: `1px solid ${C.grid}`, padding: "5px 11px", borderRadius: 99 }}>{position}</span>}
         <span title="Livello calcolato dal punteggio complessivo" style={{ ...font, fontSize: 12, fontWeight: 600, color: C.orange, background: C.orangeSoft, padding: "5px 11px", borderRadius: 99, display: "inline-flex", alignItems: "center", gap: 5 }}>
@@ -193,7 +202,7 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
         <span ref={shareRef}>
           <ShareButton kind="profile" label="Condividi profilo"
             data={{ name: sel, position, scores, keys: SKILLS, SHORT, overall: overall(sel),
-              avatarUrl: personal ? avatarUrl : "", level: personal ? participationLevel : null,
+              avatarUrl: personal ? shareAvatarUrl : "", level: personal ? participationLevel : null,
               bgUrl: personal ? auth?.cardBg : "", bgStyle: auth?.cardBgStyle }} />
         </span>
         <button className="a360-noprint" onClick={() => window.print()}
@@ -205,6 +214,21 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
           Punteggio complessivo <b style={{ color: C.orange, fontSize: 20, marginLeft: 6 }}>{overall(sel).toFixed(1)}</b>
         </div>
       </div>
+
+      {personal && (auth?.songTitle || auth?.ritual) && (
+        <div className="a360-noprint" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+          {auth.songTitle && (
+            <span style={{ ...font, fontSize: 12.5, color: C.ink, background: C.surface, border: `1px solid ${C.grid}`, borderRadius: 99, padding: "6px 12px" }}>
+              🎵 {auth.songTitle}{auth.songArtist ? ` · ${auth.songArtist}` : ""}
+            </span>
+          )}
+          {auth.ritual && (
+            <span style={{ ...font, fontSize: 12.5, color: C.ink, background: C.surface, border: `1px solid ${C.grid}`, borderRadius: 99, padding: "6px 12px" }}>
+              🍀 {auth.ritual}
+            </span>
+          )}
+        </div>
+      )}
 
       <Card title={personal ? "I tuoi traguardi" : "Traguardi"} subtitle={personal ? "Riconoscimenti calcolati dai tuoi rilevamenti" : `Riconoscimenti di ${sel}`} style={{ marginBottom: 20 }}>
         {badges.length > 0
