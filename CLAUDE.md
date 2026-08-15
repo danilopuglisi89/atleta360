@@ -512,3 +512,89 @@ Piano a 4 ondate concordato con Danilo:
 Le 4 ondate pianificate sono complete. Ogni ondata che ha toccato il database ha portato il suo
 script SQL in `supabase/`: `notifications.sql`, `self-assessments.sql`, `goals.sql`, `reports.sql`,
 `attendance.sql` — tutti eseguiti da Danilo nel SQL Editor di Supabase.
+
+## Ondate Q1–Q4 — dalle "24 domande di esplorazione" (2026-08-15)
+
+Seconda intervista di esplorazione (24 domande in 6 blocchi) su cosa mancasse ancora.
+Danilo ha detto **no** in modo esplicito a: statistiche di gioco/scouting, schede avversarie,
+accesso genitori, registro consensi, gestione quote, bacheca avvisi (WhatsApp resta WhatsApp),
+sponsor dentro l'app, ruoli staff differenziati, libreria esercizi. Sono "no" da rispettare:
+l'app è **lo spazio delle ragazze e del mister**. Priorità dichiarata: *la vita quotidiana*.
+
+- **Q1 — Il rito quotidiano** (`supabase/q1.sql`): Home personalizzabile
+  (`profiles.home_hidden` + RPC `set_my_home_hidden`, `HomeCustomizer.jsx` — le card si
+  spengono singolarmente, la Home resta ricca di default); check-in **post-partita**
+  (`checkins.kind` = `'pre'|'post'`, vincolo unique allargato a `(athlete_id, checkin_date,
+  kind)`, `PostMatchCheckinCard.jsx` appare solo nel giorno di una partita già iniziata);
+  offline più solido (`NavigationRoute` in `src/sw.js`: senza, navigare offline verso una
+  vista non ancora in cache mostrava l'errore del browser invece della shell).
+- **Q2 — Il mister senza attrito** (nessun SQL): `GymMode.jsx` (schermata bordocampo a tutto
+  schermo, bottoni grandi, presenze + appunto veloce, riusa `attendance`/`athlete_notes`);
+  la **nota dell'ultimo rilevamento** ricompare in `NewAssessment.jsx`; `MondayInsightCard.jsx`
+  (3 osservazioni IA il lunedì, generate **una volta a settimana** e messe in localStorage —
+  mai a ogni apertura, per i limiti Gemini).
+- **Q3 — Il ciclo della stagione** (`supabase/q3.sql`): `SeasonWrappedButton.jsx` (Wrapped di
+  stagione: stessa messa in scena di `WrappedStory`, totali da sempre, calcolati al tocco);
+  `season_reports` + `SeasonReportCard.jsx` (pagellone finale del mister, una riga per atleta,
+  si aggiorna); `invite_links` + RPC `create_invite_link`/`redeem_invite_link` (link generato
+  da Admin → Atlete, la nuova arrivata si registra e arriva **già approvata e collegata**);
+  **archiviazione soft** — il toggle attiva/disattiva su `athletes` ora esclude davvero
+  l'atleta da `NOMI` in `buildModel()` (sparisce da classifica/squadra) ma `atleti[identifier]`
+  resta, quindi lo storico non si perde.
+- **Q4 — Rifinitura + video** (`supabase/q4.sql`): `Card` duplicata a mano in `AdminPanel.jsx` e
+  `NewAssessment.jsx` sostituita con quella condivisa di `components/ui`; `video_clips` +
+  `VideoClipsCard.jsx` — clip di partita **a link** (YouTube/Drive), non file caricati: un
+  video pesa troppo per il testo in Postgres e non c'è nessun bucket Storage configurato.
+  Modello di permessi identico all'album foto (scelta esplicita di Danilo).
+- **Admin** (`supabase/admin-status.sql`): `profiles.pwa_installed` + `touch_last_seen(p_installed)`
+  e RPC `staff_push_status()` → badge 📱 (app installata) e 🔔/🔕 (push attive) accanto a ogni
+  membro. ⚠️ **Trappola vera**: appena deployato il client che chiama `touch_last_seen` col
+  parametro nuovo, l'"ultimo accesso" si è bloccato su "mai" **per tutti** finché lo script non
+  è stato eseguito — la chiamata falliva in silenzio. Cambiando la firma di una RPC già in uso,
+  ricordare che client e database restano disallineati fino al Run nel SQL Editor.
+
+## Avatar: dalla galleria anime, non più disegnati (2026-08-15)
+
+Il vecchio avatar componibile (cerchi/ellissi SVG in `avatar.js`) è stato sostituito da
+**50 illustrazioni** stile anime elegante — 25 aspetti (5 carnagioni × 5 acconciature) × 2 maglie
+**rosa/nero**, i colori di Oasi Volley — generate con Higgsfield (`nano_banana_pro`), ridotte a
+480×480 JPEG (~35 KB l'una, 1.7 MB in tutto) in `public/avatars/lookNN-{pink|black}.jpg`.
+`avatar.js` ora risolve solo `config → url`; `AvatarBuilder.jsx` è una griglia di scelta;
+`Avatar2D.jsx` mostra l'immagine col numero di maglia come badge sovrapposto (non più dentro
+l'SVG). La scelta avatar è riservata alle **atlete**: staff e admin vedono solo "carica foto"
+(scelta di Danilo — `PersonalArea.jsx` la monta solo se `category === 'atleta'` e non admin).
+
+## Notifiche con ancoraggio (2026-08-15)
+
+Prima una notifica portava solo alla **vista** ("apri il Profilo") e poi bisognava cercare la
+card giusta. Ora `notifications.meta.anchor` porta l'id dell'elemento: il service worker lo
+passa come `?anchor=...`, `App.jsx` (`scrollToAnchor`, con qualche retry perché le viste sono
+lazy) scrolla fino alla card, sia da push sia dal click in campanella.
+Vedi **`supabase/notification-anchors.sql`**, che ridefinisce le funzioni già esistenti:
+stella → `a360-stars`, obiettivo → `a360-goals`, certificato → `a360-certificates`, controllo
+settimanale staff → `a360-attention`, pre-partita → `a360-next-event`, momento del giorno →
+`a360-daily-moment`, check-in e streak → `a360-checkin` **e vista corretta in `profilo`**
+(prima puntavano a `home`, dove la card non c'è). `dispatch_push()` e `api/push.js` inoltrano
+il campo `anchor`. Aggiungendo un ancoraggio nuovo: mettere l'`id` sulla `Card` di destinazione.
+
+## Identità del club dal nuovo sito (2026-08-15)
+
+I ragazzi di Oasi hanno rifatto **oasivolley.it** (Joomla). Cose recepite nella dashboard:
+- **Palestre di casa** in `src/venues.js` (PalaGalilei · Via Aurelia Nord; Pal. Sc. Gragnani ·
+  Via Giuseppe Verdi 32, Torre del Lago; Palestra Lenci · Via Lenci 3) → scelta rapida nel
+  campo luogo di eventi e routine in `CalendarioView.jsx`. Il campo resta libero: le trasferte
+  possono essere ovunque.
+- **Accenti del club** in `theme.js`: `oasi` (rosa `#E5007E`, il loro colore, senza punti da
+  sbloccare) e `oro` (`#D4AF37`, scurito a `#B8952A` in tema chiaro per restare leggibile).
+- **TikTok** `@oasi.volley.viare` nelle didascalie delle card (`shareCards.js`) — per le
+  ragazze è il canale vero; sulla card resta disegnato solo `@atleta360.volley · @oasivolley`
+  per non allungare troppo la riga.
+- Il motto **"Passione rosa. Grinta nera. Cuore d'oro"** tra le frasi del giorno.
+- **Corretto un errore reale**: il report squadra diceva "Oasi Volley **U18**", ma quella
+  categoria non esiste nel club — Danilo segue la **U19** (confermato dall'articolo su
+  Atleta360 pubblicato sul loro sito).
+- **Non** recepiti di proposito: loghi sponsor (l'app resta pulita) e il font Montserrat
+  (introdurrebbe un webfont, la dashboard usa font già caricati).
+
+**Da eseguire nel SQL Editor** (in quest'ordine, tutti idempotenti): `q1.sql` → `q3.sql` →
+`q4.sql` → `admin-status.sql` → `notification-anchors.sql`. Q2 e gli avatar non richiedono SQL.
