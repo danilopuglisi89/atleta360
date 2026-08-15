@@ -66,7 +66,7 @@ export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile }) {
 
       <MotivationCard />
       <WeekSongCard />
-      <DailyPill quizDone={quizMine} onOpenQuiz={goQuiz} />
+      <DailyPill quizDone={restricted ? quizMine : true} onOpenQuiz={goQuiz} />
       {restricted && <MissionCard uid={auth?.uid} athleteId={myAthleteId} />}
       <NextEventCard uid={auth?.uid} />
       {restricted && myScores && <WeeklyChallengeCard scores={myScores} />}
@@ -120,8 +120,8 @@ export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile }) {
         </Card>
       </div>
 
-      <DailyMomentCard uid={auth?.uid} />
-      <QuizCard uid={auth?.uid} />
+      {restricted && <DailyMomentCard uid={auth?.uid} />}
+      {restricted && <QuizCard uid={auth?.uid} />}
       <PollsCard uid={auth?.uid} isStaff={auth?.isStaff} />
       <PhotoAlbumCard uid={auth?.uid} isStaff={auth?.isStaff} />
     </div>
