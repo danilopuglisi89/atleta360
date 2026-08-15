@@ -20,6 +20,7 @@ import SelfAssessmentCard from "../components/SelfAssessmentCard";
 import WellbeingCard from "../components/WellbeingCard";
 import ParticipationCard from "../components/ParticipationCard";
 import StarsCard from "../components/StarsCard";
+import MvpCard from "../components/MvpCard";
 import PathMirror from "../components/PathMirror";
 import SeasonWrappedButton from "../components/SeasonWrappedButton";
 import SeasonReportCard from "../components/SeasonReportCard";
@@ -278,6 +279,7 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
       </div>
 
       <StarsCard athleteId={effectiveAthleteId} personal={personal} />
+      <MvpCard athleteId={effectiveAthleteId} personal={personal} />
 
       <GoalsCard goals={goals} scores={scores} editable athleteName={sel} personal={personal} onAdd={addGoal} onRemove={removeGoal} />
 

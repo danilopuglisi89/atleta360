@@ -4,6 +4,7 @@ import { C, font, display } from "./theme";
 import { supabase } from "./supabaseClient";
 import { Avatar } from "./PersonalArea";
 import { Card } from "./components/ui";
+import UsageDashboard from "./components/UsageDashboard";
 
 const STATUS_META = {
   pending: { label: "In attesa", color: "#B4520A", bg: "#FFE9D5" },
@@ -132,6 +133,8 @@ export default function AdminPanel({ onChange }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <UsageDashboard />
+
       {/* RICHIESTE IN ATTESA */}
       <Card title="Richieste in attesa" subtitle={pending.length ? `${pending.length} da valutare` : "Nessuna richiesta in attesa"}>
         {pending.length === 0 ? (

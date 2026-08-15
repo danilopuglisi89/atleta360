@@ -238,6 +238,23 @@ export default function StaffView({ d, onOpenCard }) {
   const { reports, saveReport, removeReport } = useReports();
   const { rows: attendanceRows, saveSession, removeSession } = useAttendance();
   const [gymMode, setGymMode] = useState(false);
+  // Ultimo riconoscimento ricevuto (stella o giocatore del match) per atleta:
+  // serve a segnalare al mister — solo a lui — chi sta restando senza niente.
+  const [lastPraise, setLastPraise] = useState(null);   // null = non ancora caricato
+  useEffect(() => {
+    (async () => {
+      const [s, m] = await Promise.all([
+        supabase.from("stars").select("athlete_id, created_at"),
+        supabase.from("match_mvp").select("athlete_id, created_at"),
+      ]);
+      const map = {};
+      [...(s.data || []), ...(m.data || [])].forEach((r) => {
+        const t = new Date(r.created_at).getTime();
+        if (!map[r.athlete_id] || t > map[r.athlete_id]) map[r.athlete_id] = t;
+      });
+      setLastPraise(map);
+    })();
+  }, []);
 
   const athletes = NOMI.map((n) => ({ id: atleti[n].athleteId, identifier: n })).filter((a) => a.id);
 
@@ -277,6 +294,14 @@ export default function StaffView({ d, onOpenCard }) {
       if (last3[2] < last3[1] && last3[1] < last3[0]) reasons.push("punteggi in calo da 2 rilevamenti");
     }
     if (!atleti[n].self) reasons.push("nessuna autovalutazione");
+    // Chi non riceve un riconoscimento da oltre un mese: lo sa solo il mister,
+    // l'atleta non deve mai vedere di essere "in ritardo" su questo.
+    if (aid && lastPraise) {
+      const last = lastPraise[aid];
+      const days = last ? Math.floor((Date.now() - last) / 86400000) : null;
+      if (last === undefined) reasons.push("mai ricevuto un riconoscimento");
+      else if (days >= 30) reasons.push(`nessun riconoscimento da ${days} giorni`);
+    }
     return reasons.length ? { n, reasons } : null;
   }).filter(Boolean);
 

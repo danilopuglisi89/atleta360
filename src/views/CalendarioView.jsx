@@ -11,6 +11,7 @@ import { downloadEventICS } from "../ics";
 import { ShareButton } from "../components/ShareSheet";
 import { useMatchWords } from "../rituals";
 import { VENUES } from "../venues";
+import { useMvp } from "../mvp";
 
 // Le palestre di casa in un tocco: il campo luogo resta libero (le trasferte
 // possono essere ovunque), queste sono solo scorciatoie.
@@ -45,7 +46,59 @@ function KindBadge({ kind }) {
   );
 }
 
-function EventCard({ ev, myRsvp, counts, names, isStaff, uid, onRsvp, onResult, onCancel, onDelete }) {
+// Giocatore del match: lo sceglie il mister a partita finita. Tutti vedono
+// chi è stata; solo lo staff può assegnarla o cambiarla.
+function MvpBlock({ ev, isStaff, mvp, roster }) {
+  const [pick, setPick] = useState("");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(null);
+
+  if (mvp.unavailable || mvp.loading) return null;
+  const current = mvp.forEvent(ev.id);
+  const nameOf = (id) => (roster || []).find((r) => r.id === id)?.identifier || "—";
+
+  if (current) {
+    return (
+      <div style={{ background: "#FFF8E6", border: "1px solid #F5D77A", borderRadius: 10, padding: "10px 12px", marginTop: 8 }}>
+        <div style={{ ...font, fontSize: 11.5, color: "#8A6A10", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>Giocatore del match</div>
+        <div style={{ ...display, fontSize: 15, fontWeight: 700, color: C.ink, marginTop: 3 }}>🏐 {nameOf(current.athlete_id)}</div>
+        {current.note && <div style={{ ...font, fontSize: 12.5, color: C.ink, marginTop: 3 }}>{current.note}</div>}
+      </div>
+    );
+  }
+  if (!isStaff) return null;
+
+  const submit = async () => {
+    setBusy(true); setErr(null);
+    const e = await mvp.award(ev.id, pick, note);
+    setBusy(false);
+    if (e) setErr(e); else { setPick(""); setNote(""); }
+  };
+
+  return (
+    <div style={{ background: C.surface, borderRadius: 10, padding: "10px 12px", marginTop: 8 }}>
+      <div style={{ ...font, fontSize: 11.5, color: C.muted, marginBottom: 6 }}>Giocatore del match</div>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <select value={pick} onChange={(e) => setPick(e.target.value)}
+          style={{ ...font, fontSize: 12.5, border: `1px solid ${C.grid}`, borderRadius: 8, padding: "6px 10px" }}>
+          <option value="">Scegli…</option>
+          {(roster || []).map((r) => <option key={r.id} value={r.id}>{r.identifier}</option>)}
+        </select>
+        <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Perché? (facoltativo)" maxLength={120}
+          style={{ ...font, fontSize: 12.5, border: `1px solid ${C.grid}`, borderRadius: 8, padding: "6px 10px", flex: "1 1 140px" }} />
+        <button onClick={submit} disabled={!pick || busy}
+          style={{ ...font, fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 8, border: "none",
+            background: C.orange, color: "#fff", cursor: pick ? "pointer" : "default", opacity: pick ? 1 : 0.5 }}>
+          {busy ? "…" : "Assegna"}
+        </button>
+      </div>
+      {err && <div style={{ ...font, fontSize: 12, color: "#B4232A", marginTop: 6 }}>{err}</div>}
+    </div>
+  );
+}
+
+function EventCard({ ev, myRsvp, counts, names, isStaff, uid, mvp, roster, onRsvp, onResult, onCancel, onDelete }) {
   const [resultDraft, setResultDraft] = useState("");
   const past = new Date(ev.starts_at) < new Date();
   // "La parola della partita": 24h di finestra dopo il risultato per
@@ -109,6 +162,10 @@ function EventCard({ ev, myRsvp, counts, names, isStaff, uid, onRsvp, onResult, 
           )}
         </div>
       )}
+      {ev.kind === "match" && past && !ev.cancelled && mvp && (
+        <MvpBlock ev={ev} isStaff={isStaff} mvp={mvp} roster={roster} />
+      )}
+
       {(ev.objective || ev.exercises) && (
         <div style={{ background: C.surface, borderRadius: 10, padding: "9px 12px", marginTop: 8 }}>
           {ev.objective && <div style={{ ...font, fontSize: 12.5, color: C.ink }}><b>Obiettivo:</b> {ev.objective}</div>}
@@ -174,10 +231,12 @@ function EventCard({ ev, myRsvp, counts, names, isStaff, uid, onRsvp, onResult, 
   );
 }
 
-export default function CalendarioView({ auth }) {
+export default function CalendarioView({ auth, d }) {
   const uid = auth?.uid;
   const isStaff = !!auth?.isStaff;
   const cal = useCalendar(uid);
+  const mvp = useMvp();
+  const roster = d?.roster || [];
   const [people, setPeople] = useState({});      // user_id -> nome (per i nomi delle conferme, staff)
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ kind: "match", title: "", date: "", time: "", endTime: "", location: "", notes: "", objective: "", exercises: "" });
@@ -210,6 +269,8 @@ export default function CalendarioView({ auth }) {
       },
       isStaff,
       uid,
+      mvp,
+      roster,
       onRsvp: async (id, s) => setErr(await cal.setRsvp(id, s)),
       onResult: async (id, result) => setErr(await cal.updateEvent(id, { result })),
       onCancel: async (id) => { if (window.confirm("Annullare questo evento? Resta in elenco come annullato.")) setErr(await cal.updateEvent(id, { cancelled: true })); },
