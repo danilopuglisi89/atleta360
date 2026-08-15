@@ -14,6 +14,7 @@ import DailyMomentCard from "../components/DailyMomentCard";
 import DailyPill from "../components/DailyPill";
 import TodayStrip from "../components/TodayStrip";
 import TeamFeedCard from "../components/TeamFeedCard";
+import FigurineAlbumCard from "../components/FigurineAlbumCard";
 import QuizCard from "../components/QuizCard";
 import { ShareButton } from "../components/ShareSheet";
 import WeeklyRecapCard from "../components/WeeklyRecapCard";
@@ -21,7 +22,7 @@ import { useTodaysBirthdays } from "../birthdays";
 import { useWeeklyQuiz } from "../quiz";
 
 export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile }) {
-  const { NOMI, atleti, overall, RANK, TEAM_AVG, lastPeriod } = d;
+  const { NOMI, atleti, overall, RANK, TEAM_AVG, lastPeriod, roster } = d;
   const restricted = !!auth?.restricted;
   const myScores = restricted && auth?.athleteId ? atleti[auth.athleteId]?.scores : null;
   const myAthleteId = restricted ? resolveAthleteId(d, auth?.athleteId) : null;
@@ -54,6 +55,8 @@ export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile }) {
       {restricted && myScores && <WeeklyChallengeCard scores={myScores} />}
       {restricted && <WeeklyRecapCard uid={auth?.uid} athleteId={myAthleteId} name={auth?.athleteId || auth?.firstName}
         avatarUrl={auth?.avatarUrl} bgUrl={auth?.cardBg} bgStyle={auth?.cardBgStyle} />}
+
+      {restricted && <FigurineAlbumCard uid={auth?.uid} roster={roster} />}
 
       <TeamFeedCard />
 
