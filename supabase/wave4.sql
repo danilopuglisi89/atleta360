@@ -26,7 +26,7 @@ create policy "reactions delete own" on public.profile_reactions for delete usin
 
 alter table public.notifications drop constraint if exists notifications_type_check;
 alter table public.notifications add constraint notifications_type_check
-  check (type in ('dm', 'team_chat', 'assessment', 'approval', 'goal', 'reminder', 'event', 'reaction'));
+  check (type in ('dm', 'team_chat', 'assessment', 'approval', 'goal', 'reminder', 'event', 'reaction', 'star'));
 
 create or replace function public.notify_reaction()
 returns trigger language plpgsql security definer set search_path = public as $$

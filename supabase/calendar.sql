@@ -84,7 +84,7 @@ create policy "rsvps write own" on public.event_rsvps for all
 -- ---------- Le notifiche imparano il tipo 'event' ----------
 alter table public.notifications drop constraint if exists notifications_type_check;
 alter table public.notifications add constraint notifications_type_check
-  check (type in ('dm', 'team_chat', 'assessment', 'approval', 'goal', 'reminder', 'event'));
+  check (type in ('dm', 'team_chat', 'assessment', 'approval', 'goal', 'reminder', 'event', 'reaction', 'star'));
 
 -- ---------- Generatore: dalla ricorrenza agli eventi delle prossime 5 settimane ----------
 create or replace function public.generate_recurring_events()

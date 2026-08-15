@@ -52,9 +52,14 @@ create policy "goals delete" on public.goals for delete using (
 -- Notifica solo al momento del "sorpasso" (punteggio precedente sotto al
 -- target, nuovo punteggio a target o oltre): niente notifiche ripetute ai
 -- rilevamenti successivi in cui l'obiettivo resta raggiunto.
+-- Lista COMPLETA dei tipi, identica in ogni script che tocca questo vincolo
+-- (notifications/goals/push/calendar/wave4/gamify-*): ogni file lo ricrea da
+-- zero, quindi dichiararne una piu' corta lo restringe e fa fallire tutto se
+-- nel database esistono gia' righe dei tipi mancanti. Aggiungendo un tipo
+-- nuovo, aggiornare la lista in TUTTI quei file.
 alter table public.notifications drop constraint if exists notifications_type_check;
 alter table public.notifications add constraint notifications_type_check
-  check (type in ('dm', 'team_chat', 'assessment', 'approval', 'goal'));
+  check (type in ('dm', 'team_chat', 'assessment', 'approval', 'goal', 'reminder', 'event', 'reaction', 'star'));
 
 create or replace function public.notify_goal_reached()
 returns trigger language plpgsql security definer set search_path = public as $$
