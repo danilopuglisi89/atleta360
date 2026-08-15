@@ -26,7 +26,7 @@ create policy "stars delete staff" on public.stars for delete using (public.is_s
 
 alter table public.notifications drop constraint if exists notifications_type_check;
 alter table public.notifications add constraint notifications_type_check
-  check (type in ('dm', 'team_chat', 'assessment', 'approval', 'goal', 'reminder', 'event', 'reaction', 'star'));
+  check (type in ('dm', 'team_chat', 'assessment', 'approval', 'goal', 'reminder', 'event', 'reaction', 'star', 'drop'));
 
 create or replace function public.notify_star()
 returns trigger language plpgsql security definer set search_path = public as $$

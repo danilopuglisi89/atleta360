@@ -40,7 +40,7 @@ create policy "push subs delete own" on public.push_subscriptions for delete usi
 -- ---------- Nuovo tipo di notifica: 'reminder' (promemoria staff) ----------
 alter table public.notifications drop constraint if exists notifications_type_check;
 alter table public.notifications add constraint notifications_type_check
-  check (type in ('dm', 'team_chat', 'assessment', 'approval', 'goal', 'reminder', 'event', 'reaction', 'star'));
+  check (type in ('dm', 'team_chat', 'assessment', 'approval', 'goal', 'reminder', 'event', 'reaction', 'star', 'drop'));
 
 -- ---------- RPC: lo staff invia un promemoria ----------
 -- A tutta la squadra (recipients = null) oppure solo ad alcune persone

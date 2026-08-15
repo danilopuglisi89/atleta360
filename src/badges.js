@@ -5,6 +5,7 @@
 // ============================================================
 import { C } from "./theme";
 import { growthStreak } from "./gamification";
+import { activeSeason, SEASONS } from "./seasons";
 
 // Media di un rilevamento sui focus presenti.
 function entryOverall(entry, keys) {
@@ -79,6 +80,20 @@ export function computeBadges(model, name) {
     badges.push({ id: "completa", emoji: "🌟", label: "Atleta completa", desc: "Tutti i focus almeno a 7/10", color: C.orange });
   }
 
+  // 9) Badge stagionali — un rilevamento fatto durante una finestra di festa
+  // (Halloween, Natale, fine campionato...) sblocca il badge di quella
+  // festa, per sempre: si guarda la DATA di ogni rilevamento passato, non
+  // solo se la festa è attiva oggi.
+  const seasonsHit = new Set();
+  hist.forEach((e) => {
+    if (!e.ts) return;
+    const s = activeSeason(new Date(e.ts));
+    if (s) seasonsHit.add(s.key);
+  });
+  SEASONS.forEach((s) => {
+    if (seasonsHit.has(s.key)) badges.push({ ...s.badge, color: "#C9971C" });
+  });
+
   return badges;
 }
 
@@ -99,5 +114,6 @@ export function badgeCatalog(model) {
     { id: "costanza", emoji: "🎯", label: "Costanza", hint: "Almeno 3 rilevamenti registrati", color: C.navy2 },
     { id: "top10", emoji: "💎", label: "Punteggio pieno", hint: "Un focus a 10/10", color: "#0EA5E9" },
     { id: "completa", emoji: "🌟", label: "Atleta completa", hint: "Tutti i focus almeno a 7/10", color: C.orange },
+    ...SEASONS.map((s) => ({ ...s.badge, hint: `Un rilevamento durante ${s.label.toLowerCase()}`, color: "#C9971C" })),
   ];
 }

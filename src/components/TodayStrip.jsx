@@ -9,6 +9,7 @@ import { useCalendar } from "../calendar";
 import { useCheckins } from "../wellbeing";
 import { useWeeklyQuiz } from "../quiz";
 import { weatherFor } from "../weather";
+import StreakMilestone from "./StreakMilestone";
 
 const KIND_LABEL = { match: "Partita", training: "Allenamento", other: "Impegno" };
 const isToday = (iso) => {
@@ -44,6 +45,7 @@ export default function TodayStrip({ uid, athleteId, onGoCheckin, onGoQuiz }) {
 
   return (
     <div className="a360-reveal a360-noprint" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 16, background: C.card, border: `1px solid ${C.grid}`, borderRadius: 14, padding: "12px 16px" }}>
+      <StreakMilestone streak={streak} />
       {streak >= 1 && (
         <div style={{ display: "flex", alignItems: "center", gap: 5, ...display, fontSize: 15, fontWeight: 700, color: "#D2691E" }}>
           <Flame size={17} /> {streak}

@@ -59,7 +59,7 @@ create policy "goals delete" on public.goals for delete using (
 -- nuovo, aggiornare la lista in TUTTI quei file.
 alter table public.notifications drop constraint if exists notifications_type_check;
 alter table public.notifications add constraint notifications_type_check
-  check (type in ('dm', 'team_chat', 'assessment', 'approval', 'goal', 'reminder', 'event', 'reaction', 'star'));
+  check (type in ('dm', 'team_chat', 'assessment', 'approval', 'goal', 'reminder', 'event', 'reaction', 'star', 'drop'));
 
 create or replace function public.notify_goal_reached()
 returns trigger language plpgsql security definer set search_path = public as $$

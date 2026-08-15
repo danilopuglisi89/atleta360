@@ -23,6 +23,7 @@ import QuizCard from "../components/QuizCard";
 import { ShareButton } from "../components/ShareSheet";
 import WeeklyRecapCard from "../components/WeeklyRecapCard";
 import { useTodaysBirthdays } from "../birthdays";
+import { activeSeason } from "../seasons";
 import { useWeeklyQuiz } from "../quiz";
 
 export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile }) {
@@ -31,6 +32,7 @@ export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile }) {
   const myScores = restricted && auth?.athleteId ? atleti[auth.athleteId]?.scores : null;
   const myAthleteId = restricted ? resolveAthleteId(d, auth?.athleteId) : null;
   const birthdays = useTodaysBirthdays();
+  const season = activeSeason();
   const { mine: quizMine } = useWeeklyQuiz(auth?.uid);
 
   const goCheckin = () => {
@@ -42,6 +44,13 @@ export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile }) {
 
   return (
     <div>
+      {season && (
+        <div className="a360-reveal a360-noprint" style={{ background: "linear-gradient(120deg, #2A1B4D 0%, #4A2E7A 100%)", borderRadius: 14, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 24 }}>{season.emoji}</span>
+          <span style={{ ...font, fontSize: 13.5, color: "#fff" }}>{season.banner}</span>
+        </div>
+      )}
+
       {birthdays.length > 0 && (
         <div className="a360-reveal a360-noprint" style={{ background: "linear-gradient(120deg, #FFE9D5 0%, #FFF3E6 100%)", border: "1px solid #FFC98A", borderRadius: 14, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 22 }}>🎂</span>

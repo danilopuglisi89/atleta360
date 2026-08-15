@@ -161,7 +161,7 @@ alter table public.engagement_prompts_sent enable row level security;
 
 alter table public.notifications drop constraint if exists notifications_type_check;
 alter table public.notifications add constraint notifications_type_check
-  check (type in ('dm', 'team_chat', 'assessment', 'approval', 'goal', 'reminder', 'event', 'reaction', 'star'));
+  check (type in ('dm', 'team_chat', 'assessment', 'approval', 'goal', 'reminder', 'event', 'reaction', 'star', 'drop'));
 
 create or replace function public.send_daily_engagement()
 returns integer language plpgsql security definer set search_path = public as $$
