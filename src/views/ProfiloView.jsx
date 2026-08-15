@@ -11,7 +11,7 @@ import { levelFor } from "../gamification";
 import { useGoals } from "../goals";
 import { fireConfetti } from "../effects";
 import { Avatar } from "../PersonalArea";
-import Avatar2D, { avatarSvgDataUrl } from "../components/Avatar2D";
+import Avatar2D, { avatarShareUrl } from "../components/Avatar2D";
 import { ShareButton } from "../components/ShareSheet";
 import CelebrationOverlay from "../components/CelebrationOverlay";
 import CoachChat from "../CoachChat";
@@ -36,7 +36,7 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
   const avatarUrl = auth?.avatarUrl || "";
   // La foto vera vince se c'è; altrimenti l'avatar disegnato è "usabile
   // ovunque" per davvero, incluse le card condivisibili.
-  const shareAvatarUrl = avatarUrl || (auth?.avatarConfig ? avatarSvgDataUrl(auth.avatarConfig) : "");
+  const shareAvatarUrl = avatarUrl || (auth?.avatarConfig ? avatarShareUrl(auth.avatarConfig) : "");
 
   // Le atlete vedono SOLO il proprio profilo. Lo staff sceglie dalla rosa
   // (menu a tendina o "Vedi scheda completa" dalla card di un'atleta).
