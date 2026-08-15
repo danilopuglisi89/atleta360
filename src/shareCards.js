@@ -17,6 +17,10 @@
 
 export const IG_ATLETA360 = "@atleta360.volley";
 export const IG_SOCIETA = "@oasivolley";
+// TikTok della società: sta solo nelle didascalie, non disegnato sulla card
+// (la riga dei tag resterebbe troppo lunga) — ma per le ragazze è il canale
+// dove finiscono davvero le storie.
+export const TIKTOK_SOCIETA = "@oasi.volley.viare";
 const TAGS = `${IG_ATLETA360} · ${IG_SOCIETA}`;
 
 export const SIZES = {
@@ -467,7 +471,7 @@ export async function drawTeam({ teamName, keys, SHORT, avg, athleteCount, lastP
 const HASHTAGS = "#Atleta360 #OasiVolley #pallavolo #volleyfemminile #softskills";
 
 export function captionFor(kind, data = {}) {
-  const tag = `${IG_ATLETA360} ${IG_SOCIETA}`;
+  const tag = `${IG_ATLETA360} ${IG_SOCIETA} ${TIKTOK_SOCIETA}`;
   switch (kind) {
     case "badge":
       return `${data.badge?.emoji || "🏅"} Nuovo traguardo: ${data.badge?.label}!\n${data.badge?.desc || ""}\n\nIl mio percorso sulle soft skills con ${tag}\n${HASHTAGS}`;

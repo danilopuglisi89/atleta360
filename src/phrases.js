@@ -4,6 +4,9 @@
 // nello stesso giorno), senza bisogno di backend.
 // ============================================================
 export const PHRASES = [
+  // Il motto della società (oasivolley.it): non è mio, è loro — e le ragazze
+  // lo riconoscono al volo.
+  "Passione rosa. Grinta nera. Cuore d'oro.",
   "Il talento porta al campo, il carattere ti fa restare.",
   "Non devi essere perfetta: devi essere presente, punto dopo punto.",
   "L'errore di ieri è l'allenamento di oggi.",

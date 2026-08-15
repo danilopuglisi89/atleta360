@@ -10,6 +10,24 @@ import { useCalendar } from "../calendar";
 import { downloadEventICS } from "../ics";
 import { ShareButton } from "../components/ShareSheet";
 import { useMatchWords } from "../rituals";
+import { VENUES } from "../venues";
+
+// Le palestre di casa in un tocco: il campo luogo resta libero (le trasferte
+// possono essere ovunque), queste sono solo scorciatoie.
+function VenuePicker({ onPick }) {
+  return (
+    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+      <span style={{ ...font, fontSize: 11.5, color: C.muted }}>Palestre di casa:</span>
+      {VENUES.map((v) => (
+        <button key={v.short} type="button" onClick={() => onPick(v.full)} title={v.full}
+          style={{ ...font, fontSize: 11.5, fontWeight: 600, padding: "5px 10px", borderRadius: 99, cursor: "pointer",
+            border: `1px solid ${C.grid}`, background: C.card, color: C.navy2 }}>
+          {v.short}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 const WEEKDAYS = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
 const KIND_LABEL = { match: "Partita", training: "Allenamento", other: "Evento" };
@@ -260,6 +278,7 @@ export default function CalendarioView({ auth }) {
               <input type="time" value={form.endTime} onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))} title="Fine (facoltativa)" style={inputStyle} />
             </div>
             <input value={form.location} onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} placeholder="Luogo (es. Pardini Sporting Center, Lido di Camaiore)" style={inputStyle} />
+            <VenuePicker onPick={(v) => setForm((f) => ({ ...f, location: v }))} />
             <input value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Note (es. ritrovo 30 minuti prima)" style={inputStyle} />
             {form.kind === "training" && (
               <>
@@ -316,6 +335,7 @@ export default function CalendarioView({ auth }) {
             <input type="time" value={recForm.start} onChange={(e) => setRecForm((f) => ({ ...f, start: e.target.value }))} style={inputStyle} />
             <input type="time" value={recForm.end} onChange={(e) => setRecForm((f) => ({ ...f, end: e.target.value }))} style={inputStyle} />
             <input value={recForm.location} onChange={(e) => setRecForm((f) => ({ ...f, location: e.target.value }))} placeholder="Palestra" style={{ ...inputStyle, flex: "1 1 140px" }} />
+            <VenuePicker onPick={(v) => setRecForm((f) => ({ ...f, location: v }))} />
             <button onClick={submitRecurrence}
               style={{ ...font, display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 14px", borderRadius: 10, border: "none", background: C.navy2, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
               <Plus size={14} /> Aggiungi routine

@@ -43,6 +43,10 @@ const ACCENT_KEY = "a360-accent";  // preferenza SOLO sul dispositivo, come il t
 // disponibile senza dover salire di livello.
 export const ACCENTS = {
   arancio: { label: "Arancio", minPoints: 0, light: { orange: "#FF7A18", orangeSoft: "#FFE9D5" }, dark: { orange: "#FF9142", orangeSoft: "#3A2A16" } },
+  // I colori della società (oasivolley.it): "passione rosa, grinta nera,
+  // cuore d'oro". Disponibile da subito, senza punti: è la squadra, non un premio.
+  oasi:    { label: "Rosa Oasi", minPoints: 0, light: { orange: "#E5007E", orangeSoft: "#FFE0F0" }, dark: { orange: "#FF4DA6", orangeSoft: "#3D1029" } },
+  oro:     { label: "Cuore d'oro", minPoints: 15, light: { orange: "#B8952A", orangeSoft: "#FBF1D2" }, dark: { orange: "#D4AF37", orangeSoft: "#3A3016" } },
   rosa:    { label: "Rosa",    minPoints: 15, light: { orange: "#F0439B", orangeSoft: "#FDE1F0" }, dark: { orange: "#FF6FBD", orangeSoft: "#3A1A2E" } },
   viola:   { label: "Viola",   minPoints: 15, light: { orange: "#8B5CF6", orangeSoft: "#EDE5FE" }, dark: { orange: "#A78BFA", orangeSoft: "#2E2140" } },
   verde:   { label: "Verde acqua", minPoints: 50, light: { orange: "#0EA394", orangeSoft: "#DBF5F1" }, dark: { orange: "#2DD4BF", orangeSoft: "#123A30" } },
