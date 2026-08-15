@@ -9,7 +9,7 @@ import { C, font, display } from "./theme";
  * - payload: oggetto unito al corpo della richiesta a /api/coach
  *   (es. { athlete, skills } per una singola atleta, oppure { team, skills }).
  */
-export default function CoachChat({ title = "Coach IA", subtitle, suggestions = [], payload = {} }) {
+export default function CoachChat({ id, title = "Coach IA", subtitle, suggestions = [], payload = {}, autoPrompt, autoKey }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -19,6 +19,18 @@ export default function CoachChat({ title = "Coach IA", subtitle, suggestions = 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, busy]);
+
+  // "Il coach si fa vivo lui nei momenti giusti": un messaggio VERO (non
+  // canned), generato una sola volta per traguardo — mai a ogni apertura
+  // del profilo, per rispettare i limiti d'uso di Gemini e non essere invadente.
+  useEffect(() => {
+    if (!autoPrompt || !autoKey) return;
+    const SEEN_KEY = `a360-coach-nudge-${autoKey}`;
+    if (localStorage.getItem(SEEN_KEY)) return;
+    localStorage.setItem(SEEN_KEY, "1");
+    send(autoPrompt);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPrompt, autoKey]);
 
   const send = async (text) => {
     const q = (text ?? input).trim();
@@ -45,7 +57,7 @@ export default function CoachChat({ title = "Coach IA", subtitle, suggestions = 
   };
 
   return (
-    <div className="a360-noprint" style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.grid}`, boxShadow: "0 1px 2px rgba(12,19,48,0.04)", padding: 20, marginTop: 20 }}>
+    <div id={id} className="a360-noprint" style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.grid}`, boxShadow: "0 1px 2px rgba(12,19,48,0.04)", padding: 20, marginTop: 20 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
         <div style={{ width: 30, height: 30, borderRadius: 9, background: C.orangeSoft, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <Sparkles size={17} color={C.orange} />

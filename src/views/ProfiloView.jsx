@@ -20,6 +20,7 @@ import SelfAssessmentCard from "../components/SelfAssessmentCard";
 import WellbeingCard from "../components/WellbeingCard";
 import ParticipationCard from "../components/ParticipationCard";
 import StarsCard from "../components/StarsCard";
+import PathMirror from "../components/PathMirror";
 import { useParticipation } from "../participation";
 import { Heart } from "lucide-react";
 import { useReactions } from "../reactions";
@@ -278,15 +279,22 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
         </Card>
       )}
 
+      {personal && <PathMirror athleteId={effectiveAthleteId} history={storico?.[sel]} keys={SKILLS} />}
+
       <PrintStamp label={sel} />
 
       <CoachChat
+        id="a360-coach"
         subtitle={`Consigli sulle competenze allenate di ${sel}`}
         suggestions={[
           "Come posso migliorare il mio punto più debole?",
           "Dammi un esercizio per resettare dopo un errore.",
           "Una routine mentale prima del servizio nei punti caldi?",
         ]}
+        autoKey={personal && improvement ? `${sel}-${storico?.[sel]?.length}` : undefined}
+        autoPrompt={personal && improvement
+          ? `Sono cresciuta di ${improvement.diff} punti${improvement.skill ? ` soprattutto in ${improvement.skill}` : ""} rispetto all'ultimo rilevamento. Dimmi in poche righe, col tuo tono, cosa ne pensi e come posso continuare così.`
+          : undefined}
         payload={{
           athlete: {
             id: sel, scores,
