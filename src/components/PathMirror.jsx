@@ -24,7 +24,7 @@ export default function PathMirror({ athleteId, history, keys }) {
     .map((e, i) => ({
       kind: "assessment", ts: e.ts,
       label: i === 0 ? "Il tuo inizio" : "Rilevamento del mister",
-      detail: `Punteggio ${(overallOf(e, keys) ?? 0).toFixed(1)}`,
+      detail: `Media ${(overallOf(e, keys) ?? 0).toFixed(1)}`,
       icon: i === 0 ? Flag : TrendingUp,
     }));
 

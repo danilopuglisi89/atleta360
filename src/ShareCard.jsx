@@ -200,7 +200,7 @@ async function drawCard({ name, position, scores, keys, SHORT, overall, avatarUr
   ctx.textAlign = "center";
   ctx.fillStyle = "rgba(255,255,255,0.55)";
   ctx.font = "600 30px 'Inter', sans-serif";
-  ctx.fillText("PUNTEGGIO COMPLESSIVO", cx, 1690);
+  ctx.fillText("DOVE SONO ORA", cx, 1690);
   ctx.fillStyle = C.orange;
   ctx.font = "700 120px 'Space Grotesk', sans-serif";
   ctx.fillText(overall.toFixed(1), cx, 1810);

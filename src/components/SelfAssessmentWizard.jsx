@@ -133,8 +133,8 @@ export default function SelfAssessmentWizard({ profile, isStaff, onDone }) {
             </div>
             <p style={{ ...font, fontSize: 14, color: C.muted, lineHeight: 1.6, marginTop: 10 }}>
               Prima di cominciare, <b style={{ color: C.ink }}>raccontaci come ti vedi</b>: per ognuna delle {total} competenze
-              ti spieghiamo cos'è e ti chiediamo un voto da 1 a 10 su te stessa.
-              <br />Ci vogliono 2 minuti — e non esistono risposte sbagliate.
+              ti spieghiamo cos'è e ti chiediamo quanto ti ci senti a tuo agio oggi, da 1 a 10.
+              <br />Non è un test e non ci sono risposte sbagliate: serve solo a sapere da dove parti. Ci vogliono 2 minuti.
             </p>
             <button onClick={() => setStep(1)}
               style={{ ...font, marginTop: 16, display: "inline-flex", alignItems: "center", gap: 8, padding: "13px 24px", borderRadius: 12, border: "none", background: C.orange, color: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
@@ -184,7 +184,7 @@ export default function SelfAssessmentWizard({ profile, isStaff, onDone }) {
         ) : (
           <div>
             <div style={{ ...display, fontSize: 19, fontWeight: 700, color: C.ink }}>Il tuo ritratto ✨</div>
-            <p style={{ ...font, fontSize: 13, color: C.muted, marginTop: 4 }}>Controlla i voti: puoi tornare indietro per cambiarli.</p>
+            <p style={{ ...font, fontSize: 13, color: C.muted, marginTop: 4 }}>Controlla le tue risposte: puoi tornare indietro per cambiarle.</p>
             <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
               {skills.map((k) => (
                 <div key={k.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: C.surface, borderRadius: 10, padding: "9px 13px" }}>

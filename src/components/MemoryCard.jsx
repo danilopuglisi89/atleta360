@@ -42,7 +42,7 @@ export default function MemoryCard({ history, keys, currentOverall }) {
     <div className="a360-reveal a360-noprint" style={{ display: "flex", alignItems: "center", gap: 10, background: C.surface, border: `1px solid ${C.grid}`, borderRadius: 14, padding: "12px 16px", marginBottom: 16 }}>
       <Clock size={18} color={C.navy2} style={{ flexShrink: 0 }} />
       <div style={{ ...font, fontSize: 13, color: C.ink, lineHeight: 1.4 }}>
-        <b>{best.label}</b> il tuo punteggio era {past.toFixed(1)}
+        <b>{best.label}</b> eri a {past.toFixed(1)}
         {diff > 0 && <span style={{ color: "#0F7A4E", fontWeight: 700 }}> — oggi sei a +{diff}! 🚀</span>}
         {diff <= 0 && <span> — oggi sei a {currentOverall.toFixed(1)}.</span>}
       </div>

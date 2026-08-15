@@ -99,7 +99,7 @@ export default function AndamentoView({ d, onOpenCard }) {
       </Card>
 
       {growth.length > 0 && (
-        <Card title="Chi è cresciuto di più" subtitle="Variazione del punteggio medio dal primo all'ultimo rilevamento" style={{ marginTop: 20 }}>
+        <Card title="Chi è cresciuto di più" subtitle="Quanto è cambiata la media dal primo all'ultimo rilevamento" style={{ marginTop: 20 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {growth.slice(0, 6).map(({ name, g }, i) => {
               const up = g > 0, down = g < 0;

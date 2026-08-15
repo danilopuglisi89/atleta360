@@ -34,7 +34,7 @@ export function computeBadges(model, name) {
     const max = Math.max(...vals);
     const leaders = NOMI.filter((n) => (atleti[n]?.scores[k] ?? 0) === max);
     if (max > 0 && leaders.length === 1 && leaders[0] === name) {
-      badges.push({ id: `top-${k}`, emoji: "⭐", label: `Regina di ${SHORT[k]}`, desc: `Miglior punteggio della squadra in ${SHORT[k]}`, color: C.navy2 });
+      badges.push({ id: `top-${k}`, emoji: "⭐", label: `Regina di ${SHORT[k]}`, desc: `La più forte della squadra in ${SHORT[k]}`, color: C.navy2 });
     }
   });
 
@@ -72,7 +72,7 @@ export function computeBadges(model, name) {
 
   // 7) Fuoriclasse — almeno un focus a punteggio pieno (10).
   if (keys.some((k) => (me.scores[k] ?? 0) >= 10)) {
-    badges.push({ id: "top10", emoji: "💎", label: "Punteggio pieno", desc: "Un focus a 10/10", color: "#0EA5E9" });
+    badges.push({ id: "top10", emoji: "💎", label: "Il massimo", desc: "Una competenza arrivata a 10 su 10", color: "#0EA5E9" });
   }
 
   // 8) Completa — tutti i focus almeno a 7.
@@ -106,13 +106,13 @@ export function badgeCatalog(model) {
   return [
     { id: "regina", emoji: "👑", label: "Regina del campo", hint: "1ª nella classifica generale", color: "#E8A400" },
     { id: "podio", emoji: "🏅", label: "Sul podio", hint: "Tra le prime 3 della classifica generale", color: C.orange },
-    ...keys.map((k) => ({ id: `top-${k}`, emoji: "⭐", label: `Regina di ${SHORT[k]}`, hint: `Miglior punteggio della squadra in ${SHORT[k]}`, color: C.navy2 })),
+    ...keys.map((k) => ({ id: `top-${k}`, emoji: "⭐", label: `Regina di ${SHORT[k]}`, hint: `La più forte della squadra in ${SHORT[k]}`, color: C.navy2 })),
     { id: "piu-migliorata", emoji: "🚀", label: "Più migliorata", hint: "Crescita complessiva più alta dal primo rilevamento", color: "#0F7A4E" },
     { id: "in-crescita", emoji: "📈", label: "In crescita", hint: "Ultimo rilevamento migliore del precedente", color: "#0F7A4E" },
     { id: "streak3", emoji: "🔥", label: "In fiamme", hint: "3 rilevamenti di fila in crescita", color: "#E11D74" },
     { id: "streak5", emoji: "🔥🔥", label: "Serie leggendaria", hint: "5 rilevamenti di fila in crescita", color: "#E11D74" },
     { id: "costanza", emoji: "🎯", label: "Costanza", hint: "Almeno 3 rilevamenti registrati", color: C.navy2 },
-    { id: "top10", emoji: "💎", label: "Punteggio pieno", hint: "Un focus a 10/10", color: "#0EA5E9" },
+    { id: "top10", emoji: "💎", label: "Il massimo", hint: "Una competenza arrivata a 10 su 10", color: "#0EA5E9" },
     { id: "completa", emoji: "🌟", label: "Atleta completa", hint: "Tutti i focus almeno a 7/10", color: C.orange },
     ...SEASONS.map((s) => ({ ...s.badge, hint: `Un rilevamento durante ${s.label.toLowerCase()}`, color: "#C9971C" })),
   ];

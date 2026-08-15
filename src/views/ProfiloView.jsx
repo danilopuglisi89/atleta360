@@ -189,7 +189,7 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
             </span>
           : <Select value={sel} onChange={onOpenFullProfile} options={NOMI} className="a360-noprint" />}
         {position && <span style={{ ...font, fontSize: 12, fontWeight: 600, color: C.navy2, background: C.surface, border: `1px solid ${C.grid}`, padding: "5px 11px", borderRadius: 99 }}>{position}</span>}
-        <span title="Livello calcolato dal punteggio complessivo" style={{ ...font, fontSize: 12, fontWeight: 600, color: C.orange, background: C.orangeSoft, padding: "5px 11px", borderRadius: 99, display: "inline-flex", alignItems: "center", gap: 5 }}>
+        <span title="Livello calcolato dalla media delle competenze" style={{ ...font, fontSize: 12, fontWeight: 600, color: C.orange, background: C.orangeSoft, padding: "5px 11px", borderRadius: 99, display: "inline-flex", alignItems: "center", gap: 5 }}>
           {level.emoji} {level.label}
         </span>
         {!personal && auth?.uid && (
@@ -220,8 +220,14 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
           <Printer size={16} /> Stampa / PDF
         </button>
         <div style={{ marginLeft: "auto", ...display, fontSize: 13, color: C.muted }}>
-          Punteggio complessivo <b style={{ color: C.orange, fontSize: 20, marginLeft: 6 }}>{overall(sel).toFixed(1)}</b>
+          Dove {personal ? "sei" : "è"} ora <b style={{ color: C.orange, fontSize: 20, marginLeft: 6 }}>{overall(sel).toFixed(1)}</b>
         </div>
+      </div>
+
+      {/* I numeri delle soft skill non sono voti scolastici: dirlo apertamente
+          protegge l'atleta (e la lettura che ne dà un genitore). */}
+      <div style={{ ...font, fontSize: 12, color: C.muted, background: C.surface, borderRadius: 10, padding: "9px 13px", marginBottom: 20, lineHeight: 1.5 }}>
+        Non sono voti: sono una fotografia di questo momento, per capire su cosa lavorare. Cambiano nel tempo — è proprio quello il punto.
       </div>
 
       {personal && (auth?.songTitle || auth?.ritual) && (

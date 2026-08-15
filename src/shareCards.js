@@ -292,7 +292,7 @@ export async function drawProfile({ name, position, scores, keys, SHORT, overall
   ctx.textAlign = "center";
   ctx.fillStyle = "rgba(255,255,255,0.55)";
   ctx.font = `600 ${story ? 30 : 20}px 'Inter', sans-serif`;
-  ctx.fillText("PUNTEGGIO COMPLESSIVO", cx, L.scoreLabelY);
+  ctx.fillText("DOVE SONO ORA", cx, L.scoreLabelY);
   ctx.fillStyle = "#FF7A18";
   ctx.font = `700 ${L.scoreSize}px 'Space Grotesk', sans-serif`;
   ctx.fillText(overall.toFixed(1), cx, L.scoreY);
@@ -482,6 +482,6 @@ export function captionFor(kind, data = {}) {
     case "team":
       return `Il profilo soft skills della nostra squadra 🏐\nNon solo tecnica: testa, gruppo e carattere.\n\n${tag}\n${HASHTAGS}`;
     default:
-      return `Il mio profilo su Atleta360 🏐\nPunteggio complessivo ${data.overall ?? ""}\n\n${tag}\n${HASHTAGS}`;
+      return `Il mio profilo su Atleta360 🏐\nDove sono ora: ${data.overall ?? ""}\n\n${tag}\n${HASHTAGS}`;
   }
 }
