@@ -38,6 +38,14 @@ function ViewFallback() {
   return <DashboardSkeleton />;
 }
 
+// La card-obiettivo può non essere ancora nel DOM (vista lazy + dati ancora
+// in caricamento): qualche tentativo ravvicinato invece di un singolo timeout.
+function scrollToAnchor(id, attempt = 0) {
+  const el = document.getElementById(id);
+  if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+  if (attempt < 6) setTimeout(() => scrollToAnchor(id, attempt + 1), 400);
+}
+
 /* ============================================================
    APP + LAYOUT RESPONSIVE
    ============================================================ */
@@ -144,7 +152,15 @@ function Dashboard() {
   const openNotification = (n) => {
     if (n.type === "dm" && n.meta?.from_id) { openDM(n.meta.from_id, n.meta.from_name || ""); return; }
     setView(n.view || "home"); setMobileOpen(false);
+    if (n.meta?.anchor) scrollToAnchor(n.meta.anchor);
   };
+  // Se la notifica arriva da fuori (push toccata sul telefono), il service
+  // worker passa ?anchor=... nell'URL: scrolla dritto alla card giusta
+  // invece di lasciare l'atleta a cercarla nella vista.
+  useEffect(() => {
+    const anchor = new URLSearchParams(window.location.search).get("anchor");
+    if (anchor) scrollToAnchor(anchor);
+  }, []);
   // Aprendo la chat, le notifiche di bacheca risultano lette (la bacheca è
   // sempre visibile in ChatPage); quelle dei messaggi privati si segnano
   // conversazione per conversazione (vedi onConversationOpen in DirectMessages).

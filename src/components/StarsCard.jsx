@@ -12,7 +12,7 @@ export default function StarsCard({ athleteId, personal }) {
   if (!athleteId || !stars || stars.length === 0) return null;
 
   return (
-    <Card title={personal ? "Le tue stelle" : "Stelle ricevute"} subtitle="Riconoscimenti del mister" style={{ marginTop: 20 }}>
+    <Card id="a360-stars" title={personal ? "Le tue stelle" : "Stelle ricevute"} subtitle="Riconoscimenti del mister" style={{ marginTop: 20 }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {stars.map((s) => (
           <div key={s.id} style={{ display: "flex", alignItems: "flex-start", gap: 10, background: "#FFF8E6", border: "1px solid #F5D77A", borderRadius: 12, padding: "10px 13px" }}>

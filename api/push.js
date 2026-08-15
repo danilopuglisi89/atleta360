@@ -21,14 +21,14 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Segreto non valido" });
   }
 
-  const { title, body, view, type, subs } = req.body || {};
+  const { title, body, view, type, anchor, subs } = req.body || {};
   if (!title || !Array.isArray(subs) || subs.length === 0) {
     return res.status(400).json({ error: "Payload incompleto" });
   }
 
   webpush.setVapidDetails(CONTACT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
-  const payload = JSON.stringify({ title, body: body || "", view: view || "home", type: type || "generic" });
+  const payload = JSON.stringify({ title, body: body || "", view: view || "home", type: type || "generic", anchor: anchor || null });
   let ok = 0, gone = 0, failed = 0;
 
   await Promise.all(subs.map(async (s) => {

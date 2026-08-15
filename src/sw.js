@@ -40,16 +40,18 @@ self.addEventListener("push", (event) => {
     icon: "/pwa-192x192.png",
     badge: "/pwa-192x192.png",
     tag: data.type || "atleta360",          // raggruppa le notifiche dello stesso tipo
-    data: { view: data.view || "home" },
+    data: { view: data.view || "home", anchor: data.anchor || null },
   };
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
-// ---------- Click sulla notifica: apri l'app sulla vista giusta ----------
+// ---------- Click sulla notifica: apri l'app sulla vista giusta, e se c'è
+// un ancoraggio scrolla dritto alla card giusta (vedi src/App.jsx) ----------
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const view = event.notification.data?.view || "home";
-  const url = `/?view=${encodeURIComponent(view)}`;
+  const anchor = event.notification.data?.anchor;
+  const url = `/?view=${encodeURIComponent(view)}${anchor ? `&anchor=${encodeURIComponent(anchor)}` : ""}`;
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((wins) => {
       for (const w of wins) {

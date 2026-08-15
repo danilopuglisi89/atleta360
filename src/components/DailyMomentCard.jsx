@@ -37,7 +37,7 @@ export default function DailyMomentCard({ uid }) {
   };
 
   return (
-    <Card title="Il momento del giorno" subtitle="Com'è andata oggi? Un'emoji, e una foto se vuoi" style={{ marginTop: 16 }} className="a360-noprint">
+    <Card id="a360-daily-moment" title="Il momento del giorno" subtitle="Com'è andata oggi? Un'emoji, e una foto se vuoi" style={{ marginTop: 16 }} className="a360-noprint">
       {mine ? (
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {mine.photo && <img src={mine.photo} alt="" onClick={() => setViewer(mine.photo)} style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover", cursor: "pointer" }} />}

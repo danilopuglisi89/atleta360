@@ -197,7 +197,7 @@ function CertificatesCard({ athletes }) {
   };
 
   return (
-    <Card title="Scadenze certificati" subtitle="Promemoria automatico 30 e 7 giorni prima" style={{ marginTop: 20 }} className="a360-noprint">
+    <Card id="a360-certificates" title="Scadenze certificati" subtitle="Promemoria automatico 30 e 7 giorni prima" style={{ marginTop: 20 }} className="a360-noprint">
       {rows.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
           {rows.map((c) => {
@@ -359,7 +359,7 @@ export default function StaffView({ d, onOpenCard }) {
       </div>
 
       {attentionAlerts.length > 0 && (
-        <Card title="Da tenere d'occhio" subtitle="Segnali automatici calcolati dai dati esistenti" style={{ marginTop: 20 }} className="a360-noprint">
+        <Card id="a360-attention" title="Da tenere d'occhio" subtitle="Segnali automatici calcolati dai dati esistenti" style={{ marginTop: 20 }} className="a360-noprint">
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {attentionAlerts.map(({ n, reasons }) => (
               <div key={n} style={{ display: "flex", alignItems: "flex-start", gap: 10, background: "#FDECEC", borderRadius: 10, padding: "9px 13px" }}>

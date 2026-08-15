@@ -43,7 +43,7 @@ export default function NextEventCard({ uid }) {
   const myRsvp = rs.find((r) => r.user_id === uid)?.status || null;
 
   return (
-    <div className="a360-reveal a360-noprint" style={{ background: `linear-gradient(120deg, ${C.navy2} 0%, ${C.navy} 100%)`, borderRadius: 16, padding: "18px 20px", marginBottom: 16, color: "#fff" }}>
+    <div id="a360-next-event" className="a360-reveal a360-noprint" style={{ background: `linear-gradient(120deg, ${C.navy2} 0%, ${C.navy} 100%)`, borderRadius: 16, padding: "18px 20px", marginBottom: 16, color: "#fff" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, ...font, fontSize: 11.5, color: C.orange, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase" }}>
         <CalendarDays size={14} /> Prossimo impegno
       </div>

@@ -30,7 +30,7 @@ export default function GoalsCard({ goals, scores, editable, personal, athleteNa
   const name = athleteName || "l'atleta";
 
   return (
-    <Card title={personal ? "I tuoi obiettivi" : "Obiettivi"}
+    <Card id="a360-goals" title={personal ? "I tuoi obiettivi" : "Obiettivi"}
       subtitle={personal ? "Fissa un traguardo per un focus e segui i progressi" : editable ? `Fissa un traguardo per ${name} e segui i progressi` : "Traguardi fissati per questa atleta"}
       style={{ marginTop: 20 }}>
       {goals.length === 0 && !adding && (
