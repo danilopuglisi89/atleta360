@@ -41,24 +41,33 @@ export function useParticipation(athleteId) {
   return { level, streak, loading, reload: load };
 }
 
-// "Momento del giorno" stile BeReal: un'emoji + nota al giorno, feed di
-// squadra (tabella daily_moments, RPC todays_daily_moments — solo Oasi).
+// "Momento del giorno" stile BeReal: un'emoji (+ foto facoltativa) + nota
+// al giorno, feed di squadra con reazioni (tabelle daily_moments +
+// moment_reactions, RPC todays_daily_moments/todays_moment_reactions —
+// solo Oasi). Vedi supabase/wow-1.sql per la foto e le reazioni.
 export function useDailyMoments(uid) {
   const [feed, setFeed] = useState(null);        // null = caricamento
+  const [reactions, setReactions] = useState({}); // moment_id -> [{emoji,count}]
   const [unavailable, setUnavailable] = useState(false);  // tabella non ancora creata
   const load = useCallback(async () => {
-    const { data, error } = await supabase.rpc("todays_daily_moments");
+    const [{ data, error }, { data: rx }] = await Promise.all([
+      supabase.rpc("todays_daily_moments"),
+      supabase.rpc("todays_moment_reactions"),
+    ]);
     setUnavailable(!!error);
     setFeed(data || []);
+    const map = {};
+    (rx || []).forEach((r) => { (map[r.moment_id] ||= []).push({ emoji: r.emoji, count: r.count }); });
+    setReactions(map);
   }, []);
   useEffect(() => { load(); }, [load]);
 
   const mine = uid ? (feed || []).find((m) => m.user_id === uid) || null : null;
 
-  const save = async (emoji, note) => {
+  const save = async (emoji, note, photo) => {
     if (!uid) return "Utente non riconosciuto.";
     const { error } = await supabase.from("daily_moments").upsert(
-      { user_id: uid, emoji, note: note?.trim() || null, moment_date: todayIso() },
+      { user_id: uid, emoji, note: note?.trim() || null, photo: photo || null, moment_date: todayIso() },
       { onConflict: "user_id,moment_date" }
     );
     if (error) return error.message;
@@ -66,5 +75,25 @@ export function useDailyMoments(uid) {
     return null;
   };
 
-  return { feed, mine, save, loading: feed === null, unavailable };
+  // Una reazione per persona per momento: ricliccare la stessa la toglie,
+  // cliccarne un'altra la sostituisce (niente scelta multipla, resta leggero).
+  const [myReactions, setMyReactions] = useState({});
+  useEffect(() => {
+    if (!uid) return;
+    supabase.from("moment_reactions").select("moment_id,emoji").eq("user_id", uid)
+      .then(({ data }) => setMyReactions(Object.fromEntries((data || []).map((r) => [r.moment_id, r.emoji]))));
+  }, [uid, feed]);
+
+  const react = async (momentId, emoji) => {
+    if (!uid) return;
+    const mineNow = myReactions[momentId];
+    if (mineNow === emoji) {
+      await supabase.from("moment_reactions").delete().eq("moment_id", momentId).eq("user_id", uid);
+    } else {
+      await supabase.from("moment_reactions").upsert({ moment_id: momentId, user_id: uid, emoji }, { onConflict: "moment_id,user_id" });
+    }
+    await load();
+  };
+
+  return { feed, mine, save, reactions, myReactions, react, loading: feed === null, unavailable };
 }

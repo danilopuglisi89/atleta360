@@ -24,6 +24,7 @@ import { ShareButton } from "../components/ShareSheet";
 import WeeklyRecapCard from "../components/WeeklyRecapCard";
 import { useTodaysBirthdays } from "../birthdays";
 import { activeSeason } from "../seasons";
+import MatchdayBanner from "../components/MatchdayBanner";
 import { useWeeklyQuiz } from "../quiz";
 
 export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile }) {
@@ -44,6 +45,8 @@ export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile }) {
 
   return (
     <div>
+      <MatchdayBanner uid={auth?.uid} />
+
       {season && (
         <div className="a360-reveal a360-noprint" style={{ background: "linear-gradient(120deg, #2A1B4D 0%, #4A2E7A 100%)", borderRadius: 14, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 24 }}>{season.emoji}</span>
