@@ -67,9 +67,19 @@ begin
   return new;
 end;
 $$;
-drop trigger if exists on_checkin_points on public.checkins;
-create trigger on_checkin_points after insert on public.checkins
-  for each row execute function public.award_points_checkin();
+-- Guardia: se wave3.sql (tabella checkins) non è ancora stato eseguito,
+-- salta solo questo trigger invece di bloccare tutto lo script — capitato
+-- davvero il 2026-08-14, "checkins" non esisteva su questo progetto.
+do $$
+begin
+  if exists (select 1 from information_schema.tables where table_schema = 'public' and table_name = 'checkins') then
+    drop trigger if exists on_checkin_points on public.checkins;
+    create trigger on_checkin_points after insert on public.checkins
+      for each row execute function public.award_points_checkin();
+  else
+    raise notice 'Tabella public.checkins non trovata: esegui wave3.sql, poi ri-lancia questo script per completare i punti sul check-in.';
+  end if;
+end $$;
 
 -- ---------- Trigger: conferma presenza -> +3 punti ----------
 create or replace function public.award_points_rsvp()

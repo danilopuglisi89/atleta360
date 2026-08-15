@@ -20,8 +20,15 @@ export default function WellbeingCard({ athleteId, canSeeAll }) {
   const [showUnavail, setShowUnavail] = useState(false);
   const [until, setUntil] = useState("");
   const [reason, setReason] = useState("");
+  const [checkinError, setCheckinError] = useState(null);
 
   if (!athleteId) return null;
+
+  const onSetEnergy = async (n) => {
+    setCheckinError(null);
+    const error = await setEnergy(n);
+    if (error) setCheckinError(error);
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -32,7 +39,7 @@ export default function WellbeingCard({ athleteId, canSeeAll }) {
         </div>
         <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
           {[1, 2, 3, 4, 5].map((n) => (
-            <button key={n} onClick={() => setEnergy(n)}
+            <button key={n} onClick={() => onSetEnergy(n)}
               style={{ flex: 1, padding: "10px 0", borderRadius: 10, cursor: "pointer", fontSize: 20,
                 border: `2px solid ${today === n ? C.orange : C.grid}`, background: today === n ? C.orangeSoft : C.card }}>
               {["😴", "😕", "😐", "💪", "🔥"][n - 1]}
@@ -40,6 +47,7 @@ export default function WellbeingCard({ athleteId, canSeeAll }) {
           ))}
         </div>
         {today && <div style={{ ...font, fontSize: 12, color: C.muted, marginTop: 6 }}>Registrato per oggi — puoi cambiarlo quando vuoi.</div>}
+        {checkinError && <div style={{ ...font, fontSize: 12, color: "#B4232A", marginTop: 6 }}>Non salvato: {checkinError}</div>}
       </div>
 
       {/* Diario privato */}
