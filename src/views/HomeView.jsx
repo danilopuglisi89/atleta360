@@ -30,11 +30,12 @@ import StreakBuddyCard from "../components/StreakBuddyCard";
 import TeamPetCard from "../components/TeamPetCard";
 import PostMatchCheckinCard from "../components/PostMatchCheckinCard";
 import HomeCustomizer, { saveHomeHidden } from "../components/HomeCustomizer";
+import WelcomeWeekCard from "../components/WelcomeWeekCard";
 import { useWeeklyQuiz } from "../quiz";
 import { computeBadges } from "../badges";
 import { useState } from "react";
 
-export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile }) {
+export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile, onGoView }) {
   const { NOMI, atleti, overall, RANK, TEAM_AVG, lastPeriod, roster } = d;
   const restricted = !!auth?.restricted;
   const myScores = restricted && auth?.athleteId ? atleti[auth.athleteId]?.scores : null;
@@ -81,6 +82,14 @@ export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile }) {
             Oggi è il compleanno di <b>{birthdays.join(", ")}</b>! Fatele gli auguri 🎉
           </span>
         </div>
+      )}
+
+      {restricted && (
+        <WelcomeWeekCard uid={auth?.uid} athleteId={myAthleteId}
+          hasAvatar={!!auth?.avatarConfig || !!auth?.avatarUrl}
+          hasSelf={!!(atleti[auth?.athleteId]?.self || d.selfOnly?.[auth?.athleteId]?.self)}
+          hasMotto={!!auth?.motto}
+          onGoView={onGoView} onGoCheckin={goCheckin} onGoQuiz={goQuiz} />
       )}
 
       {restricted && <TodayStrip uid={auth?.uid} athleteId={myAthleteId} onGoCheckin={goCheckin} onGoQuiz={goQuiz} />}

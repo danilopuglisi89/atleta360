@@ -51,7 +51,10 @@ function PlantSvg({ stage }) {
 
 export default function TeamPetCard() {
   const total = useTeamGrowth();
-  if (total === null) return null;
+  // A zero punti la pianta è solo un vaso vuoto: al lancio, quando ancora
+  // nessuno ha fatto niente, meglio non mostrarla affatto — compare da sola
+  // appena la squadra comincia a muoversi.
+  if (total === null || total === 0) return null;
   const stage = stageFor(total);
   const next = STAGES.find((s) => s.min > total);
 

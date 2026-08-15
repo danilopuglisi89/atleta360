@@ -20,6 +20,7 @@ import { GateScreen, SetupNotice } from "./components/GateScreens";
 import NotificationBell from "./components/NotificationBell";
 import InstallPrompt from "./components/InstallPrompt";
 import SelfAssessmentWizard from "./components/SelfAssessmentWizard";
+import WelcomeAvatar, { needsWelcomeAvatar } from "./components/WelcomeAvatar";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { useNotifications } from "./notifications";
 import SecretEgg from "./components/SecretEgg";
@@ -89,7 +90,7 @@ function useThemeToggle() {
 }
 
 function Dashboard() {
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, refreshProfile } = useAuth();
   const theme = useThemeToggle();
   const isAdmin = profile?.role === "admin";
   const isStaff = isAdmin || ["direzione", "staff"].includes(profile?.category);
@@ -119,6 +120,7 @@ function Dashboard() {
     cardBg: profile?.card_bg || "",
     cardBgStyle: profile?.card_bg_style || "sfumata",
     homeHidden: profile?.home_hidden || [],
+    motto: profile?.motto || "",
     uid: profile?.id || null,
     isStaff,
     isAdmin,
@@ -330,7 +332,7 @@ function Dashboard() {
   } else if (model.NOMI.length === 0) {
     content = <StatusBox title="Nessun rilevamento ancora" message="Appena il mister inserisce il primo rilevamento dalla pagina “Nuovo rilevamento”, la dashboard si popola da sola." />;
   } else {
-    content = <ViewComp d={model} auth={viewCtx} target={profileTarget} onOpenCard={openCard} onOpenFullProfile={openFullProfile} onReload={reload} />;
+    content = <ViewComp d={model} auth={viewCtx} target={profileTarget} onOpenCard={openCard} onOpenFullProfile={openFullProfile} onReload={reload} onGoView={goTo} />;
   }
   const needsSuspense = ["home", "profilo", "confronto", "andamento", "info", "staff", "calendario"].includes(active.id);
 
@@ -391,7 +393,10 @@ function Dashboard() {
       <MobileTabBar />
 
       <InstallPrompt userId={profile?.id} />
-      <SelfAssessmentWizard profile={profile} isStaff={isStaff} onDone={reload} />
+      {/* L'avatar viene PRIMA di tutto: finché è aperto, il wizard
+          dell'autovalutazione aspetta il suo turno. */}
+      <WelcomeAvatar profile={profile} onDone={refreshProfile} />
+      {!needsWelcomeAvatar(profile) && <SelfAssessmentWizard profile={profile} isStaff={isStaff} onDone={reload} />}
 
       {cardTarget && model?.atleti?.[cardTarget] && (
         <PublicProfileCard
