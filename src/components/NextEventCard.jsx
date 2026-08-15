@@ -7,6 +7,9 @@ import { CalendarDays, MapPin, CheckCircle2, XCircle, Wind } from "lucide-react"
 import { C, font, display } from "../theme";
 import { useCalendar } from "../calendar";
 import PreMatchRoutine from "./PreMatchRoutine";
+import { usePregameCheers } from "../rituals";
+
+const CHEER_EMOJI = ["🔥", "💪", "🏐", "😤", "🙌", "❤️"];
 
 const KIND_LABEL = { match: "Partita", training: "Allenamento", other: "Evento" };
 const fmtTime = (iso) => new Date(iso).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
@@ -28,6 +31,11 @@ export default function NextEventCard({ uid }) {
     const now = new Date();
     return cal.events.find((e) => !e.cancelled && new Date(e.starts_at) >= now) || null;
   }, [cal.events]);
+
+  // "Il grido pre-partita": spazio comune che si apre nelle 2 ore prima di
+  // una partita — hook chiamato sempre (Rules of Hooks), attivo solo quando serve.
+  const cheers = usePregameCheers(next?.id, uid);
+  const isPregameWindow = next && next.kind === "match" && (new Date(next.starts_at) - new Date()) <= 2 * 3600e3;
 
   if (cal.error || !next) return null;
 
@@ -72,6 +80,29 @@ export default function NextEventCard({ uid }) {
           )}
         </div>
       )}
+      {isPregameWindow && (
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.15)" }}>
+          <div style={{ ...font, fontSize: 11.5, color: C.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Il grido pre-partita 🏐</div>
+          {cheers.mine ? (
+            <div style={{ ...font, fontSize: 13, color: "#fff" }}>Hai caricato la squadra: {cheers.mine.emoji}</div>
+          ) : (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {CHEER_EMOJI.map((e) => (
+                <button key={e} onClick={() => cheers.send(e)}
+                  style={{ fontSize: 20, padding: "6px 9px", borderRadius: 9, border: "none", background: "rgba(255,255,255,0.14)", cursor: "pointer" }}>
+                  {e}
+                </button>
+              ))}
+            </div>
+          )}
+          {cheers.rows.length > 0 && (
+            <div style={{ ...font, fontSize: 12, color: "rgba(255,255,255,0.75)", marginTop: 8 }}>
+              {cheers.rows.map((r) => r.emoji).join(" ")} · {cheers.rows.length} {cheers.rows.length === 1 ? "carica" : "cariche"}
+            </div>
+          )}
+        </div>
+      )}
+
       {routine && <PreMatchRoutine onClose={() => setRoutine(false)} />}
     </div>
   );

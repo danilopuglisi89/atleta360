@@ -15,6 +15,10 @@ import DailyPill from "../components/DailyPill";
 import TodayStrip from "../components/TodayStrip";
 import TeamFeedCard from "../components/TeamFeedCard";
 import FigurineAlbumCard from "../components/FigurineAlbumCard";
+import SeasonCapsuleCard from "../components/SeasonCapsuleCard";
+import WeekSongCard from "../components/WeekSongCard";
+import MondayNudge from "../components/MondayNudge";
+import MemoryCard from "../components/MemoryCard";
 import QuizCard from "../components/QuizCard";
 import { ShareButton } from "../components/ShareSheet";
 import WeeklyRecapCard from "../components/WeeklyRecapCard";
@@ -34,6 +38,7 @@ export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile }) {
     setTimeout(() => document.getElementById("a360-checkin")?.scrollIntoView({ behavior: "smooth", block: "center" }), 200);
   };
   const goQuiz = () => document.getElementById("a360-quiz")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  const goTeam = () => document.getElementById("a360-classifica")?.scrollIntoView({ behavior: "smooth", block: "center" });
 
   return (
     <div>
@@ -47,8 +52,11 @@ export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile }) {
       )}
 
       {restricted && <TodayStrip uid={auth?.uid} athleteId={myAthleteId} onGoCheckin={goCheckin} onGoQuiz={goQuiz} />}
+      {restricted && <MondayNudge onGoTeam={goTeam} />}
+      {restricted && <MemoryCard history={d.storico?.[auth?.athleteId]} keys={d.keys} currentOverall={myScores ? overall(auth.athleteId) : null} />}
 
       <MotivationCard />
+      <WeekSongCard />
       <DailyPill quizDone={quizMine} onOpenQuiz={goQuiz} />
       {restricted && <MissionCard uid={auth?.uid} athleteId={myAthleteId} />}
       <NextEventCard uid={auth?.uid} />
@@ -57,6 +65,7 @@ export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile }) {
         avatarUrl={auth?.avatarUrl} bgUrl={auth?.cardBg} bgStyle={auth?.cardBgStyle} />}
 
       {restricted && <FigurineAlbumCard uid={auth?.uid} roster={roster} />}
+      {restricted && <SeasonCapsuleCard uid={auth?.uid} />}
 
       <TeamFeedCard />
 
@@ -97,7 +106,7 @@ export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile }) {
           )}
         </Card>
 
-        <Card title="Classifica generale" subtitle="Tocca un nome per vedere il profilo">
+        <Card id="a360-classifica" title="Classifica generale" subtitle="Tocca un nome per vedere il profilo">
           <Classifica RANK={RANK} overall={overall} onOpen={onOpenCard} />
         </Card>
       </div>

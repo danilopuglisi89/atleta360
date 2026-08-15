@@ -6,6 +6,7 @@ import { Gift, Sparkles, X } from "lucide-react";
 import { C, font, display } from "../theme";
 import { Card } from "./ui";
 import FigurineCard from "./FigurineCard";
+import Mascot from "./Mascot";
 import { useFigurines } from "../figurine";
 
 export default function FigurineAlbumCard({ uid, roster }) {
@@ -60,6 +61,7 @@ export default function FigurineAlbumCard({ uid, roster }) {
             style={{ position: "fixed", top: 16, right: 16, width: 40, height: 40, borderRadius: 12, border: "none", background: "rgba(255,255,255,0.15)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <X size={20} />
           </button>
+          <Mascot size={52} style={{ marginBottom: 10 }} />
           <div style={{ ...display, fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 20 }}>Il tuo pacchetto! 🎉</div>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "center" }} onClick={(e) => e.stopPropagation()}>
             {revealed.map((c, i) => (

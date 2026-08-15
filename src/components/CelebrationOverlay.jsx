@@ -10,6 +10,7 @@ import { PartyPopper, X } from "lucide-react";
 import { C, font, display } from "../theme";
 import { fireConfetti } from "../effects";
 import { ShareButton } from "./ShareSheet";
+import Mascot from "./Mascot";
 
 export default function CelebrationOverlay({ badge, onClose, shareData }) {
   useEffect(() => {
@@ -24,6 +25,7 @@ export default function CelebrationOverlay({ badge, onClose, shareData }) {
         <button onClick={onClose} aria-label="Chiudi" style={{ position: "absolute", top: 12, right: 12, background: "none", border: "none", color: C.muted, cursor: "pointer" }}>
           <X size={20} />
         </button>
+        <Mascot size={44} style={{ position: "absolute", top: -18, left: -14, filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.2))" }} />
         <div style={{ fontSize: 54, lineHeight: 1 }}>{badge.emoji}</div>
         <div style={{ ...font, fontSize: 12, color: C.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, marginTop: 10 }}>Nuovo traguardo!</div>
         <div style={{ ...display, fontSize: 20, fontWeight: 700, color: C.ink, marginTop: 4 }}>{badge.label}</div>

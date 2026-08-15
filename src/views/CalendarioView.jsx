@@ -9,6 +9,7 @@ import { supabase } from "../supabaseClient";
 import { useCalendar } from "../calendar";
 import { downloadEventICS } from "../ics";
 import { ShareButton } from "../components/ShareSheet";
+import { useMatchWords } from "../rituals";
 
 const WEEKDAYS = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
 const KIND_LABEL = { match: "Partita", training: "Allenamento", other: "Evento" };
@@ -26,9 +27,15 @@ function KindBadge({ kind }) {
   );
 }
 
-function EventCard({ ev, myRsvp, counts, names, isStaff, onRsvp, onResult, onCancel, onDelete }) {
+function EventCard({ ev, myRsvp, counts, names, isStaff, uid, onRsvp, onResult, onCancel, onDelete }) {
   const [resultDraft, setResultDraft] = useState("");
   const past = new Date(ev.starts_at) < new Date();
+  // "La parola della partita": 24h di finestra dopo il risultato per
+  // lasciare una parola/emoji — hook sempre chiamato, attivo solo quando serve.
+  const words = useMatchWords(ev.result ? ev.id : null, uid);
+  const [wordDraft, setWordDraft] = useState("");
+  const hoursSinceResult = ev.result ? (new Date() - new Date(ev.starts_at)) / 3600e3 : null;
+  const wordsOpen = ev.result && hoursSinceResult >= 0 && hoursSinceResult <= 24;
 
   return (
     <div style={{ border: `1px solid ${C.grid}`, borderRadius: 14, padding: "14px 16px", background: ev.cancelled ? "#FAFAFC" : C.card, opacity: ev.cancelled ? 0.65 : 1 }}>
@@ -62,6 +69,28 @@ function EventCard({ ev, myRsvp, counts, names, isStaff, onRsvp, onResult, onCan
         </a>
       )}
       {ev.notes && <div style={{ ...font, fontSize: 12.5, color: C.muted, marginTop: 5 }}>{ev.notes}</div>}
+
+      {wordsOpen && uid && (
+        <div style={{ background: C.surface, borderRadius: 10, padding: "10px 12px", marginTop: 8 }}>
+          <div style={{ ...font, fontSize: 11.5, color: C.muted, marginBottom: 6 }}>Com'è andata? Lascia una parola (24h dalla partita)</div>
+          {words.mine ? (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {words.rows.map((w, i) => (
+                <span key={i} style={{ ...font, fontSize: 12.5, fontWeight: 600, color: C.ink, background: C.card, border: `1px solid ${C.grid}`, borderRadius: 99, padding: "4px 10px" }}>{w.word}</span>
+              ))}
+            </div>
+          ) : (
+            <div style={{ display: "flex", gap: 6 }}>
+              <input value={wordDraft} onChange={(e) => setWordDraft(e.target.value)} placeholder="una parola o un'emoji" maxLength={24}
+                style={{ ...font, fontSize: 12.5, border: `1px solid ${C.grid}`, borderRadius: 8, padding: "6px 10px", flex: 1 }} />
+              <button onClick={() => { words.send(wordDraft); setWordDraft(""); }}
+                style={{ ...font, fontSize: 12, fontWeight: 600, padding: "6px 11px", borderRadius: 8, border: "none", background: C.navy2, color: "#fff", cursor: "pointer" }}>
+                Invia
+              </button>
+            </div>
+          )}
+        </div>
+      )}
       {(ev.objective || ev.exercises) && (
         <div style={{ background: C.surface, borderRadius: 10, padding: "9px 12px", marginTop: 8 }}>
           {ev.objective && <div style={{ ...font, fontSize: 12.5, color: C.ink }}><b>Obiettivo:</b> {ev.objective}</div>}
@@ -162,6 +191,7 @@ export default function CalendarioView({ auth }) {
         no: rs.filter((r) => r.status === "no").map((r) => people[r.user_id]).filter(Boolean),
       },
       isStaff,
+      uid,
       onRsvp: async (id, s) => setErr(await cal.setRsvp(id, s)),
       onResult: async (id, result) => setErr(await cal.updateEvent(id, { result })),
       onCancel: async (id) => { if (window.confirm("Annullare questo evento? Resta in elenco come annullato.")) setErr(await cal.updateEvent(id, { cancelled: true })); },

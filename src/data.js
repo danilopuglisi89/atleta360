@@ -45,7 +45,10 @@ export function buildModel(skills, athletes, assessments, selfAssessments = []) 
       scores: last.scores,
       nota: last.nota,
     };
-    storico[identifier] = entries.map((e) => ({ periodo: fmtDate(e.ts), nota: e.nota, ...e.scores }));
+    // "ts" (data ISO grezza) resta accanto a "periodo" (già formattata):
+    // serve a MemoryCard per calcolare "un anno fa" con precisione, senza
+    // dover riparsare una stringa tipo "12 ago" che non porta l'anno.
+    storico[identifier] = entries.map((e) => ({ periodo: fmtDate(e.ts), ts: e.ts, nota: e.nota, ...e.scores }));
   });
 
   // Ultima autovalutazione per atleta (stesso raggruppamento delle assessments
