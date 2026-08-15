@@ -290,7 +290,9 @@ export default function PersonalArea({ accent, onPickAccent }) {
         </button>
       </Card>
 
-      <AvatarBuilder initial={profile?.avatar_config} onSaved={refreshProfile} />
+      {profile?.role !== "admin" && profile?.category === "atleta" && (
+        <AvatarBuilder initial={profile?.avatar_config} onSaved={refreshProfile} />
+      )}
     </div>
   );
 }
