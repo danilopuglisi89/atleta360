@@ -143,7 +143,7 @@ export default function AdminPanel({ onChange }) {
                     <span onClick={() => openDetail(r)} title="Apri scheda" style={{ ...font, fontSize: 14.5, color: C.navy2, fontWeight: 600, cursor: "pointer", textDecoration: "underline", textDecorationColor: C.grid }}>{fullName(r)}</span>
                     <span style={{ ...font, fontSize: 11.5, fontWeight: 600, color: C.navy2, background: C.surface, border: `1px solid ${C.grid}`, padding: "3px 9px", borderRadius: 99 }}>{CATEGORY_LABEL[r.category] || "Atleta"}</span>
                   </div>
-                  <div style={{ ...font, fontSize: 12.5, color: C.muted, marginTop: 2 }}>{r.email} · {fmtDate(r.created_at)}</div>
+                  <div style={{ ...font, fontSize: 12.5, color: C.muted, marginTop: 2 }}>{r.email} · {fmtDate(r.created_at)} · ultimo accesso {fmtLastSeen(r.last_seen_at)}</div>
                 </div>
                 <button onClick={() => setAssess(r.id, !r.can_assess)} title="Permesso di inserire rilevamenti (mister)"
                   style={{ ...font, fontSize: 12, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 99, cursor: "pointer",
@@ -179,6 +179,10 @@ export default function AdminPanel({ onChange }) {
                     </div>
                     <div style={{ ...font, fontSize: 12, color: C.muted, marginTop: 2 }}>{r.email}</div>
                   </div>
+                  <span title={r.last_seen_at ? new Date(r.last_seen_at).toLocaleString("it-IT") : "Non ha ancora effettuato l'accesso"}
+                    style={{ ...font, fontSize: 11.5, color: r.last_seen_at ? C.muted : "#B4520A", whiteSpace: "nowrap" }}>
+                    ⏱ {fmtLastSeen(r.last_seen_at)}
+                  </span>
                   <select value={r.category || "atleta"} onChange={(e) => setCategory(r.id, e.target.value)} style={{ ...inp, cursor: "pointer", fontSize: 12.5 }}>
                     <option value="atleta">Atleta</option><option value="staff">Staff</option><option value="direzione">Direzione</option>
                   </select>
@@ -318,4 +322,18 @@ function fullName(r) {
 function fmtDate(iso) {
   if (!iso) return "";
   return new Date(iso).toLocaleDateString("it-IT", { day: "2-digit", month: "short", year: "numeric" });
+}
+// Ultimo accesso: relativo se recente (più facile da leggere di un
+// timestamp), data secca oltre la settimana.
+function fmtLastSeen(iso) {
+  if (!iso) return "mai";
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "adesso";
+  if (mins < 60) return `${mins} min fa`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} ${hours === 1 ? "ora" : "ore"} fa`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} ${days === 1 ? "giorno" : "giorni"} fa`;
+  return fmtDate(iso);
 }

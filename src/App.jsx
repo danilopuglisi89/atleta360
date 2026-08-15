@@ -88,6 +88,12 @@ function Dashboard() {
   const canAssess = isAdmin || !!profile?.can_assess;   // può inserire rilevamenti (mister)
   const isChatMember = isAdmin || profile?.category === "atleta";  // chat di squadra: atlete + admin
   const isAthlete = profile?.category === "atleta";                // messaggi privati tra atlete
+
+  // Ultimo accesso (Area Staff → Iscritti): un tocco per sessione, non ad
+  // ogni render — l'effetto riparte solo se cambia l'id (nuovo login).
+  useEffect(() => {
+    if (profile?.id) supabase.rpc("touch_last_seen");
+  }, [profile?.id]);
   // Un'atleta "semplice" (non staff/admin) vede solo il proprio profilo.
   const viewCtx = {
     restricted: !isStaff && profile?.category === "atleta",
