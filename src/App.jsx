@@ -233,10 +233,9 @@ function Dashboard() {
   const Brand = () => (
     <div style={{ padding: "22px 22px 14px" }}>
       <SecretEgg>
-        <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
-          <div style={{ width: 38, height: 38, borderRadius: 11, background: C.orange, display: "flex", alignItems: "center", justifyContent: "center", ...display, fontWeight: 700, color: "#fff", fontSize: 13, letterSpacing: -0.5 }}>360</div>
-          <div style={{ ...display, color: "#fff", fontWeight: 700, fontSize: 17, letterSpacing: -0.3 }}>Atleta360</div>
-        </div>
+        {/* Logo vero, mai ricostruito a mano (regola di brand): la versione
+            bianca è quella giusta sul navy della sidebar. */}
+        <img src="/logo-esteso-bianco.png" alt="Atleta360" style={{ width: 172, height: "auto", display: "block" }} />
       </SecretEgg>
       <div style={{ marginTop: 12, background: "#fff", borderRadius: 10, padding: "7px 11px", display: "inline-flex" }}>
         <img src="/logo-oasivolley.png" alt="Oasi Volley" style={{ height: 26, width: "auto", display: "block" }} />
@@ -367,7 +366,7 @@ function Dashboard() {
         {/* Topbar mobile */}
         <header className="a360-mobilebar" style={{ display: "flex", alignItems: "center", gap: 14, padding: "calc(14px + env(safe-area-inset-top, 0px)) 18px 14px", background: C.navy, position: "sticky", top: 0, zIndex: 20 }}>
           <button onClick={() => setMobileOpen(true)} aria-label="Apri menu" style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", display: "flex" }}><Menu size={24} /></button>
-          <div style={{ ...display, color: "#fff", fontWeight: 700, fontSize: 16 }}>Atleta360</div>
+          <img src="/logo-esteso-bianco.png" alt="Atleta360" style={{ height: 30, width: "auto", display: "block" }} />
         </header>
 
         <main className="a360-main" style={{ padding: "clamp(18px, 4vw, 34px)", maxWidth: 1180, width: "100%", margin: "0 auto" }}>
