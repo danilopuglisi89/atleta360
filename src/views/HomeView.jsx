@@ -25,7 +25,10 @@ import WeeklyRecapCard from "../components/WeeklyRecapCard";
 import { useTodaysBirthdays } from "../birthdays";
 import { activeSeason } from "../seasons";
 import MatchdayBanner from "../components/MatchdayBanner";
+import StreakBuddyCard from "../components/StreakBuddyCard";
+import TeamPetCard from "../components/TeamPetCard";
 import { useWeeklyQuiz } from "../quiz";
+import { computeBadges } from "../badges";
 
 export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile }) {
   const { NOMI, atleti, overall, RANK, TEAM_AVG, lastPeriod, roster } = d;
@@ -35,6 +38,7 @@ export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile }) {
   const birthdays = useTodaysBirthdays();
   const season = activeSeason();
   const { mine: quizMine } = useWeeklyQuiz(auth?.uid);
+  const myBadgesCount = restricted && auth?.athleteId && atleti[auth.athleteId] ? computeBadges(d, auth.athleteId).length : 0;
 
   const goCheckin = () => {
     onOpenFullProfile?.();
@@ -74,11 +78,13 @@ export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile }) {
       <NextEventCard uid={auth?.uid} />
       {restricted && myScores && <WeeklyChallengeCard scores={myScores} />}
       {restricted && <WeeklyRecapCard uid={auth?.uid} athleteId={myAthleteId} name={auth?.athleteId || auth?.firstName}
-        avatarUrl={auth?.avatarUrl} bgUrl={auth?.cardBg} bgStyle={auth?.cardBgStyle} />}
+        avatarUrl={auth?.avatarUrl} bgUrl={auth?.cardBg} bgStyle={auth?.cardBgStyle} badgesCount={myBadgesCount} />}
+      {restricted && <StreakBuddyCard myAthleteId={myAthleteId} roster={roster} />}
 
       {restricted && <FigurineAlbumCard uid={auth?.uid} roster={roster} />}
       {restricted && <SeasonCapsuleCard uid={auth?.uid} />}
 
+      <TeamPetCard />
       <TeamFeedCard />
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>

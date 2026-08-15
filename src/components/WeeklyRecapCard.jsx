@@ -1,12 +1,14 @@
 // "La tua settimana": mini recap stile Wrapped calcolato dai punti
 // partecipazione degli ultimi 7 giorni — nessuna tabella nuova.
 import { useEffect, useState } from "react";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Clapperboard } from "lucide-react";
 import { C, font, display } from "../theme";
 import { Card } from "./ui";
 import { supabase } from "../supabaseClient";
 import { ShareButton } from "./ShareSheet";
 import { useParticipation } from "../participation";
+import { useStars } from "../stars";
+import WrappedStory from "./WrappedStory";
 
 const ACTION_LABEL = {
   checkin: "check-in energia",
@@ -17,10 +19,12 @@ const ACTION_LABEL = {
   quiz: "risposte al quiz",
 };
 
-export default function WeeklyRecapCard({ uid, athleteId, name, avatarUrl, bgUrl, bgStyle }) {
+export default function WeeklyRecapCard({ uid, athleteId, name, avatarUrl, bgUrl, bgStyle, badgesCount = 0 }) {
   const [rows, setRows] = useState(null);   // null = caricamento, [] = niente questa settimana
+  const [wrapped, setWrapped] = useState(false);
   // Hook prima di ogni return condizionale (Rules of Hooks).
   const { streak, level } = useParticipation(athleteId);
+  const { stars } = useStars(athleteId);
 
   useEffect(() => {
     if (!uid) return;
@@ -58,10 +62,22 @@ export default function WeeklyRecapCard({ uid, athleteId, name, avatarUrl, bgUrl
           La tua attività più frequente: <b style={{ color: C.ink }}>{ACTION_LABEL[top[0]] || top[0]}</b>. Continua così! 💪
         </div>
       )}
-      <div style={{ marginTop: 14 }}>
-        <ShareButton kind="recap" label="Condividi la settimana"
+      <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
+        <button onClick={() => setWrapped(true)}
+          style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 600, padding: "9px 14px", borderRadius: 10, border: "none",
+            background: "linear-gradient(135deg, #7A0C1E, #FF7A18)", color: "#fff", cursor: "pointer" }}>
+          <Clapperboard size={16} /> Vedi il tuo Wrapped
+        </button>
+        <ShareButton kind="recap" label="Condividi la settimana" variant="ghost"
           data={{ name, avatarUrl, total, byAction: byLabel, streak, level, bgUrl, bgStyle }} />
       </div>
+
+      {wrapped && (
+        <WrappedStory name={name} total={total} byAction={byLabel} streak={streak} level={level}
+          starsCount={(stars || []).length} badgesCount={badgesCount}
+          onClose={() => setWrapped(false)}
+          shareData={{ name, avatarUrl, total, byAction: byLabel, streak, level, bgUrl, bgStyle }} />
+      )}
     </Card>
   );
 }
