@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
-import { Check, X, Clock, RotateCcw, Plus, Trash2, ArrowUp, ArrowDown, Power, Save } from "lucide-react";
+import { Check, X, Clock, RotateCcw, Plus, Trash2, ArrowUp, ArrowDown, Power, Save, Link2, Copy, Smartphone, Bell, BellOff } from "lucide-react";
 import { C, font, display } from "./theme";
 import { supabase } from "./supabaseClient";
 import { Avatar } from "./PersonalArea";
+import { Card } from "./components/ui";
 
 const STATUS_META = {
   pending: { label: "In attesa", color: "#B4520A", bg: "#FFE9D5" },
@@ -10,17 +11,6 @@ const STATUS_META = {
   rejected: { label: "Rifiutata", color: "#B4232A", bg: "#FDECEC" },
 };
 const CATEGORY_LABEL = { direzione: "Direzione", staff: "Staff", atleta: "Atleta" };
-
-function Card({ title, subtitle, children, style }) {
-  return (
-    <div style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.grid}`, boxShadow: "0 1px 2px rgba(12,19,48,0.04)", padding: 20, ...style }}>
-      {title && <h3 style={{ ...display, fontSize: 15, fontWeight: 600, color: C.ink, margin: 0 }}>{title}</h3>}
-      {subtitle && <p style={{ ...font, fontSize: 13, color: C.muted, margin: "4px 0 0" }}>{subtitle}</p>}
-      {(title || subtitle) && <div style={{ height: 16 }} />}
-      {children}
-    </div>
-  );
-}
 
 const inp = { ...font, fontSize: 13.5, color: C.ink, background: C.card, border: `1px solid ${C.grid}`, borderRadius: 9, padding: "8px 10px", outline: "none" };
 const iconBtn = (color) => ({ ...font, display: "inline-flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 9, border: `1px solid ${C.grid}`, background: C.card, color, cursor: "pointer" });
@@ -34,21 +24,27 @@ export default function AdminPanel({ onChange }) {
   const [rows, setRows] = useState(null);
   const [athletes, setAthletes] = useState([]);
   const [skills, setSkills] = useState([]);
+  const [pushIds, setPushIds] = useState(new Set());
   const [error, setError] = useState(null);
   const [busyId, setBusyId] = useState(null);
   const [newAthlete, setNewAthlete] = useState("");
   const [newSkill, setNewSkill] = useState({ title: "", short: "", description: "" });
   const [detail, setDetail] = useState(null);   // scheda utente aperta
   const [dform, setDform] = useState({});
+  const [inviteUrl, setInviteUrl] = useState({});   // athlete.id -> url generato
 
   const load = useCallback(async () => {
-    const [p, a, s] = await Promise.all([
+    const [p, a, s, push] = await Promise.all([
       supabase.from("profiles").select("*").neq("role", "admin").order("created_at", { ascending: false }),
       supabase.from("athletes").select("*").order("identifier", { ascending: true }),
       supabase.from("skills").select("*").order("sort_order", { ascending: true }),
+      // Tabella facoltativa (Ondata Q4): se staff_push_status non esiste
+      // ancora, l'errore non blocca il resto del pannello — badge assenti.
+      supabase.rpc("staff_push_status"),
     ]);
     if (p.error || a.error || s.error) { setError((p.error || a.error || s.error).message); return; }
     setRows(p.data || []); setAthletes(a.data || []); setSkills(s.data || []);
+    setPushIds(new Set((push.data || []).map((r) => r.user_id)));
   }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -100,6 +96,12 @@ export default function AdminPanel({ onChange }) {
   const setPosition = (a, position) => { const v = position.trim(); if (v !== (a.position || "")) guard(() => supabase.from("athletes").update({ position: v || null }).eq("id", a.id)); };
   const toggleAthlete = (a) => guard(() => supabase.from("athletes").update({ active: !a.active }).eq("id", a.id));
   const delAthlete = (a) => { if (window.confirm(`Eliminare "${a.identifier}"? Verranno rimossi anche i suoi rilevamenti.`)) guard(() => supabase.from("athletes").delete().eq("id", a.id)); };
+  const genInvite = async (a) => {
+    setError(null);
+    const { data, error: err } = await supabase.rpc("create_invite_link", { p_athlete_identifier: a.identifier, p_category: "atleta" });
+    if (err) { setError(err.message); return; }
+    setInviteUrl((v) => ({ ...v, [a.id]: `${window.location.origin}/?invite=${data}` }));
+  };
 
   // --- focus ---
   const addSkill = async () => {
@@ -143,7 +145,10 @@ export default function AdminPanel({ onChange }) {
                     <span onClick={() => openDetail(r)} title="Apri scheda" style={{ ...font, fontSize: 14.5, color: C.navy2, fontWeight: 600, cursor: "pointer", textDecoration: "underline", textDecorationColor: C.grid }}>{fullName(r)}</span>
                     <span style={{ ...font, fontSize: 11.5, fontWeight: 600, color: C.navy2, background: C.surface, border: `1px solid ${C.grid}`, padding: "3px 9px", borderRadius: 99 }}>{CATEGORY_LABEL[r.category] || "Atleta"}</span>
                   </div>
-                  <div style={{ ...font, fontSize: 12.5, color: C.muted, marginTop: 2 }}>{r.email} · {fmtDate(r.created_at)} · ultimo accesso {fmtLastSeen(r.last_seen_at)}</div>
+                  <div style={{ ...font, fontSize: 12.5, color: C.muted, marginTop: 2, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                    <span>{r.email} · {fmtDate(r.created_at)} · ultimo accesso {fmtLastSeen(r.last_seen_at)}</span>
+                    <StatusBadges profile={r} hasPush={pushIds.has(r.id)} />
+                  </div>
                 </div>
                 <button onClick={() => setAssess(r.id, !r.can_assess)} title="Permesso di inserire rilevamenti (mister)"
                   style={{ ...font, fontSize: 12, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 99, cursor: "pointer",
@@ -183,6 +188,7 @@ export default function AdminPanel({ onChange }) {
                     style={{ ...font, fontSize: 11.5, color: r.last_seen_at ? C.muted : "#B4520A", whiteSpace: "nowrap" }}>
                     ⏱ {fmtLastSeen(r.last_seen_at)}
                   </span>
+                  <StatusBadges profile={r} hasPush={pushIds.has(r.id)} />
                   <select value={r.category || "atleta"} onChange={(e) => setCategory(r.id, e.target.value)} style={{ ...inp, cursor: "pointer", fontSize: 12.5 }}>
                     <option value="atleta">Atleta</option><option value="staff">Staff</option><option value="direzione">Direzione</option>
                   </select>
@@ -221,12 +227,21 @@ export default function AdminPanel({ onChange }) {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {athletes.map((a) => (
-            <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", borderBottom: `1px solid ${C.grid}`, padding: "8px 2px", opacity: a.active ? 1 : 0.55 }}>
-              <input defaultValue={a.identifier} onBlur={(e) => renameAthlete(a, e.target.value)} style={{ ...inp, flex: "1 1 160px" }} />
-              <input defaultValue={a.position || ""} onBlur={(e) => setPosition(a, e.target.value)} placeholder="Ruolo in campo" style={{ ...inp, flex: "1 1 140px", fontSize: 12.5 }} />
-              <span style={{ ...font, fontSize: 12, color: a.active ? "#0F7A4E" : C.muted }}>{a.active ? "attiva" : "disattivata"}</span>
-              <button onClick={() => toggleAthlete(a)} title={a.active ? "Disattiva" : "Riattiva"} style={iconBtn(C.muted)}><Power size={15} /></button>
-              <button onClick={() => delAthlete(a)} title="Elimina" style={iconBtn("#B4232A")}><Trash2 size={15} /></button>
+            <div key={a.id} style={{ borderBottom: `1px solid ${C.grid}`, padding: "8px 2px", opacity: a.active ? 1 : 0.55 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <input defaultValue={a.identifier} onBlur={(e) => renameAthlete(a, e.target.value)} style={{ ...inp, flex: "1 1 160px" }} />
+                <input defaultValue={a.position || ""} onBlur={(e) => setPosition(a, e.target.value)} placeholder="Ruolo in campo" style={{ ...inp, flex: "1 1 140px", fontSize: 12.5 }} />
+                <span style={{ ...font, fontSize: 12, color: a.active ? "#0F7A4E" : C.muted }}>{a.active ? "attiva" : "archiviata"}</span>
+                <button onClick={() => genInvite(a)} title="Genera link di invito (arriva già approvata e collegata)" style={iconBtn(C.navy2)}><Link2 size={15} /></button>
+                <button onClick={() => toggleAthlete(a)} title={a.active ? "Archivia (sparisce da classifica/chat, storico resta consultabile)" : "Riattiva"} style={iconBtn(C.muted)}><Power size={15} /></button>
+                <button onClick={() => delAthlete(a)} title="Elimina" style={iconBtn("#B4232A")}><Trash2 size={15} /></button>
+              </div>
+              {inviteUrl[a.id] && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, background: C.surface, borderRadius: 9, padding: "7px 10px" }}>
+                  <span style={{ ...font, fontSize: 11.5, color: C.ink, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{inviteUrl[a.id]}</span>
+                  <button onClick={() => navigator.clipboard?.writeText(inviteUrl[a.id])} title="Copia" style={{ ...iconBtn(C.navy2), width: 26, height: 26 }}><Copy size={13} /></button>
+                </div>
+              )}
             </div>
           ))}
           {athletes.length === 0 && <div style={{ ...font, fontSize: 13, color: C.muted }}>Nessuna atleta. Aggiungine una qui sopra.</div>}
@@ -298,6 +313,21 @@ export default function AdminPanel({ onChange }) {
         </div>
       )}
     </div>
+  );
+}
+
+// Due badge discreti: app installata sul telefono e notifiche push attive —
+// entrambi calcolati lato client/RPC, mai chiesti esplicitamente al mister.
+function StatusBadges({ profile, hasPush }) {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+      {profile.pwa_installed && (
+        <span title="App installata sul telefono" style={{ display: "inline-flex", color: "#0F7A4E" }}><Smartphone size={13} /></span>
+      )}
+      {hasPush
+        ? <span title="Notifiche push attive" style={{ display: "inline-flex", color: "#0F7A4E" }}><Bell size={13} /></span>
+        : <span title="Notifiche push non attive" style={{ display: "inline-flex", color: C.muted, opacity: 0.6 }}><BellOff size={13} /></span>}
+    </span>
   );
 }
 

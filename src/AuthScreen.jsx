@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LogIn, UserPlus, CheckCircle2, AlertCircle } from "lucide-react";
 import { C, font, display } from "./theme";
 import { useAuth } from "./auth";
@@ -26,6 +26,18 @@ export default function AuthScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [done, setDone] = useState(false);
+  const [invited, setInvited] = useState(false);
+
+  // Link di invito (?invite=token, generato dallo staff): salva il token per
+  // il riscatto post-registrazione (vedi redeem_invite_link in App.jsx) e
+  // apre subito il tab di registrazione.
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get("invite");
+    if (t) {
+      try { localStorage.setItem("a360-invite-token", t); } catch { /* ignora */ }
+      setInvited(true); setMode("register");
+    }
+  }, []);
 
   const upd = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -111,6 +123,12 @@ export default function AuthScreen() {
               )}
 
               <form onSubmit={submit}>
+                {mode === "register" && invited && (
+                  <div style={{ display: "flex", gap: 8, alignItems: "flex-start", background: "#DDF3E7", color: "#0F7A4E",
+                    borderRadius: 10, padding: "10px 12px", ...font, fontSize: 13, lineHeight: 1.5, marginBottom: 14 }}>
+                    <CheckCircle2 size={16} style={{ flexShrink: 0, marginTop: 1 }} /> <span>Sei stata invitata dallo staff: appena confermi, il tuo accesso sarà già approvato.</span>
+                  </div>
+                )}
                 {mode === "register" && (
                   <>
                     <Field label="Nome" value={form.firstName} onChange={upd("firstName")} autoComplete="given-name" />

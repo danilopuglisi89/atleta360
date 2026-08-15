@@ -92,7 +92,9 @@ function Dashboard() {
   // Ultimo accesso (Area Staff → Iscritti): un tocco per sessione, non ad
   // ogni render — l'effetto riparte solo se cambia l'id (nuovo login).
   useEffect(() => {
-    if (profile?.id) supabase.rpc("touch_last_seen");
+    if (!profile?.id) return;
+    const installed = window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    supabase.rpc("touch_last_seen", { p_installed: !!installed });
   }, [profile?.id]);
   // Un'atleta "semplice" (non staff/admin) vede solo il proprio profilo.
   const viewCtx = {
@@ -108,6 +110,7 @@ function Dashboard() {
     ritual: profile?.ritual || "",
     cardBg: profile?.card_bg || "",
     cardBgStyle: profile?.card_bg_style || "sfumata",
+    homeHidden: profile?.home_hidden || [],
     uid: profile?.id || null,
     isStaff,
     isAdmin,
@@ -413,6 +416,20 @@ function Root() {
     demoAttempted.current = true;
     signIn(getDemoCredentials(demoKind)).then((err) => { if (err) setDemoFailed(true); });
   }, [demoKind, loading, session, signIn]);
+
+  // Link di invito: se c'è un token in sospeso (vedi AuthScreen) e l'account
+  // appena creato è ancora "pending", lo riscatta subito (approva + collega
+  // all'atleta) invece di aspettare lo staff.
+  useEffect(() => {
+    if (profile?.status !== "pending") return;
+    let token = null;
+    try { token = localStorage.getItem("a360-invite-token"); } catch { /* ignora */ }
+    if (!token) return;
+    supabase.rpc("redeem_invite_link", { p_token: token }).then(({ data }) => {
+      try { localStorage.removeItem("a360-invite-token"); } catch { /* ignora */ }
+      if (data) refreshProfile();
+    });
+  }, [profile?.status, refreshProfile]);
 
   if (!supabaseConfigured) return <SetupNotice />;
   if (recovery) return <ResetPasswordScreen />;

@@ -1,15 +1,23 @@
 /* Service worker della PWA: precache degli asset (come prima, via Workbox)
    + gestione delle notifiche push (nuovo). Compilato da vite-plugin-pwa
    in modalità injectManifest. */
-import { precacheAndRoute, cleanupOutdatedCaches } from "workbox-precaching";
+import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from "workbox-precaching";
 import { clientsClaim } from "workbox-core";
-import { registerRoute } from "workbox-routing";
+import { registerRoute, NavigationRoute } from "workbox-routing";
 import { NetworkFirst } from "workbox-strategies";
 
 self.skipWaiting();
 clientsClaim();
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
+
+// ---------- Modalità offline: l'app si apre sempre, anche senza rete ----------
+// Le rotte sono tutte client-side (SPA): senza questo, navigare offline verso
+// una voce di menu diversa dalla schermata già in cache mostra l'errore del
+// browser invece della shell dell'app (che poi mostra i dati salvati sotto).
+registerRoute(new NavigationRoute(createHandlerBoundToURL("index.html"), {
+  denylist: [/^\/api\//],
+}));
 
 // ---------- Modalità offline: ultimi dati visti, senza rete ----------
 // Solo LETTURE verso Supabase (GET su /rest/v1/): prova la rete, se non

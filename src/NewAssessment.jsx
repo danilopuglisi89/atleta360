@@ -3,17 +3,7 @@ import { CheckCircle2, AlertCircle, Save, Pencil, Trash2, X, History, StickyNote
 import { C, font, display } from "./theme";
 import { supabase } from "./supabaseClient";
 import { useAthleteNotes } from "./athleteNotes";
-
-function Card({ title, subtitle, children, style }) {
-  return (
-    <div style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.grid}`, boxShadow: "0 1px 2px rgba(12,19,48,0.04)", padding: 20, ...style }}>
-      {title && <h3 style={{ ...display, fontSize: 15, fontWeight: 600, color: C.ink, margin: 0 }}>{title}</h3>}
-      {subtitle && <p style={{ ...font, fontSize: 13, color: C.muted, margin: "4px 0 0" }}>{subtitle}</p>}
-      {(title || subtitle) && <div style={{ height: 16 }} />}
-      {children}
-    </div>
-  );
-}
+import { Card } from "./components/ui";
 
 const fmt = (iso) => new Date(iso).toLocaleDateString("it-IT", { day: "2-digit", month: "short", year: "numeric" });
 
@@ -168,8 +158,15 @@ export default function NewAssessment({ onSaved }) {
         )}
 
         {previous && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6, background: C.surface, borderRadius: 10, padding: "8px 12px", ...font, fontSize: 12.5, color: C.muted, marginBottom: 14 }}>
-            <History size={14} /> Rispetto al rilevamento del {fmt(previous.created_at)} — "prec." sotto ogni focus è il punto di partenza dell'atleta.
+          <div style={{ background: C.surface, borderRadius: 10, padding: "8px 12px", marginBottom: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, ...font, fontSize: 12.5, color: C.muted }}>
+              <History size={14} /> Rispetto al rilevamento del {fmt(previous.created_at)} — "prec." sotto ogni focus è il punto di partenza dell'atleta.
+            </div>
+            {previous.note && (
+              <div style={{ ...font, fontSize: 12.5, color: C.ink, marginTop: 6, paddingTop: 6, borderTop: `1px solid ${C.grid}`, lineHeight: 1.5 }}>
+                📝 Cosa avevi scritto l'ultima volta: <i>"{previous.note}"</i>
+              </div>
+            )}
           </div>
         )}
 

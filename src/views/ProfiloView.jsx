@@ -21,7 +21,10 @@ import WellbeingCard from "../components/WellbeingCard";
 import ParticipationCard from "../components/ParticipationCard";
 import StarsCard from "../components/StarsCard";
 import PathMirror from "../components/PathMirror";
+import SeasonWrappedButton from "../components/SeasonWrappedButton";
+import SeasonReportCard from "../components/SeasonReportCard";
 import { useParticipation } from "../participation";
+import { useStars } from "../stars";
 import { Heart } from "lucide-react";
 import { useReactions } from "../reactions";
 
@@ -45,7 +48,8 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
   const effectiveAthleteId = atleti[sel]?.athleteId ?? selfOnlyEntry?.athleteId ?? roster?.find((r) => r.identifier === sel)?.id;
   const personal = restricted;                    // l'atleta guarda sempre sé stessa
   const { goals, addGoal, removeGoal } = useGoals(effectiveAthleteId);
-  const { level: participationLevel } = useParticipation(effectiveAthleteId);
+  const { level: participationLevel, streak: participationStreak } = useParticipation(effectiveAthleteId);
+  const { stars } = useStars(effectiveAthleteId);
 
   // Rileva un miglioramento tra gli ultimi due rilevamenti (per i coriandoli).
   const improvement = useMemo(() => {
@@ -206,6 +210,10 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
               avatarUrl: personal ? shareAvatarUrl : "", level: personal ? participationLevel : null,
               bgUrl: personal ? auth?.cardBg : "", bgStyle: auth?.cardBgStyle }} />
         </span>
+        {personal && auth?.uid && (
+          <SeasonWrappedButton uid={auth.uid} name={sel} avatarUrl={shareAvatarUrl} bgUrl={auth?.cardBg} bgStyle={auth?.cardBgStyle}
+            streak={participationStreak} level={participationLevel} starsCount={(stars || []).length} badgesCount={badges.length} />
+        )}
         <button className="a360-noprint" onClick={() => window.print()}
           style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500,
             padding: "9px 13px", borderRadius: 10, border: `1px solid ${C.grid}`, background: C.card, color: C.ink, cursor: "pointer" }}>
@@ -280,6 +288,8 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
       )}
 
       {personal && <PathMirror athleteId={effectiveAthleteId} history={storico?.[sel]} keys={SKILLS} />}
+
+      <SeasonReportCard athleteId={effectiveAthleteId} athleteName={sel} isStaff={!!auth?.isStaff} personal={personal} />
 
       <PrintStamp label={sel} />
 

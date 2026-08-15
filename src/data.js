@@ -81,7 +81,12 @@ export function buildModel(skills, athletes, assessments, selfAssessments = []) 
     selfOnly[identifier] = { id: identifier, athleteId: ath?.id, position: ath?.position || "", self: entries[entries.length - 1] };
   });
 
-  const NOMI = Object.keys(atleti);
+  // "Archiviazione soft" (toggle attiva/disattivata in Admin → Atlete): chi
+  // è disattivata sparisce da classifica/squadra, ma la sua scheda resta
+  // raggiungibile (atleti[identifier] non viene tolto) per chi vi accede
+  // direttamente, così lo storico non è mai perso.
+  const activeIdentifiers = new Set(athletes.filter((a) => a.active !== false).map((a) => a.identifier));
+  const NOMI = Object.keys(atleti).filter((id) => activeIdentifiers.has(id));
   const overall = (n) =>
     Math.round((keys.reduce((a, k) => a + (atleti[n]?.scores[k] ?? 0), 0) / Math.max(keys.length, 1)) * 10) / 10;
   const RANK = [...NOMI].sort((a, b) => overall(b) - overall(a));

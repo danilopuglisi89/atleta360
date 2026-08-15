@@ -32,22 +32,24 @@ export function useDiary(athleteId) {
 // ---------- Check-in pre-allenamento ----------
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
-export function useCheckins(athleteId) {
+// kind: "pre" (energia pre-allenamento, default) o "post" (come ti sei
+// sentita in partita) — stessa tabella, distinte da una colonna in più.
+export function useCheckins(athleteId, kind = "pre") {
   const [today, setToday] = useState(null);      // il mio check-in di oggi (energy) o null
   const [all, setAll] = useState([]);             // tutti i check-in di oggi (per lo staff)
 
   const load = useCallback(async () => {
-    const { data } = await supabase.from("checkins").select("*").eq("checkin_date", todayIso());
+    const { data } = await supabase.from("checkins").select("*").eq("checkin_date", todayIso()).eq("kind", kind);
     setAll(data || []);
     setToday(athleteId ? (data || []).find((c) => c.athlete_id === athleteId)?.energy ?? null : null);
-  }, [athleteId]);
+  }, [athleteId, kind]);
   useEffect(() => { load(); }, [load]);
 
   const setEnergy = async (energy) => {
     if (!athleteId) return "Profilo non collegato.";
     const { error } = await supabase.from("checkins").upsert(
-      { athlete_id: athleteId, checkin_date: todayIso(), energy },
-      { onConflict: "athlete_id,checkin_date" }
+      { athlete_id: athleteId, checkin_date: todayIso(), energy, kind },
+      { onConflict: "athlete_id,checkin_date,kind" }
     );
     if (error) return error.message;
     await load();

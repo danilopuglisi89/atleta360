@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip, ResponsiveContainer } from "recharts";
-import { Printer, Sparkles, Trash2, ChevronDown, ChevronUp, Megaphone, AlertTriangle, CheckCircle2, FileClock, Plus } from "lucide-react";
+import { Printer, Sparkles, Trash2, ChevronDown, ChevronUp, Megaphone, AlertTriangle, CheckCircle2, FileClock, Plus, Dumbbell } from "lucide-react";
 import { C, font, display } from "../theme";
 import { supabase } from "../supabaseClient";
 import { CORE, TITLE, SKILL_META } from "../skills";
@@ -9,6 +9,8 @@ import Classifica from "../components/Classifica";
 import AttendanceCard from "../components/AttendanceCard";
 import AwardStarCard from "../components/AwardStarCard";
 import CoachChat from "../CoachChat";
+import GymMode from "../components/GymMode";
+import MondayInsightCard from "../components/MondayInsightCard";
 import { useReports } from "../reports";
 import { useAttendance } from "../attendance";
 import { useCertificates } from "../certificates";
@@ -235,6 +237,7 @@ export default function StaffView({ d, onOpenCard }) {
   const [repErr, setRepErr] = useState(null);
   const { reports, saveReport, removeReport } = useReports();
   const { rows: attendanceRows, saveSession, removeSession } = useAttendance();
+  const [gymMode, setGymMode] = useState(false);
 
   const athletes = NOMI.map((n) => ({ id: atleti[n].athleteId, identifier: n })).filter((a) => a.id);
 
@@ -309,11 +312,19 @@ export default function StaffView({ d, onOpenCard }) {
           <div style={{ ...display, fontSize: 16, fontWeight: 700, color: C.ink }}>Report squadra — Oasi Volley U18</div>
           <div style={{ ...font, fontSize: 12.5, color: C.muted }}>Aggiornato al {lastPeriod}</div>
         </div>
+        <button className="a360-noprint" onClick={() => setGymMode(true)}
+          style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 600, padding: "9px 13px", borderRadius: 10, border: "none", background: C.orange, color: "#fff", cursor: "pointer" }}>
+          <Dumbbell size={16} /> Modalità palestra
+        </button>
         <button className="a360-noprint" onClick={() => window.print()}
           style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500, padding: "9px 13px", borderRadius: 10, border: `1px solid ${C.grid}`, background: C.card, color: C.ink, cursor: "pointer" }}>
           <Printer size={16} /> Stampa / PDF
         </button>
       </div>
+
+      {gymMode && <GymMode athletes={athletes} rows={attendanceRows} onSave={saveSession} onClose={() => setGymMode(false)} />}
+
+      <MondayInsightCard team={team} skills={skills} />
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
         {[
