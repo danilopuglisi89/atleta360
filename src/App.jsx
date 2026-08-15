@@ -148,7 +148,7 @@ function Dashboard() {
   const openDM = (userId, name) => { setCardTarget(null); setDmTarget({ id: userId, name }); setView("chat"); setMobileOpen(false); };
 
   // Notifiche: chat di squadra, messaggi privati, nuovi rilevamenti, approvazione.
-  const { items: notifications, unread: unreadNotif, unreadChat, unreadDmFromIds, markAllRead, markTypeRead, markFromRead } = useNotifications(profile?.id);
+  const { items: notifications, unread: unreadNotif, unreadChat, unreadDmFromIds, markAllRead, markTypeRead, markFromRead, remove: removeNotif, removeRead: removeReadNotif } = useNotifications(profile?.id);
   const openNotification = (n) => {
     if (n.type === "dm" && n.meta?.from_id) { openDM(n.meta.from_id, n.meta.from_name || ""); return; }
     setView(n.view || "home"); setMobileOpen(false);
@@ -377,7 +377,8 @@ function Dashboard() {
             </div>
             <div className="a360-noprint" style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <ThemeToggle mode={theme.mode} onCycle={theme.cycle} />
-              <NotificationBell items={notifications} unreadCount={unreadNotif.length} onOpenItem={openNotification} onMarkAllRead={markAllRead} userId={profile?.id} />
+              <NotificationBell items={notifications} unreadCount={unreadNotif.length} onOpenItem={openNotification} onMarkAllRead={markAllRead}
+                onRemove={removeNotif} onRemoveRead={removeReadNotif} userId={profile?.id} />
             </div>
           </div>
           <ErrorBoundary key={active.id}>

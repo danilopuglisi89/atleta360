@@ -50,5 +50,25 @@ export function useNotifications(userId) {
     [items, markRead]
   );
 
-  return { items, unread, unreadChat, unreadDmFromIds, markRead, markAllRead, markTypeRead, markFromRead };
+  // Eliminazione: `.select()` restituisce le righe davvero cancellate. Se
+  // torna vuoto senza errore vuol dire che la policy di delete non c'è
+  // ancora (vedi supabase/notifications-delete.sql): in quel caso non
+  // togliamo niente dall'elenco, invece di far sparire una riga che al
+  // primo aggiornamento ricomparirebbe.
+  const remove = useCallback(async (ids) => {
+    if (!ids.length) return null;
+    const { data, error } = await supabase.from("notifications").delete().in("id", ids).select("id");
+    if (error) return error.message;
+    if (!data?.length) return "Eliminazione non permessa dal database.";
+    const gone = data.map((r) => r.id);
+    setItems((prev) => prev.filter((n) => !gone.includes(n.id)));
+    return null;
+  }, []);
+
+  const removeRead = useCallback(
+    () => remove(items.filter((n) => n.read).map((n) => n.id)),
+    [items, remove]
+  );
+
+  return { items, unread, unreadChat, unreadDmFromIds, markRead, markAllRead, markTypeRead, markFromRead, remove, removeRead };
 }

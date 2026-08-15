@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Bell, BellRing, MessageCircle, MessagesSquare, ClipboardPlus, CheckCircle2, Target, Smartphone, CalendarDays, Star, Gift } from "lucide-react";
+import { Bell, BellRing, MessageCircle, MessagesSquare, ClipboardPlus, CheckCircle2, Target, Smartphone, CalendarDays, Star, Gift, X } from "lucide-react";
 import { C, font, display } from "../theme";
 import { usePush } from "../push";
 
@@ -51,9 +51,17 @@ const timeLabel = (iso) => {
 
 // Campanella con pallino rosso + elenco a tendina. Un click su una notifica
 // la segna come letta e naviga alla vista collegata (gestito dal chiamante).
-export default function NotificationBell({ items, unreadCount, onOpenItem, onMarkAllRead, userId }) {
+export default function NotificationBell({ items, unreadCount, onOpenItem, onMarkAllRead, onRemove, onRemoveRead, userId }) {
   const [open, setOpen] = useState(false);
+  const [err, setErr] = useState(null);
   const ref = useRef(null);
+  const readCount = items.filter((n) => n.read).length;
+
+  const doRemove = async (fn) => {
+    setErr(null);
+    const error = await fn();
+    if (error) setErr(error);
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -80,34 +88,61 @@ export default function NotificationBell({ items, unreadCount, onOpenItem, onMar
         <div className="a360-reveal" style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", zIndex: 45, width: 320, maxWidth: "88vw",
           background: C.card, borderRadius: 14, border: `1px solid ${C.grid}`, boxShadow: "0 16px 40px rgba(10,22,80,0.18)", overflow: "hidden" }}>
           <PushRow userId={userId} />
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", borderBottom: `1px solid ${C.grid}` }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "12px 14px", borderBottom: `1px solid ${C.grid}` }}>
             <span style={{ ...display, fontSize: 14, fontWeight: 700, color: C.ink }}>Notifiche</span>
-            {unreadCount > 0 && (
-              <button onClick={() => onMarkAllRead()} style={{ ...font, fontSize: 12, color: C.navy2, background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>
-                Segna tutte lette
-              </button>
-            )}
+            <span style={{ display: "flex", gap: 10 }}>
+              {unreadCount > 0 && (
+                <button onClick={() => onMarkAllRead()} style={{ ...font, fontSize: 12, color: C.navy2, background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>
+                  Segna tutte lette
+                </button>
+              )}
+              {readCount > 0 && onRemoveRead && (
+                <button onClick={() => doRemove(onRemoveRead)} style={{ ...font, fontSize: 12, color: C.muted, background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>
+                  Elimina lette
+                </button>
+              )}
+            </span>
           </div>
+          {err && (
+            <div style={{ ...font, fontSize: 12, color: "#B4232A", padding: "9px 14px", borderBottom: `1px solid ${C.grid}`, background: "#FDECEC" }}>
+              {err}
+            </div>
+          )}
           <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
             {items.length === 0 ? (
               <div style={{ ...font, fontSize: 13, color: C.muted, padding: "24px 16px", textAlign: "center" }}>Nessuna notifica per ora.</div>
             ) : items.map((n) => {
               const Icon = ICON_BY_TYPE[n.type] || Bell;
               return (
-                <button key={n.id} onClick={() => { setOpen(false); onOpenItem(n); }}
-                  style={{ display: "flex", gap: 10, alignItems: "flex-start", width: "100%", textAlign: "left", padding: "11px 14px",
-                    border: "none", borderBottom: `1px solid ${C.grid}`, cursor: "pointer", background: n.read ? C.card : C.orangeSoft }}>
-                  <div style={{ width: 30, height: 30, borderRadius: 9, background: n.read ? C.surface : C.card, color: C.navy2,
-                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <Icon size={15} />
-                  </div>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ ...font, fontSize: 13, color: C.ink, fontWeight: n.read ? 500 : 700, lineHeight: 1.35 }}>{n.title}</div>
-                    {n.body && <div style={{ ...font, fontSize: 12, color: C.muted, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.body}</div>}
-                    <div style={{ ...font, fontSize: 10.5, color: C.muted, marginTop: 3 }}>{timeLabel(n.created_at)}</div>
-                  </div>
-                  {!n.read && <span style={{ width: 8, height: 8, borderRadius: 99, background: C.orange, flexShrink: 0, marginTop: 5 }} />}
-                </button>
+                // Riga = area cliccabile + slot a destra (pallino se da leggere,
+                // "x" per eliminarla se già letta). Due <button> affiancati,
+                // non annidati: un bottone dentro un bottone non è valido.
+                <div key={n.id} style={{ display: "flex", alignItems: "flex-start", borderBottom: `1px solid ${C.grid}`, background: n.read ? C.card : C.orangeSoft }}>
+                  <button onClick={() => { setOpen(false); onOpenItem(n); }}
+                    style={{ display: "flex", gap: 10, alignItems: "flex-start", flex: 1, minWidth: 0, textAlign: "left",
+                      padding: "11px 4px 11px 14px", border: "none", background: "none", cursor: "pointer" }}>
+                    <div style={{ width: 30, height: 30, borderRadius: 9, background: n.read ? C.surface : C.card, color: C.navy2,
+                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Icon size={15} />
+                    </div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ ...font, fontSize: 13, color: C.ink, fontWeight: n.read ? 500 : 700, lineHeight: 1.35 }}>{n.title}</div>
+                      {n.body && <div style={{ ...font, fontSize: 12, color: C.muted, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.body}</div>}
+                      <div style={{ ...font, fontSize: 10.5, color: C.muted, marginTop: 3 }}>{timeLabel(n.created_at)}</div>
+                    </div>
+                  </button>
+                  {n.read ? (
+                    onRemove && (
+                      <button onClick={() => doRemove(() => onRemove([n.id]))} aria-label="Elimina notifica" title="Elimina"
+                        style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 34, alignSelf: "stretch",
+                          border: "none", background: "none", color: C.muted, cursor: "pointer", flexShrink: 0 }}>
+                        <X size={14} />
+                      </button>
+                    )
+                  ) : (
+                    <span style={{ width: 8, height: 8, borderRadius: 99, background: C.orange, flexShrink: 0, margin: "16px 13px 0 0" }} />
+                  )}
+                </div>
               );
             })}
           </div>
