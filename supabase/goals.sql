@@ -32,7 +32,7 @@ drop policy if exists "goals delete" on public.goals;
 create policy "goals insert" on public.goals for insert with check (
   public.is_staff() or exists (
     select 1 from public.profiles p join public.athletes a on a.identifier = p.athlete_id
-    where p.id = auth.uid() and p.status = 'approved' and a.id = athlete_id
+    where p.id = auth.uid() and p.status = 'approved' and a.id = goals.athlete_id
   )
 );
 create policy "goals update" on public.goals for update using (

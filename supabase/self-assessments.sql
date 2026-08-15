@@ -31,7 +31,7 @@ drop policy if exists "self_assessments delete" on public.self_assessments;
 create policy "self_assessments insert" on public.self_assessments for insert with check (
   public.is_staff() or exists (
     select 1 from public.profiles p join public.athletes a on a.identifier = p.athlete_id
-    where p.id = auth.uid() and p.status = 'approved' and a.id = athlete_id
+    where p.id = auth.uid() and p.status = 'approved' and a.id = self_assessments.athlete_id
   )
 );
 create policy "self_assessments update" on public.self_assessments for update using (

@@ -29,10 +29,15 @@ create policy "diary select" on public.athlete_diary for select using (
     where p.id = auth.uid() and a.id = athlete_diary.athlete_id
   )
 );
+-- Nota: qualificare SEMPRE la colonna della riga in inserimento
+-- (athlete_diary.athlete_id). Scritta come "athlete_id" nuda, Postgres la
+-- risolve con profiles.athlete_id (text) della subquery invece che con la
+-- riga in inserimento (uuid) → "operator does not exist: uuid = text",
+-- che faceva fallire e rollbackare l'intero script.
 create policy "diary insert own" on public.athlete_diary for insert with check (
   exists (
     select 1 from public.profiles p join public.athletes a on a.identifier = p.athlete_id
-    where p.id = auth.uid() and a.id = athlete_id
+    where p.id = auth.uid() and a.id = athlete_diary.athlete_id
   )
 );
 create policy "diary delete own" on public.athlete_diary for delete using (
@@ -56,9 +61,9 @@ drop policy if exists "checkins read" on public.checkins;
 drop policy if exists "checkins write own" on public.checkins;
 create policy "checkins read" on public.checkins for select using (public.is_approved());
 create policy "checkins write own" on public.checkins for all using (
-  exists (select 1 from public.profiles p join public.athletes a on a.identifier = p.athlete_id where p.id = auth.uid() and a.id = athlete_id)
+  exists (select 1 from public.profiles p join public.athletes a on a.identifier = p.athlete_id where p.id = auth.uid() and a.id = checkins.athlete_id)
 ) with check (
-  exists (select 1 from public.profiles p join public.athletes a on a.identifier = p.athlete_id where p.id = auth.uid() and a.id = athlete_id)
+  exists (select 1 from public.profiles p join public.athletes a on a.identifier = p.athlete_id where p.id = auth.uid() and a.id = checkins.athlete_id)
 );
 
 -- ---------- Indisponibilità / infortuni ----------
@@ -75,9 +80,9 @@ drop policy if exists "unavailability read" on public.unavailability;
 drop policy if exists "unavailability write" on public.unavailability;
 create policy "unavailability read" on public.unavailability for select using (public.is_approved());
 create policy "unavailability write" on public.unavailability for all using (
-  public.is_staff() or exists (select 1 from public.profiles p join public.athletes a on a.identifier = p.athlete_id where p.id = auth.uid() and a.id = athlete_id)
+  public.is_staff() or exists (select 1 from public.profiles p join public.athletes a on a.identifier = p.athlete_id where p.id = auth.uid() and a.id = unavailability.athlete_id)
 ) with check (
-  public.is_staff() or exists (select 1 from public.profiles p join public.athletes a on a.identifier = p.athlete_id where p.id = auth.uid() and a.id = athlete_id)
+  public.is_staff() or exists (select 1 from public.profiles p join public.athletes a on a.identifier = p.athlete_id where p.id = auth.uid() and a.id = unavailability.athlete_id)
 );
 
 -- Un'atleta è indisponibile oggi?
