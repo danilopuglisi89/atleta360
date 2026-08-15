@@ -8,20 +8,24 @@ import { Card, Select } from "./ui";
 import { useStreakBuddy } from "../streakBuddy";
 
 export default function StreakBuddyCard({ myAthleteId, roster }) {
-  const { buddy, pick, loading } = useStreakBuddy(myAthleteId);
+  const { buddy, pick, loading, unavailable } = useStreakBuddy(myAthleteId);
   const [choice, setChoice] = useState("");
   const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(null);
 
-  if (!myAthleteId || loading) return null;
+  // `unavailable` = wow-2.sql non ancora eseguito: meglio non mostrare nulla
+  // che un form che poi non salva.
+  if (!myAthleteId || loading || unavailable) return null;
 
   const options = (roster || []).filter((r) => r.id !== myAthleteId).map((r) => r.identifier);
   const byName = Object.fromEntries((roster || []).map((r) => [r.identifier, r.id]));
 
   const confirm = async () => {
     if (!choice) return;
-    setBusy(true);
-    await pick(byName[choice]);
+    setBusy(true); setErr(null);
+    const error = await pick(byName[choice]);
     setBusy(false);
+    if (error) setErr(error);
   };
 
   return (
@@ -36,6 +40,8 @@ export default function StreakBuddyCard({ myAthleteId, roster }) {
           </button>
         </div>
       )}
+
+      {err && <div style={{ ...font, fontSize: 12.5, color: "#B4232A", marginTop: 8 }}>Non salvato: {err}</div>}
 
       {buddy && !buddy.confirmed && (
         <div style={{ ...font, fontSize: 13.5, color: C.muted, display: "flex", alignItems: "center", gap: 8 }}>
