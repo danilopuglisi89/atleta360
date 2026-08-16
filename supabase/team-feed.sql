@@ -11,6 +11,8 @@
 -- eseguiti; photos ed events esistono da wave4.sql/calendar.sql.)
 -- ============================================================
 
+drop function if exists public.team_feed(int);
+
 create or replace function public.team_feed(p_limit int default 40)
 returns table(kind text, actor_name text, actor_id text, headline text, detail text, created_at timestamptz)
 language sql security definer stable as $$
