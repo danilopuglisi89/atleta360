@@ -4,7 +4,7 @@
 // inline) sia per quello di chiunque altro cliccato in giro nell'app.
 // Vedi supabase/profile-page.sql (colonna cover_url, set_my_cover,
 // chat_roster allargato, team_feed agganciato all'uuid del profilo).
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X, Camera, MessageCircle, ClipboardList, Instagram, Facebook, Shirt, Pencil, Save } from "lucide-react";
 import { C, font, display, ringForScore, ringForRole } from "../theme";
 import { supabase } from "../supabaseClient";
@@ -30,8 +30,7 @@ function useIsDesktop() {
 
 function EditForm({ row, onDone }) {
   const [form, setForm] = useState({
-    ruolo: row.ruolo || "", jersey_number: row.jersey_number || "",
-    instagram: row.instagram || "", facebook: row.facebook || "", motto: row.motto || "",
+    ruolo: row.ruolo || "", jersey_number: row.jersey_number || "", motto: row.motto || "",
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
@@ -42,7 +41,7 @@ function EditForm({ row, onDone }) {
   const save = async () => {
     setBusy(true); setErr(null);
     const { error } = await supabase.rpc("update_my_profile", {
-      p_phone: row.phone || null, p_facebook: form.facebook.trim() || null, p_instagram: form.instagram.trim() || null,
+      p_phone: row.phone || null, p_facebook: row.facebook || null, p_instagram: row.instagram || null,
       p_jersey_number: form.jersey_number.trim() || null, p_ruolo: form.ruolo.trim() || null, p_avatar_url: row.avatar_url || null,
     });
     if (!error) await supabase.rpc("set_my_motto", { p_motto: form.motto || "" });
@@ -64,14 +63,6 @@ function EditForm({ row, onDone }) {
         </div>
       </div>
       <div>
-        <label style={labelStyle}>Instagram</label>
-        <input style={fieldStyle} value={form.instagram} onChange={upd("instagram")} placeholder="@nomeutente o link" />
-      </div>
-      <div>
-        <label style={labelStyle}>Facebook</label>
-        <input style={fieldStyle} value={form.facebook} onChange={upd("facebook")} placeholder="link o nome utente" />
-      </div>
-      <div>
         <label style={labelStyle}>Motto</label>
         <input style={fieldStyle} value={form.motto} onChange={upd("motto")} placeholder="es. Punto dopo punto." />
       </div>
@@ -82,6 +73,67 @@ function EditForm({ row, onDone }) {
           <Save size={14} /> {busy ? "Salvo…" : "Salva"}
         </button>
       </div>
+    </div>
+  );
+}
+
+// Link social in cima al profilo, sempre visibili appena si apre la
+// scheda (stile TikTok) e modificabili sul posto se è il tuo profilo.
+function SocialLinks({ row, isSelf, onSaved }) {
+  const [editing, setEditing] = useState(false);
+  const [ig, setIg] = useState(row.instagram || "");
+  const [fb, setFb] = useState(row.facebook || "");
+  const [busy, setBusy] = useState(false);
+
+  const social = [];
+  if (row.instagram) social.push({ icon: Instagram, url: row.instagram.startsWith("http") ? row.instagram : `https://instagram.com/${row.instagram.replace(/^@/, "")}`, label: "Instagram" });
+  if (row.facebook) social.push({ icon: Facebook, url: row.facebook.startsWith("http") ? row.facebook : `https://facebook.com/${row.facebook}`, label: "Facebook" });
+
+  const save = async () => {
+    setBusy(true);
+    const { error } = await supabase.rpc("update_my_profile", {
+      p_phone: row.phone || null, p_facebook: fb.trim() || null, p_instagram: ig.trim() || null,
+      p_jersey_number: row.jersey_number || null, p_ruolo: row.ruolo || null, p_avatar_url: row.avatar_url || null,
+    });
+    setBusy(false);
+    if (!error) { onSaved({ ...row, instagram: ig.trim() || null, facebook: fb.trim() || null }); setEditing(false); }
+  };
+
+  if (!isSelf && social.length === 0) return null;
+
+  if (editing) {
+    return (
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8, alignItems: "center" }}>
+        <input value={ig} onChange={(e) => setIg(e.target.value)} placeholder="@instagram"
+          style={{ ...font, fontSize: 12.5, padding: "7px 10px", borderRadius: 8, border: `1px solid ${C.grid}`, width: 140, boxSizing: "border-box" }} />
+        <input value={fb} onChange={(e) => setFb(e.target.value)} placeholder="Facebook"
+          style={{ ...font, fontSize: 12.5, padding: "7px 10px", borderRadius: 8, border: `1px solid ${C.grid}`, width: 140, boxSizing: "border-box" }} />
+        <button onClick={save} disabled={busy}
+          style={{ ...font, fontSize: 12.5, fontWeight: 600, padding: "7px 12px", borderRadius: 8, border: "none", background: C.orange, color: "#fff", cursor: busy ? "default" : "pointer" }}>
+          {busy ? "…" : "Salva"}
+        </button>
+        <button onClick={() => setEditing(false)} style={{ ...font, fontSize: 12.5, color: C.muted, background: "none", border: "none", cursor: "pointer" }}>Annulla</button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+      {social.map((s, i) => {
+        const Icon = s.icon;
+        return (
+          <a key={i} href={s.url} target="_blank" rel="noopener noreferrer" title={s.label}
+            style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 9, border: `1px solid ${C.grid}`, background: C.card, color: C.navy2 }}>
+            <Icon size={16} />
+          </a>
+        );
+      })}
+      {isSelf && (
+        <button onClick={() => setEditing(true)}
+          style={{ ...font, display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600, padding: "6px 10px", borderRadius: 9, border: `1px dashed ${C.grid}`, background: "none", color: C.muted, cursor: "pointer" }}>
+          <Pencil size={11} /> {social.length ? "Modifica link" : "Aggiungi link"}
+        </button>
+      )}
     </div>
   );
 }
@@ -136,14 +188,6 @@ export default function ProfilePage({ target, model, viewer, onClose, onMessage,
   const fullName = row ? [row.first_name, row.last_name].filter(Boolean).join(" ") : "";
   const overall = isAthlete && model?.overall ? model.overall(row.athlete_id) : null;
   const ring = overall != null ? ringForScore(overall) : ringForRole(row?.role, row?.category);
-
-  const social = useMemo(() => {
-    if (!row) return [];
-    const list = [];
-    if (row.instagram) list.push({ icon: Instagram, url: row.instagram.startsWith("http") ? row.instagram : `https://instagram.com/${row.instagram.replace(/^@/, "")}`, label: "Instagram" });
-    if (row.facebook) list.push({ icon: Facebook, url: row.facebook.startsWith("http") ? row.facebook : `https://facebook.com/${row.facebook}`, label: "Facebook" });
-    return list;
-  }, [row]);
 
   const onCoverFile = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
@@ -227,6 +271,7 @@ export default function ProfilePage({ target, model, viewer, onClose, onMessage,
                   )}
                 </div>
                 {row.motto && <div style={{ ...font, fontSize: 13, color: C.muted, fontStyle: "italic", marginTop: 6 }}>"{row.motto}"</div>}
+                <SocialLinks row={row} isSelf={isSelf} onSaved={setRow} />
               </div>
             </div>
 
@@ -256,7 +301,7 @@ export default function ProfilePage({ target, model, viewer, onClose, onMessage,
 
             {/* Tab */}
             <div style={{ display: "flex", gap: 4, marginTop: 20, borderBottom: `1px solid ${C.grid}` }}>
-              {[["post", "Post"], ["info", "Informazioni"], ["foto", "Foto"]].map(([key, label]) => (
+              {[["post", "Post"], ["foto", "Foto"]].map(([key, label]) => (
                 <button key={key} onClick={() => setTab(key)}
                   style={{ ...font, fontSize: 13.5, fontWeight: 600, padding: "10px 16px", background: "none", border: "none", cursor: "pointer",
                     color: tab === key ? C.orange : C.muted, borderBottom: tab === key ? `2px solid ${C.orange}` : "2px solid transparent" }}>
@@ -269,22 +314,6 @@ export default function ProfilePage({ target, model, viewer, onClose, onMessage,
               {tab === "post" && (
                 <WallCard uid={row.id} viewerUid={viewer?.uid} isStaff={viewer?.isStaff}
                   personal={isSelf && isAthlete} institutional={!isAthlete} bare wall={wall} />
-              )}
-              {tab === "info" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "8px 2px" }}>
-                  {social.length === 0 && !row.motto && !row.ruolo && (
-                    <div style={{ ...font, fontSize: 13.5, color: C.muted }}>Nessuna informazione condivisa.</div>
-                  )}
-                  {social.map((s, i) => {
-                    const Icon = s.icon;
-                    return (
-                      <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
-                        style={{ ...font, display: "inline-flex", alignItems: "center", gap: 9, fontSize: 13.5, color: C.navy2, textDecoration: "none" }}>
-                        <Icon size={16} /> {s.label}
-                      </a>
-                    );
-                  })}
-                </div>
               )}
               {tab === "foto" && <PhotoGrid wall={wall} onOpenPhoto={setLightbox} />}
             </div>
