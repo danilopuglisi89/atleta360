@@ -112,7 +112,7 @@ export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile, onGoV
       {restricted && !hidden.includes("season") && <SeasonCapsuleCard uid={auth?.uid} />}
 
       {flags.feature_teampet && <TeamPetCard />}
-      {flags.feature_teamfeed && <TeamFeedCard />}
+      {flags.feature_teamfeed && <TeamFeedCard onOpenCard={onOpenCard} />}
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
         {[

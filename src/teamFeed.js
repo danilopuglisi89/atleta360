@@ -9,18 +9,21 @@ const LAST_VISIT_KEY = "a360-last-visit";
 
 const KIND_ICON = { moment: "💭", star: "⭐", photo: "📸", result: "🏐" };
 
+// actorName/actorId separati dal resto della frase: così il chiamante può
+// rendere il nome come span cliccabile senza dover fare parsing di stringhe.
 function describe(row) {
+  const actorName = row.actor_name || "Una compagna";
   switch (row.kind) {
     case "moment":
-      return { icon: row.headline || KIND_ICON.moment, text: `${row.actor_name || "Una compagna"} ha condiviso il momento del giorno${row.detail ? `: “${row.detail}”` : ""}` };
+      return { icon: row.headline || KIND_ICON.moment, actorName, actorId: row.actor_id, rest: ` ha condiviso il momento del giorno${row.detail ? `: “${row.detail}”` : ""}` };
     case "star":
-      return { icon: KIND_ICON.star, text: `${row.actor_name || "Una compagna"} ha ricevuto una stella dal mister${row.detail ? `: “${row.detail}”` : ""}` };
+      return { icon: KIND_ICON.star, actorName, actorId: row.actor_id, rest: ` ha ricevuto una stella dal mister${row.detail ? `: “${row.detail}”` : ""}` };
     case "photo":
-      return { icon: KIND_ICON.photo, text: `${row.actor_name || "Una compagna"} ha aggiunto una foto all'album${row.detail ? `: “${row.detail}”` : ""}` };
+      return { icon: KIND_ICON.photo, actorName, actorId: row.actor_id, rest: ` ha aggiunto una foto all'album${row.detail ? `: “${row.detail}”` : ""}` };
     case "result":
-      return { icon: KIND_ICON.result, text: `${row.headline || "Partita"}${row.detail ? ` · ${row.detail}` : ""}` };
+      return { icon: KIND_ICON.result, actorName: null, actorId: null, rest: `${row.headline || "Partita"}${row.detail ? ` · ${row.detail}` : ""}` };
     default:
-      return { icon: "•", text: row.headline || "" };
+      return { icon: "•", actorName: null, actorId: null, rest: row.headline || "" };
   }
 }
 

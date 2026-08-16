@@ -15,7 +15,7 @@ const timeLabel = (iso) => {
   return d.toLocaleDateString("it-IT", { day: "2-digit", month: "short" });
 };
 
-export default function TeamFeedCard() {
+export default function TeamFeedCard({ onOpenCard }) {
   const { items, loading } = useTeamFeed();
   const welcomeBack = useWelcomeBack(items);
 
@@ -33,15 +33,25 @@ export default function TeamFeedCard() {
       )}
       <Card title="Novità" subtitle="Cosa è successo in squadra" style={{ marginTop: 16 }} className="a360-noprint">
         <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 360, overflowY: "auto" }}>
-          {items.map((it, i) => (
-            <div key={`${it.kind}-${it.created_at}-${i}`} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-              <span style={{ fontSize: 18, lineHeight: 1.3, flexShrink: 0 }}>{it.icon}</span>
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ ...font, fontSize: 13, color: C.ink, lineHeight: 1.4 }}>{it.text}</div>
-                <div style={{ ...font, fontSize: 11, color: C.muted, marginTop: 2 }}>{timeLabel(it.created_at)}</div>
+          {items.map((it, i) => {
+            const canOpen = onOpenCard && it.actorId;
+            return (
+              <div key={`${it.kind}-${it.created_at}-${i}`} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                <span style={{ fontSize: 18, lineHeight: 1.3, flexShrink: 0 }}>{it.icon}</span>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ ...font, fontSize: 13, color: C.ink, lineHeight: 1.4 }}>
+                    {it.actorName && (
+                      <span className={canOpen ? "a360-clickname" : undefined} onClick={canOpen ? () => onOpenCard(it.actorId) : undefined} style={{ fontWeight: 600 }}>
+                        {it.actorName}
+                      </span>
+                    )}
+                    {it.rest}
+                  </div>
+                  <div style={{ ...font, fontSize: 11, color: C.muted, marginTop: 2 }}>{timeLabel(it.created_at)}</div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </Card>
     </>

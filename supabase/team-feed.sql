@@ -12,30 +12,31 @@
 -- ============================================================
 
 create or replace function public.team_feed(p_limit int default 40)
-returns table(kind text, actor_name text, headline text, detail text, created_at timestamptz)
+returns table(kind text, actor_name text, actor_id text, headline text, detail text, created_at timestamptz)
 language sql security definer stable as $$
   select * from (
-    select 'moment'::text as kind, p.first_name as actor_name, dm.emoji as headline, dm.note as detail, dm.created_at
+    select 'moment'::text as kind, p.first_name as actor_name, p.athlete_id as actor_id, dm.emoji as headline, dm.note as detail, dm.created_at
     from public.daily_moments dm
     join public.profiles p on p.id = dm.user_id
     where p.status = 'approved'
 
     union all
 
-    select 'star', a.identifier, 'stella'::text, s.note, s.created_at
+    select 'star', coalesce(p.first_name, a.identifier), a.identifier, 'stella'::text, s.note, s.created_at
     from public.stars s
     join public.athletes a on a.id = s.athlete_id
+    left join public.profiles p on p.athlete_id = a.identifier and p.status = 'approved'
 
     union all
 
-    select 'photo', p.first_name, 'foto'::text, ph.caption, ph.created_at
+    select 'photo', p.first_name, p.athlete_id, 'foto'::text, ph.caption, ph.created_at
     from public.photos ph
     join public.profiles p on p.id = ph.uploaded_by
     where p.status = 'approved'
 
     union all
 
-    select 'result', null::text, e.title, e.result, e.starts_at
+    select 'result', null::text, null::text, e.title, e.result, e.starts_at
     from public.events e
     where e.result is not null and not e.cancelled
   ) feed
