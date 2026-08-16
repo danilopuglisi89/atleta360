@@ -321,7 +321,7 @@ function Dashboard() {
   } else if (active.id === "personale") {
     content = <PersonalArea accent={theme.accent} onPickAccent={theme.pickAccent} />;
   } else if (active.id === "chat") {
-    content = <ChatPage dmTarget={dmTarget} onMarkDmRead={markFromRead} unreadDmFromIds={unreadDmFromIds} />;
+    content = <ChatPage dmTarget={dmTarget} onMarkDmRead={markFromRead} unreadDmFromIds={unreadDmFromIds} onOpenCard={openCard} />;
   } else if (errore) {
     content = (
       <StatusBox tone="error" title="Non riesco a leggere i dati"

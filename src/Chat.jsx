@@ -34,7 +34,7 @@ function MiniAvatar({ url, name, size = 30 }) {
   );
 }
 
-export default function Chat() {
+export default function Chat({ onOpenCard }) {
   const { profile, session } = useAuth();
   const uid = session?.user?.id;
   const authorName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.email;
@@ -145,12 +145,20 @@ export default function Chat() {
         {messages.map((m) => {
           const mine = m.user_id && m.user_id === uid;
           const av = roster[m.user_id];
+          // Il nome è cliccabile solo se dietro c'è davvero una scheda atleta
+          // (av.athlete_id): il mister/staff in chat non ha un profilo pubblico.
+          const canOpen = onOpenCard && av?.athlete_id && av.category === "atleta";
           return (
             <div key={m.id} style={{ display: "flex", flexDirection: "column", alignItems: mine ? "flex-end" : "flex-start" }}>
               <div style={{ display: "flex", alignItems: "flex-end", gap: 8, maxWidth: "85%", flexDirection: mine ? "row-reverse" : "row" }}>
                 {!mine && <MiniAvatar url={av?.avatar_url} name={m.author} />}
                 <div>
-                  {!mine && <div style={{ ...font, fontSize: 11.5, color: C.muted, marginBottom: 3, marginLeft: 2 }}>{m.author || "—"}</div>}
+                  {!mine && (
+                    <div className={canOpen ? "a360-clickname" : undefined} onClick={canOpen ? () => onOpenCard(av.athlete_id) : undefined}
+                      style={{ ...font, fontSize: 11.5, color: C.muted, marginBottom: 3, marginLeft: 2 }}>
+                      {m.author || "—"}
+                    </div>
+                  )}
                   <div style={{ ...font, fontSize: 13.5, lineHeight: 1.5, padding: m.image ? 4 : "9px 13px", borderRadius: 14, whiteSpace: "pre-wrap", wordBreak: "break-word",
                     background: mine ? C.navy : C.surface, color: mine ? "#fff" : C.ink,
                     borderBottomRightRadius: mine ? 4 : 14, borderBottomLeftRadius: mine ? 14 : 4 }}>

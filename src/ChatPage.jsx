@@ -5,7 +5,7 @@ import { useAuth } from "./auth";
 // Pagina "Chat": per le atlete, in alto i messaggi privati; sotto la chat di
 // squadra. Per l'admin solo la chat di squadra (il log completo è nel menu Admin).
 // onMarkDmRead(fromId) e unreadDmFromIds arrivano da Dashboard (centro notifiche).
-export default function ChatPage({ dmTarget, onMarkDmRead, unreadDmFromIds }) {
+export default function ChatPage({ dmTarget, onMarkDmRead, unreadDmFromIds, onOpenCard }) {
   const { profile } = useAuth();
   const isAthlete = profile?.category === "atleta";
   return (
@@ -14,7 +14,7 @@ export default function ChatPage({ dmTarget, onMarkDmRead, unreadDmFromIds }) {
         <DirectMessages initialToId={dmTarget?.id} initialToName={dmTarget?.name}
           onConversationOpen={onMarkDmRead} unreadFromIds={unreadDmFromIds} />
       )}
-      <Chat />
+      <Chat onOpenCard={onOpenCard} />
     </div>
   );
 }

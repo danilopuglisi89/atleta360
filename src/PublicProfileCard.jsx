@@ -1,6 +1,26 @@
-import { X, MessageCircle, ClipboardList, Instagram, Facebook, Shirt } from "lucide-react";
+import { X, MessageCircle, ClipboardList, Instagram, Facebook, Shirt, Heart } from "lucide-react";
 import { C, font, display, ringForScore } from "./theme";
 import { Avatar } from "./PersonalArea";
+import { useWall } from "./wall";
+
+// Anteprima dell'ultimo pensiero in bacheca: solo lettura + cuore, il resto
+// (scrivere, taggare, vedere tutto) sta nella scheda completa.
+function WallPreview({ recipientId, viewerUid }) {
+  const wall = useWall({ uid: recipientId, viewerUid });
+  if (wall.unavailable || !wall.posts?.length) return null;
+  const p = wall.posts[0];
+  return (
+    <div style={{ marginTop: 14, textAlign: "left", background: C.surface, borderRadius: 12, padding: "10px 13px" }}>
+      {p.kind === "mood" && <span style={{ fontSize: 20 }}>{p.mood_emoji}</span>}
+      {p.body && <div style={{ ...font, fontSize: 13, color: C.ink, lineHeight: 1.45, marginTop: p.kind === "mood" ? 4 : 0 }}>{p.body}</div>}
+      {p.photo_url && <img src={p.photo_url} alt="" style={{ maxWidth: "100%", borderRadius: 9, marginTop: 6, display: "block" }} />}
+      <button onClick={() => wall.toggleReaction(p.id, p.iReacted)}
+        style={{ ...font, display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600, background: "none", border: "none", cursor: "pointer", marginTop: 6, color: p.iReacted ? "#E11D74" : C.muted }}>
+        <Heart size={13} fill={p.iReacted ? "#E11D74" : "none"} /> {p.reactionCount > 0 ? p.reactionCount : ""}
+      </button>
+    </div>
+  );
+}
 
 // ============================================================
 // Card pubblica dell'atleta (stile social): foto, nome, ruolo e il
@@ -54,6 +74,8 @@ export default function PublicProfileCard({ identifier, model, entry, viewer, on
               })}
             </div>
           )}
+
+          {recipientId && <WallPreview recipientId={recipientId} viewerUid={viewer?.uid} />}
 
           <div style={{ display: "flex", flexDirection: "column", gap: 9, marginTop: 16 }}>
             {canMessage && (

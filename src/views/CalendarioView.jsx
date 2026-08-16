@@ -51,7 +51,7 @@ function KindBadge({ kind }) {
 
 // Giocatore del match: lo sceglie il mister a partita finita. Tutti vedono
 // chi è stata; solo lo staff può assegnarla o cambiarla.
-function MvpBlock({ ev, isStaff, mvp, roster }) {
+function MvpBlock({ ev, isStaff, mvp, roster, onOpenCard }) {
   const [pick, setPick] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -62,10 +62,14 @@ function MvpBlock({ ev, isStaff, mvp, roster }) {
   const nameOf = (id) => (roster || []).find((r) => r.id === id)?.identifier || "—";
 
   if (current) {
+    const mvpIdentifier = nameOf(current.athlete_id);
+    const canOpen = onOpenCard && mvpIdentifier && mvpIdentifier !== "—";
     return (
       <div style={{ background: "#FFF8E6", border: "1px solid #F5D77A", borderRadius: 10, padding: "10px 12px", marginTop: 8 }}>
         <div style={{ ...font, fontSize: 11.5, color: "#8A6A10", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>Giocatore del match</div>
-        <div style={{ ...display, fontSize: 15, fontWeight: 700, color: C.ink, marginTop: 3 }}>🏐 {nameOf(current.athlete_id)}</div>
+        <div style={{ ...display, fontSize: 15, fontWeight: 700, color: C.ink, marginTop: 3 }}>
+          🏐 <span className={canOpen ? "a360-clickname" : undefined} onClick={canOpen ? () => onOpenCard(mvpIdentifier) : undefined}>{mvpIdentifier}</span>
+        </div>
         {current.note && <div style={{ ...font, fontSize: 12.5, color: C.ink, marginTop: 3 }}>{current.note}</div>}
       </div>
     );
@@ -101,7 +105,21 @@ function MvpBlock({ ev, isStaff, mvp, roster }) {
   );
 }
 
-function EventCard({ ev, myRsvp, counts, names, isStaff, uid, mvp, roster, onRsvp, onResult, onCancel, onDelete }) {
+// Elenco di nomi separati da virgola, ognuno cliccabile quando c'è una
+// scheda atleta dietro (le atlete hanno athleteId, lo staff no).
+function NameList({ people, onOpenCard }) {
+  return people.map((p, i) => (
+    <span key={i}>
+      <span className={onOpenCard && p.athleteId ? "a360-clickname" : undefined}
+        onClick={onOpenCard && p.athleteId ? () => onOpenCard(p.athleteId) : undefined}>
+        {p.name}
+      </span>
+      {i < people.length - 1 ? ", " : ""}
+    </span>
+  ));
+}
+
+function EventCard({ ev, myRsvp, counts, names, isStaff, uid, mvp, roster, onOpenCard, onRsvp, onResult, onCancel, onDelete }) {
   const [resultDraft, setResultDraft] = useState("");
   const past = new Date(ev.starts_at) < new Date();
   // "La parola della partita": 24h di finestra dopo il risultato per
@@ -166,7 +184,7 @@ function EventCard({ ev, myRsvp, counts, names, isStaff, uid, mvp, roster, onRsv
         </div>
       )}
       {ev.kind === "match" && past && !ev.cancelled && mvp && (
-        <MvpBlock ev={ev} isStaff={isStaff} mvp={mvp} roster={roster} />
+        <MvpBlock ev={ev} isStaff={isStaff} mvp={mvp} roster={roster} onOpenCard={onOpenCard} />
       )}
 
       {(ev.objective || ev.exercises) && (
@@ -200,8 +218,12 @@ function EventCard({ ev, myRsvp, counts, names, isStaff, uid, mvp, roster, onRsv
       )}
       {isStaff && !past && !ev.cancelled && names.yes.length + names.no.length > 0 && (
         <div style={{ ...font, fontSize: 12, color: C.muted, marginTop: 6, lineHeight: 1.5 }}>
-          {names.yes.length > 0 && <span>✓ {names.yes.join(", ")}</span>}
-          {names.no.length > 0 && <span style={{ display: "block" }}>✗ {names.no.join(", ")}</span>}
+          {names.yes.length > 0 && (
+            <div>✓ <NameList people={names.yes} onOpenCard={onOpenCard} /></div>
+          )}
+          {names.no.length > 0 && (
+            <div>✗ <NameList people={names.no} onOpenCard={onOpenCard} /></div>
+          )}
         </div>
       )}
 
@@ -234,7 +256,7 @@ function EventCard({ ev, myRsvp, counts, names, isStaff, uid, mvp, roster, onRsv
   );
 }
 
-export default function CalendarioView({ auth, d }) {
+export default function CalendarioView({ auth, d, onOpenCard }) {
   const uid = auth?.uid;
   const isStaff = !!auth?.isStaff;
   const cal = useCalendar(uid);
@@ -248,9 +270,14 @@ export default function CalendarioView({ auth, d }) {
 
   useEffect(() => {
     if (!isStaff) return;
-    supabase.from("profiles").select("id, first_name, last_name").eq("status", "approved").then(({ data }) => {
+    supabase.from("profiles").select("id, first_name, last_name, athlete_id, category").eq("status", "approved").then(({ data }) => {
       const map = {};
-      (data || []).forEach((p) => { map[p.id] = [p.first_name, p.last_name].filter(Boolean).join(" ") || "?"; });
+      (data || []).forEach((p) => {
+        map[p.id] = {
+          name: [p.first_name, p.last_name].filter(Boolean).join(" ") || "?",
+          athleteId: p.category === "atleta" ? p.athlete_id : null,
+        };
+      });
       setPeople(map);
     });
   }, [isStaff]);
@@ -274,6 +301,7 @@ export default function CalendarioView({ auth, d }) {
       uid,
       mvp,
       roster,
+      onOpenCard,
       onRsvp: async (id, s) => setErr(await cal.setRsvp(id, s)),
       onResult: async (id, result) => setErr(await cal.updateEvent(id, { result })),
       onCancel: async (id) => { if (window.confirm("Annullare questo evento? Resta in elenco come annullato.")) setErr(await cal.updateEvent(id, { cancelled: true })); },

@@ -21,6 +21,7 @@ import WellbeingCard from "../components/WellbeingCard";
 import ParticipationCard from "../components/ParticipationCard";
 import StarsCard from "../components/StarsCard";
 import MvpCard from "../components/MvpCard";
+import WallCard from "../components/WallCard";
 import PathMirror from "../components/PathMirror";
 import SeasonWrappedButton from "../components/SeasonWrappedButton";
 import SeasonReportCard from "../components/SeasonReportCard";
@@ -126,6 +127,7 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
         </Card>
         {personal && <ParticipationCard athleteId={effectiveAthleteId} />}
         <StarsCard athleteId={effectiveAthleteId} personal={personal} />
+        <WallCard identifier={sel} viewerUid={auth?.uid} isStaff={auth?.isStaff} personal={personal} />
         {effectiveAthleteId && auth?.flags?.feature_selfassessment && (
           <SelfAssessmentCard athleteId={effectiveAthleteId} athleteName={sel} misterScores={null} self={selfOnlyEntry?.self} editable personal={personal} onSaved={onReload} />
         )}
@@ -280,6 +282,7 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
 
       <StarsCard athleteId={effectiveAthleteId} personal={personal} />
       <MvpCard athleteId={effectiveAthleteId} athleteName={sel} personal={personal} />
+      <WallCard identifier={sel} viewerUid={auth?.uid} isStaff={auth?.isStaff} personal={personal} />
 
       <GoalsCard goals={goals} scores={scores} editable athleteName={sel} personal={personal} onAdd={addGoal} onRemove={removeGoal} />
 

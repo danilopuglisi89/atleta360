@@ -5,6 +5,7 @@ import { supabase } from "./supabaseClient";
 import { useAuth } from "./auth";
 import { useParticipation } from "./participation";
 import AvatarBuilder from "./components/AvatarBuilder";
+import WallCard from "./components/WallCard";
 
 const CATEGORY_LABEL = { direzione: "Direzione", staff: "Staff", atleta: "Atleta" };
 
@@ -292,6 +293,11 @@ export default function PersonalArea({ accent, onPickAccent }) {
 
       {profile?.role !== "admin" && profile?.category === "atleta" && (
         <AvatarBuilder initial={profile?.avatar_config} onSaved={refreshProfile} />
+      )}
+
+      {(profile?.role === "admin" || ["staff", "direzione"].includes(profile?.category)) && (
+        <WallCard uid={profile?.id} viewerUid={profile?.id} isStaff institutional
+          title="La tua bacheca" />
       )}
     </div>
   );
