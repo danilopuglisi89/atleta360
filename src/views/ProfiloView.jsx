@@ -279,7 +279,7 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
       </div>
 
       <StarsCard athleteId={effectiveAthleteId} personal={personal} />
-      <MvpCard athleteId={effectiveAthleteId} personal={personal} />
+      <MvpCard athleteId={effectiveAthleteId} athleteName={sel} personal={personal} />
 
       <GoalsCard goals={goals} scores={scores} editable athleteName={sel} personal={personal} onAdd={addGoal} onRemove={removeGoal} />
 

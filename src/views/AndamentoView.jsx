@@ -8,15 +8,23 @@ export default function AndamentoView({ d, onOpenCard }) {
   const { NOMI, storico } = d;
   const [n, setN] = useState(NOMI[0]);
   const sel = storico[n] ? n : NOMI[0];
-  const data = storico[sel];
-  const single = data.length < 2;
-  const lastI = data.length - 1;
+  // Prima che esista un solo rilevamento in tutta la squadra, `sel` resta
+  // undefined: valori di riserva per gli hook sotto (chiamati sempre, mai
+  // dopo un return), poi si esce con una card invece di andare in crash
+  // sul primo `data.length`.
+  const data = sel ? storico[sel] : null;
+  const single = data ? data.length < 2 : true;
+  const lastI = data ? data.length - 1 : 0;
 
   // Confronto tra due rilevamenti scelti (default: penultimo → ultimo).
   const [fromI, setFromI] = useState(Math.max(0, lastI - 1));
   const [toI, setToI] = useState(lastI);
   const fi = Math.min(fromI, lastI);
   const ti = Math.min(toI, lastI);
+
+  if (!data) {
+    return <Card title="Ancora nessun andamento" subtitle="Appena ci sarà un rilevamento, qui vedrai l'evoluzione nel tempo." />;
+  }
   const deltas = single ? [] : CORE.map((k) => ({
     k, short: SHORT[k],
     diff: Math.round(((data[ti][k] ?? 0) - (data[fi][k] ?? 0)) * 10) / 10,

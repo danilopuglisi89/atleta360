@@ -329,9 +329,11 @@ function Dashboard() {
     );
   } else if (!model) {
     content = <DashboardSkeleton />;
-  } else if (model.NOMI.length === 0) {
-    content = <StatusBox title="Nessun rilevamento ancora" message="Appena il mister inserisce il primo rilevamento dalla pagina “Nuovo rilevamento”, la dashboard si popola da sola." />;
   } else {
+    // Prima che esista un solo rilevamento in tutta la squadra (es. il
+    // giorno del lancio, prima che il mister ne inserisca uno), le viste
+    // restano comunque accessibili — ognuna gestisce da sé la squadra
+    // vuota — invece di bloccare tutta l'app dietro un unico avviso.
     content = <ViewComp d={model} auth={viewCtx} target={profileTarget} onOpenCard={openCard} onOpenFullProfile={openFullProfile} onReload={reload} onGoView={goTo} />;
   }
   const needsSuspense = ["home", "profilo", "confronto", "andamento", "info", "staff", "calendario"].includes(active.id);

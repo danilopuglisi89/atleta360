@@ -7,14 +7,14 @@ import { useMvp } from "../mvp";
 
 const fmtDate = (iso) => new Date(iso).toLocaleDateString("it-IT", { day: "2-digit", month: "short", year: "numeric" });
 
-export default function MvpCard({ athleteId, personal }) {
+export default function MvpCard({ athleteId, athleteName, personal }) {
   const mvp = useMvp();
   if (!athleteId || mvp.unavailable || mvp.loading) return null;
   const mine = mvp.forAthlete(athleteId);
   if (!mine.length) return null;
 
   return (
-    <Card id="a360-mvp" title={personal ? "Giocatore del match" : "Giocatore del match"}
+    <Card id="a360-mvp" title={personal ? "Giocatore del match" : `Giocatore del match — ${athleteName}`}
       subtitle={`${mine.length} ${mine.length === 1 ? "volta" : "volte"} scelta dal mister dopo la partita`} style={{ marginTop: 20 }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {mine.map((m) => (
