@@ -9,7 +9,7 @@ import { useDiary, useCheckins, useUnavailability } from "../wellbeing";
 const MOOD_EMOJI = ["😞", "😕", "😐", "🙂", "😄"];
 const fmtDate = (iso) => new Date(iso).toLocaleDateString("it-IT", { day: "2-digit", month: "short" });
 
-export default function WellbeingCard({ athleteId, canSeeAll }) {
+export default function WellbeingCard({ athleteId, canSeeAll, showCheckin = true, showDiary = true }) {
   const { entries, addEntry, removeEntry } = useDiary(athleteId);
   const { today, setEnergy } = useCheckins(athleteId);
   const { current, setUnavailable, clear } = useUnavailability(athleteId);
@@ -34,24 +34,27 @@ export default function WellbeingCard({ athleteId, canSeeAll }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {/* Check-in di oggi */}
-      <div id="a360-checkin" className="a360-reveal a360-noprint" style={{ background: C.card, border: `1px solid ${C.grid}`, borderRadius: 16, padding: 18 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, ...font, fontSize: 12, color: C.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>
-          <Zap size={14} /> Come stai oggi?
+      {showCheckin && (
+        <div id="a360-checkin" className="a360-reveal a360-noprint" style={{ background: C.card, border: `1px solid ${C.grid}`, borderRadius: 16, padding: 18 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, ...font, fontSize: 12, color: C.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>
+            <Zap size={14} /> Come stai oggi?
+          </div>
+          <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button key={n} onClick={() => onSetEnergy(n)}
+                style={{ flex: 1, padding: "10px 0", borderRadius: 10, cursor: "pointer", fontSize: 20,
+                  border: `2px solid ${today === n ? C.orange : C.grid}`, background: today === n ? C.orangeSoft : C.card }}>
+                {["😴", "😕", "😐", "💪", "🔥"][n - 1]}
+              </button>
+            ))}
+          </div>
+          {today && <div style={{ ...font, fontSize: 12, color: C.muted, marginTop: 6 }}>Registrato per oggi — puoi cambiarlo quando vuoi.</div>}
+          {checkinError && <div style={{ ...font, fontSize: 12, color: "#B4232A", marginTop: 6 }}>Non salvato: {checkinError}</div>}
         </div>
-        <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-          {[1, 2, 3, 4, 5].map((n) => (
-            <button key={n} onClick={() => onSetEnergy(n)}
-              style={{ flex: 1, padding: "10px 0", borderRadius: 10, cursor: "pointer", fontSize: 20,
-                border: `2px solid ${today === n ? C.orange : C.grid}`, background: today === n ? C.orangeSoft : C.card }}>
-              {["😴", "😕", "😐", "💪", "🔥"][n - 1]}
-            </button>
-          ))}
-        </div>
-        {today && <div style={{ ...font, fontSize: 12, color: C.muted, marginTop: 6 }}>Registrato per oggi — puoi cambiarlo quando vuoi.</div>}
-        {checkinError && <div style={{ ...font, fontSize: 12, color: "#B4232A", marginTop: 6 }}>Non salvato: {checkinError}</div>}
-      </div>
+      )}
 
       {/* Diario privato */}
+      {showDiary && (
       <div className="a360-reveal a360-noprint" style={{ background: C.card, border: `1px solid ${C.grid}`, borderRadius: 16, padding: 18 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, ...font, fontSize: 12, color: C.navy2, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>
           <BookHeart size={14} /> Il tuo diario {canSeeAll ? "" : "(privato)"}
@@ -104,6 +107,7 @@ export default function WellbeingCard({ athleteId, canSeeAll }) {
           </div>
         )}
       </div>
+      )}
 
       {/* Indisponibilità */}
       <div className="a360-reveal a360-noprint" style={{ background: current ? "#FDECEC" : C.card, border: `1px solid ${current ? "#F0B4B7" : C.grid}`, borderRadius: 16, padding: 18 }}>

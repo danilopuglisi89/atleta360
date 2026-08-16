@@ -126,7 +126,7 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
         </Card>
         {personal && <ParticipationCard athleteId={effectiveAthleteId} />}
         <StarsCard athleteId={effectiveAthleteId} personal={personal} />
-        {effectiveAthleteId && (
+        {effectiveAthleteId && auth?.flags?.feature_selfassessment && (
           <SelfAssessmentCard athleteId={effectiveAthleteId} athleteName={sel} misterScores={null} self={selfOnlyEntry?.self} editable personal={personal} onSaved={onReload} />
         )}
       </div>
@@ -193,14 +193,14 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
         <span title="Livello calcolato dalla media delle competenze" style={{ ...font, fontSize: 12, fontWeight: 600, color: C.orange, background: C.orangeSoft, padding: "5px 11px", borderRadius: 99, display: "inline-flex", alignItems: "center", gap: 5 }}>
           {level.emoji} {level.label}
         </span>
-        {!personal && auth?.uid && (
+        {!personal && auth?.uid && auth?.flags?.feature_applause && (
           <button className="a360-noprint" onClick={reactions.toggle} title={reactions.mine ? "Togli l'applauso" : `Applaudi ${sel}`}
             style={{ ...font, fontSize: 12.5, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 99, cursor: "pointer",
               border: `1px solid ${reactions.mine ? "#E11D74" : C.grid}`, background: reactions.mine ? "#FCE7F1" : C.card, color: reactions.mine ? "#E11D74" : C.muted }}>
             <Heart size={13} fill={reactions.mine ? "#E11D74" : "none"} /> {reactions.count}
           </button>
         )}
-        {personal && reactions.count > 0 && (
+        {personal && auth?.flags?.feature_applause && reactions.count > 0 && (
           <span title="Applausi ricevuti dalle compagne" style={{ ...font, fontSize: 12.5, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 99, color: "#E11D74", background: "#FCE7F1" }}>
             <Heart size={13} fill="#E11D74" /> {reactions.count}
           </span>
@@ -283,9 +283,13 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
 
       <GoalsCard goals={goals} scores={scores} editable athleteName={sel} personal={personal} onAdd={addGoal} onRemove={removeGoal} />
 
-      <SelfAssessmentCard athleteId={atleti[sel]?.athleteId} athleteName={sel} misterScores={scores} self={atleti[sel]?.self} editable personal={personal} onSaved={onReload} />
+      {auth?.flags?.feature_selfassessment && (
+        <SelfAssessmentCard athleteId={atleti[sel]?.athleteId} athleteName={sel} misterScores={scores} self={atleti[sel]?.self} editable personal={personal} onSaved={onReload} />
+      )}
 
-      {personal && <WellbeingCard athleteId={atleti[sel]?.athleteId} />}
+      {personal && (auth?.flags?.feature_checkin !== false || auth?.flags?.feature_diary !== false) && (
+        <WellbeingCard athleteId={atleti[sel]?.athleteId} showCheckin={auth?.flags?.feature_checkin} showDiary={auth?.flags?.feature_diary} />
+      )}
 
       {nota && (
         <Card title="Nota del mister" subtitle={`Ultimo rilevamento`} style={{ marginTop: 20 }}>

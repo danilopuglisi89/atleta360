@@ -43,6 +43,7 @@ export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile, onGoV
   const birthdays = useTodaysBirthdays();
   const season = activeSeason();
   const { mine: quizMine } = useWeeklyQuiz(auth?.uid);
+  const flags = auth?.flags || {};
   const myBadgesCount = restricted && auth?.athleteId && atleti[auth.athleteId] ? computeBadges(d, auth.athleteId).length : 0;
   const [hidden, setHidden] = useState(auth?.homeHidden || []);
   const toggleCard = (id) => {
@@ -94,24 +95,24 @@ export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile, onGoV
 
       {restricted && <TodayStrip uid={auth?.uid} athleteId={myAthleteId} onGoCheckin={goCheckin} onGoQuiz={goQuiz} />}
       {restricted && <MondayNudge onGoTeam={goTeam} />}
-      {restricted && <PostMatchCheckinCard uid={auth?.uid} athleteId={myAthleteId} />}
+      {restricted && flags.feature_checkin && <PostMatchCheckinCard uid={auth?.uid} athleteId={myAthleteId} />}
       {restricted && <MemoryCard history={d.storico?.[auth?.athleteId]} keys={d.keys} currentOverall={myScores ? overall(auth.athleteId) : null} />}
 
       <MotivationCard />
       {!hidden.includes("song") && <WeekSongCard />}
       <DailyPill quizDone={restricted ? quizMine : true} onOpenQuiz={goQuiz} />
-      {restricted && !hidden.includes("mission") && <MissionCard uid={auth?.uid} athleteId={myAthleteId} />}
-      <NextEventCard uid={auth?.uid} />
+      {restricted && flags.feature_mission && !hidden.includes("mission") && <MissionCard uid={auth?.uid} athleteId={myAthleteId} />}
+      <NextEventCard uid={auth?.uid} showPrematch={flags.feature_prematch} />
       {restricted && myScores && !hidden.includes("weeklyChallenge") && <WeeklyChallengeCard scores={myScores} />}
       {restricted && !hidden.includes("weeklyRecap") && <WeeklyRecapCard uid={auth?.uid} athleteId={myAthleteId} name={auth?.athleteId || auth?.firstName}
         avatarUrl={auth?.avatarUrl} bgUrl={auth?.cardBg} bgStyle={auth?.cardBgStyle} badgesCount={myBadgesCount} />}
-      {restricted && !hidden.includes("streakBuddy") && <StreakBuddyCard myAthleteId={myAthleteId} roster={roster} />}
+      {restricted && flags.feature_streakbuddy && !hidden.includes("streakBuddy") && <StreakBuddyCard myAthleteId={myAthleteId} roster={roster} />}
 
-      {restricted && !hidden.includes("figurine") && <FigurineAlbumCard uid={auth?.uid} roster={roster} />}
+      {restricted && flags.feature_figurine && !hidden.includes("figurine") && <FigurineAlbumCard uid={auth?.uid} roster={roster} />}
       {restricted && !hidden.includes("season") && <SeasonCapsuleCard uid={auth?.uid} />}
 
-      <TeamPetCard />
-      <TeamFeedCard />
+      {flags.feature_teampet && <TeamPetCard />}
+      {flags.feature_teamfeed && <TeamFeedCard />}
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
         {[
@@ -155,11 +156,11 @@ export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile, onGoV
         </Card>
       </div>
 
-      {restricted && !hidden.includes("dailyMoment") && <DailyMomentCard uid={auth?.uid} />}
-      {restricted && !hidden.includes("quiz") && <QuizCard uid={auth?.uid} />}
-      <PollsCard uid={auth?.uid} isStaff={auth?.isStaff} />
-      <PhotoAlbumCard uid={auth?.uid} isStaff={auth?.isStaff} />
-      <VideoClipsCard uid={auth?.uid} isStaff={auth?.isStaff} />
+      {restricted && flags.feature_dailymoment && !hidden.includes("dailyMoment") && <DailyMomentCard uid={auth?.uid} />}
+      {restricted && flags.feature_quiz && !hidden.includes("quiz") && <QuizCard uid={auth?.uid} />}
+      {flags.feature_polls && <PollsCard uid={auth?.uid} isStaff={auth?.isStaff} />}
+      {flags.feature_photoalbum && <PhotoAlbumCard uid={auth?.uid} isStaff={auth?.isStaff} />}
+      {flags.feature_videoclips && <VideoClipsCard uid={auth?.uid} isStaff={auth?.isStaff} />}
     </div>
   );
 }

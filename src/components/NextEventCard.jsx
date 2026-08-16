@@ -23,7 +23,7 @@ function countdownLabel(iso) {
   return `Tra ${days} giorni`;
 }
 
-export default function NextEventCard({ uid }) {
+export default function NextEventCard({ uid, showPrematch = true }) {
   const cal = useCalendar(uid);
   const [routine, setRoutine] = useState(false);
   const next = useMemo(() => {
@@ -35,7 +35,7 @@ export default function NextEventCard({ uid }) {
   // "Il grido pre-partita": spazio comune che si apre nelle 2 ore prima di
   // una partita — hook chiamato sempre (Rules of Hooks), attivo solo quando serve.
   const cheers = usePregameCheers(next?.id, uid);
-  const isPregameWindow = next && next.kind === "match" && (new Date(next.starts_at) - new Date()) <= 2 * 3600e3;
+  const isPregameWindow = showPrematch && next && next.kind === "match" && (new Date(next.starts_at) - new Date()) <= 2 * 3600e3;
 
   if (cal.error || !next) return null;
 
@@ -71,7 +71,7 @@ export default function NextEventCard({ uid }) {
               border: "none", background: myRsvp === "no" ? "#fff" : "rgba(255,255,255,0.16)", color: myRsvp === "no" ? C.navy : "#fff" }}>
             <XCircle size={14} /> Non ci sarò
           </button>
-          {next.kind === "match" && (
+          {next.kind === "match" && showPrematch && (
             <button onClick={() => setRoutine(true)}
               style={{ ...font, display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600, padding: "7px 12px", borderRadius: 9, cursor: "pointer",
                 border: "none", background: C.orange, color: "#fff" }}>

@@ -44,6 +44,16 @@ body {
 @keyframes a360-confetti-fall {
   to { transform: translateY(110vh) rotate(720deg); opacity: 1; }
 }
+/* App Impostazioni: pagina che entra da destra (si va avanti) o da
+   sinistra (si torna indietro), come la navigazione a pila di iOS. */
+@keyframes a360-settings-in-fwd {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+@keyframes a360-settings-in-back {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
 
 /* Ingresso "vivo" delle card e delle sezioni. */
 .a360-reveal { animation: a360-fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
@@ -61,6 +71,9 @@ body {
   animation: a360-shimmer 1.4s ease-in-out infinite;
   border-radius: 8px;
 }
+
+.a360-settings-slide-fwd { animation: a360-settings-in-fwd 0.28s cubic-bezier(0.16, 1, 0.3, 1) both; background: inherit; }
+.a360-settings-slide-back { animation: a360-settings-in-back 0.28s cubic-bezier(0.16, 1, 0.3, 1) both; background: inherit; }
 
 /* Nomi cliccabili → profilo pubblico. */
 .a360-clickname { cursor: pointer; transition: color 0.15s; }

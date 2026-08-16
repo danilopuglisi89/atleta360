@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
-import { Check, X, Clock, RotateCcw, Plus, Trash2, ArrowUp, ArrowDown, Power, Save, Link2, Copy, Smartphone, Bell, BellOff } from "lucide-react";
+import { Check, X, Clock, RotateCcw, Plus, Trash2, ArrowUp, ArrowDown, Power, Save, Link2, Copy, Smartphone, Bell, BellOff, Settings } from "lucide-react";
 import { C, font, display } from "./theme";
 import { supabase } from "./supabaseClient";
 import { Avatar } from "./PersonalArea";
 import { Card } from "./components/ui";
 import UsageDashboard from "./components/UsageDashboard";
+import SettingsApp from "./components/settings/SettingsApp";
 
 const STATUS_META = {
   pending: { label: "In attesa", color: "#B4520A", bg: "#FFE9D5" },
@@ -33,6 +34,7 @@ export default function AdminPanel({ onChange }) {
   const [detail, setDetail] = useState(null);   // scheda utente aperta
   const [dform, setDform] = useState({});
   const [inviteUrl, setInviteUrl] = useState({});   // athlete.id -> url generato
+  const [showSettings, setShowSettings] = useState(false);
 
   const load = useCallback(async () => {
     const [p, a, s, push] = await Promise.all([
@@ -133,6 +135,13 @@ export default function AdminPanel({ onChange }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <button onClick={() => setShowSettings(true)} className="a360-noprint"
+        style={{ ...font, alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px", borderRadius: 11,
+          border: "none", background: `linear-gradient(120deg, ${C.navy2} 0%, ${C.navy} 100%)`, color: "#fff", fontSize: 13.5, fontWeight: 600, cursor: "pointer" }}>
+        <Settings size={16} /> Impostazioni
+      </button>
+      {showSettings && <SettingsApp onClose={() => setShowSettings(false)} />}
+
       <UsageDashboard />
 
       {/* RICHIESTE IN ATTESA */}

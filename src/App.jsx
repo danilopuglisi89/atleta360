@@ -24,6 +24,7 @@ import WelcomeAvatar, { needsWelcomeAvatar } from "./components/WelcomeAvatar";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { useNotifications } from "./notifications";
 import SecretEgg from "./components/SecretEgg";
+import { useAppSettings } from "./settings";
 
 // Le viste con grafici (recharts) pesano parecchio: caricate on-demand così
 // il primo avvio da telefono non le scarica finché non servono davvero.
@@ -92,6 +93,9 @@ function useThemeToggle() {
 function Dashboard() {
   const { profile, signOut, refreshProfile } = useAuth();
   const theme = useThemeToggle();
+  // Interruttori globali (Admin → Impostazioni): "guasto = tutto acceso",
+  // vedi src/settings.js — caricati una volta, condivisi da tutte le viste.
+  const settings = useAppSettings();
   const isAdmin = profile?.role === "admin";
   const isStaff = isAdmin || ["direzione", "staff"].includes(profile?.category);
   const canAssess = isAdmin || !!profile?.can_assess;   // può inserire rilevamenti (mister)
@@ -121,6 +125,8 @@ function Dashboard() {
     cardBgStyle: profile?.card_bg_style || "sfumata",
     homeHidden: profile?.home_hidden || [],
     motto: profile?.motto || "",
+    flags: settings.flags,
+    venues: settings.venues,
     uid: profile?.id || null,
     isStaff,
     isAdmin,
@@ -398,7 +404,9 @@ function Dashboard() {
       {/* L'avatar viene PRIMA di tutto: finché è aperto, il wizard
           dell'autovalutazione aspetta il suo turno. */}
       <WelcomeAvatar profile={profile} onDone={refreshProfile} />
-      {!needsWelcomeAvatar(profile) && <SelfAssessmentWizard profile={profile} isStaff={isStaff} onDone={reload} />}
+      {!needsWelcomeAvatar(profile) && settings.flags.feature_selfassessment && (
+        <SelfAssessmentWizard profile={profile} isStaff={isStaff} onDone={reload} />
+      )}
 
       {cardTarget && model?.atleti?.[cardTarget] && (
         <PublicProfileCard
