@@ -143,9 +143,10 @@ function PostRow({ post, wall, viewerUid, isStaff }) {
   const myTag = post.tags.find((t) => t.mine);
 
   return (
-    <div style={{ borderBottom: `1px solid ${C.grid}`, padding: "12px 0" }}>
+    <div style={{ background: C.card, border: `1px solid ${C.grid}`, borderRadius: 14, padding: 14, marginBottom: 12, boxShadow: "0 1px 3px rgba(12,19,48,0.05)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ ...font, fontSize: 11, color: C.muted, marginBottom: 8 }}>{fmtDate(post.created_at)}</div>
           {post.kind === "mood" && <span style={{ fontSize: 28 }}>{post.mood_emoji}</span>}
           {post.kind === "repost" && (
             <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#FFF8E6", border: "1px solid #F5D77A", borderRadius: 10, padding: "8px 12px" }}>
@@ -155,19 +156,18 @@ function PostRow({ post, wall, viewerUid, isStaff }) {
             </div>
           )}
           {post.body && <div style={{ ...font, fontSize: 14, color: C.ink, lineHeight: 1.5, marginTop: post.kind === "mood" ? 6 : 0 }}>{post.body}</div>}
-          {post.photo_url && <img src={post.photo_url} alt="" style={{ maxWidth: 220, borderRadius: 12, marginTop: 8, display: "block" }} />}
+          {post.photo_url && <img src={post.photo_url} alt="" style={{ maxWidth: "100%", borderRadius: 10, marginTop: 8, display: "block" }} />}
           {post.tags.length > 0 && (
-            <div style={{ ...font, fontSize: 12, color: C.muted, marginTop: 6 }}>
+            <div style={{ ...font, fontSize: 12, color: C.muted, marginTop: 8 }}>
               con {post.tags.map((t) => t.name).join(", ")}
               {myTag && <button onClick={() => wall.removeMyTag(post.id)} style={{ ...font, fontSize: 11.5, color: C.navy2, background: "none", border: "none", cursor: "pointer", marginLeft: 6, textDecoration: "underline" }}>togliti il tag</button>}
             </div>
           )}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.grid}` }}>
             <button onClick={() => wall.toggleReaction(post.id, post.iReacted)}
               style={{ ...font, display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, fontWeight: 600, background: "none", border: "none", cursor: "pointer", color: post.iReacted ? "#E11D74" : C.muted }}>
-              <Heart size={14} fill={post.iReacted ? "#E11D74" : "none"} /> {post.reactionCount > 0 ? post.reactionCount : ""}
+              <Heart size={14} fill={post.iReacted ? "#E11D74" : "none"} /> {post.reactionCount > 0 ? post.reactionCount : "Mi piace"}
             </button>
-            <span style={{ ...font, fontSize: 11, color: C.muted }}>{fmtDate(post.created_at)}</span>
           </div>
         </div>
         {canDelete && (
