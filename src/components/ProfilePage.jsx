@@ -240,39 +240,37 @@ export default function ProfilePage({ target, model, viewer, onClose, onMessage,
           </div>
 
           {/* Avatar + identità */}
-          <div style={{ padding: `0 ${pad}px 16px`, marginTop: -(avatarSize / 2) }}>
-            <div style={{ display: "flex", alignItems: "flex-end", gap: 14, flexWrap: "wrap" }}>
-              <div style={{ position: "relative", flexShrink: 0 }}>
-                <div style={{ background: C.surface, borderRadius: "50%", padding: 4, display: "inline-block" }}>
-                  <Avatar url={row.avatar_url} name={fullName} size={avatarSize} ring={ring} />
-                </div>
-                {isSelf && !isAthlete && (
-                  <>
-                    <input ref={avatarRef} type="file" accept="image/*" onChange={onAvatarFile} style={{ display: "none" }} />
-                    <button onClick={() => avatarRef.current?.click()} title="Cambia avatar"
-                      style={{ position: "absolute", right: 2, bottom: 6, width: 28, height: 28, borderRadius: "50%", border: `2px solid ${C.surface}`, background: C.orange, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Camera size={13} />
-                    </button>
-                  </>
+          <div style={{ padding: `0 ${pad}px 16px` }}>
+            <div style={{ position: "relative", flexShrink: 0, width: avatarSize, marginTop: -(avatarSize / 2) }}>
+              <div style={{ background: C.surface, borderRadius: "50%", padding: 4, display: "inline-block" }}>
+                <Avatar url={row.avatar_url} name={fullName} size={avatarSize} ring={ring} />
+              </div>
+              {isSelf && !isAthlete && (
+                <>
+                  <input ref={avatarRef} type="file" accept="image/*" onChange={onAvatarFile} style={{ display: "none" }} />
+                  <button onClick={() => avatarRef.current?.click()} title="Cambia avatar"
+                    style={{ position: "absolute", right: 2, bottom: 6, width: 28, height: 28, borderRadius: "50%", border: `2px solid ${C.surface}`, background: C.orange, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Camera size={13} />
+                  </button>
+                </>
+              )}
+            </div>
+            <div style={{ marginTop: 10 }}>
+              <div style={{ ...display, fontSize: isDesktop ? 22 : 19, fontWeight: 700, color: C.ink }}>
+                {fullName || "—"} {row.flair && <span>{row.flair}</span>}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap", marginTop: 5 }}>
+                <span style={{ ...font, fontSize: 12.5, fontWeight: 600, color: C.navy2, background: C.surface, border: `1px solid ${C.grid}`, padding: "4px 11px", borderRadius: 99 }}>
+                  {isAthlete ? (row.ruolo || "Atleta") : (CATEGORY_LABEL[row.category] || (row.role === "admin" ? "Admin" : "Staff"))}
+                </span>
+                {row.jersey_number && (
+                  <span style={{ ...font, display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, fontWeight: 600, color: C.orange, background: C.orangeSoft, padding: "4px 11px", borderRadius: 99 }}>
+                    <Shirt size={12} /> {row.jersey_number}
+                  </span>
                 )}
               </div>
-              <div style={{ flex: 1, minWidth: 160, paddingBottom: 4 }}>
-                <div style={{ ...display, fontSize: isDesktop ? 22 : 19, fontWeight: 700, color: C.ink }}>
-                  {fullName || "—"} {row.flair && <span>{row.flair}</span>}
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap", marginTop: 5 }}>
-                  <span style={{ ...font, fontSize: 12.5, fontWeight: 600, color: C.navy2, background: C.surface, border: `1px solid ${C.grid}`, padding: "4px 11px", borderRadius: 99 }}>
-                    {isAthlete ? (row.ruolo || "Atleta") : (CATEGORY_LABEL[row.category] || (row.role === "admin" ? "Admin" : "Staff"))}
-                  </span>
-                  {row.jersey_number && (
-                    <span style={{ ...font, display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, fontWeight: 600, color: C.orange, background: C.orangeSoft, padding: "4px 11px", borderRadius: 99 }}>
-                      <Shirt size={12} /> {row.jersey_number}
-                    </span>
-                  )}
-                </div>
-                {row.motto && <div style={{ ...font, fontSize: 13, color: C.muted, fontStyle: "italic", marginTop: 6 }}>"{row.motto}"</div>}
-                <SocialLinks row={row} isSelf={isSelf} onSaved={setRow} />
-              </div>
+              {row.motto && <div style={{ ...font, fontSize: 13, color: C.muted, fontStyle: "italic", marginTop: 6 }}>"{row.motto}"</div>}
+              <SocialLinks row={row} isSelf={isSelf} onSaved={setRow} />
             </div>
 
             {/* Azioni */}
