@@ -128,6 +128,11 @@ export default function PersonalArea({ accent, onPickAccent, onOpenCard }) {
       p_jersey_number: form.jersey_number.trim() || null,
       p_ruolo: form.ruolo.trim() || null,
       p_avatar_url: form.avatar_url || null,
+      // niente campo dedicato qui: si modificano dai link in cima al profilo,
+      // li passiamo invariati per non azzerarli (l'RPC riscrive tutta la riga).
+      p_tiktok: profile?.tiktok || null,
+      p_youtube: profile?.youtube || null,
+      p_snapchat: profile?.snapchat || null,
     });
     if (!error) await supabase.rpc("set_my_motto", { p_motto: form.motto || "" });
     if (!error) await supabase.rpc("set_my_flair", { p_flair: form.flair || "" });

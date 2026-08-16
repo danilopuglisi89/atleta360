@@ -5,7 +5,7 @@
 // Vedi supabase/profile-page.sql (colonna cover_url, set_my_cover,
 // chat_roster allargato, team_feed agganciato all'uuid del profilo).
 import { useEffect, useRef, useState } from "react";
-import { X, Camera, MessageCircle, ClipboardList, Instagram, Facebook, Shirt, Pencil, Save } from "lucide-react";
+import { X, Camera, MessageCircle, ClipboardList, Instagram, Facebook, Youtube, Music2, Ghost, Shirt, Pencil, Save } from "lucide-react";
 import { C, font, display, ringForScore, ringForRole } from "../theme";
 import { supabase } from "../supabaseClient";
 import { compressImage } from "../photos";
@@ -43,6 +43,7 @@ function EditForm({ row, onDone }) {
     const { error } = await supabase.rpc("update_my_profile", {
       p_phone: row.phone || null, p_facebook: row.facebook || null, p_instagram: row.instagram || null,
       p_jersey_number: form.jersey_number.trim() || null, p_ruolo: form.ruolo.trim() || null, p_avatar_url: row.avatar_url || null,
+      p_tiktok: row.tiktok || null, p_youtube: row.youtube || null, p_snapchat: row.snapchat || null,
     });
     if (!error) await supabase.rpc("set_my_motto", { p_motto: form.motto || "" });
     setBusy(false);
@@ -77,52 +78,69 @@ function EditForm({ row, onDone }) {
   );
 }
 
+// Piattaforme social mostrate in cima al profilo. `urlFor` costruisce il
+// link cliccabile dal valore salvato (che può essere già un link intero
+// o solo l'handle, es. "@nome").
+const SOCIAL_PLATFORMS = [
+  { key: "instagram", label: "Instagram", icon: Instagram, placeholder: "@instagram", urlFor: (v) => `https://instagram.com/${v.replace(/^@/, "")}` },
+  { key: "tiktok", label: "TikTok", icon: Music2, placeholder: "@tiktok", urlFor: (v) => `https://tiktok.com/@${v.replace(/^@/, "")}` },
+  { key: "youtube", label: "YouTube", icon: Youtube, placeholder: "@canale o link", urlFor: (v) => `https://youtube.com/${v.replace(/^@/, "@")}` },
+  { key: "snapchat", label: "Snapchat", icon: Ghost, placeholder: "@snapchat", urlFor: (v) => `https://snapchat.com/add/${v.replace(/^@/, "")}` },
+  { key: "facebook", label: "Facebook", icon: Facebook, placeholder: "link o nome utente", urlFor: (v) => `https://facebook.com/${v.replace(/^@/, "")}` },
+];
+
 // Link social in cima al profilo, sempre visibili appena si apre la
 // scheda (stile TikTok) e modificabili sul posto se è il tuo profilo.
 function SocialLinks({ row, isSelf, onSaved }) {
   const [editing, setEditing] = useState(false);
-  const [ig, setIg] = useState(row.instagram || "");
-  const [fb, setFb] = useState(row.facebook || "");
+  const [form, setForm] = useState(() => Object.fromEntries(SOCIAL_PLATFORMS.map((p) => [p.key, row[p.key] || ""])));
   const [busy, setBusy] = useState(false);
 
-  const social = [];
-  if (row.instagram) social.push({ icon: Instagram, url: row.instagram.startsWith("http") ? row.instagram : `https://instagram.com/${row.instagram.replace(/^@/, "")}`, label: "Instagram" });
-  if (row.facebook) social.push({ icon: Facebook, url: row.facebook.startsWith("http") ? row.facebook : `https://facebook.com/${row.facebook}`, label: "Facebook" });
+  const social = SOCIAL_PLATFORMS
+    .filter((p) => row[p.key])
+    .map((p) => ({ ...p, url: row[p.key].startsWith("http") ? row[p.key] : p.urlFor(row[p.key]) }));
 
   const save = async () => {
     setBusy(true);
+    const trimmed = Object.fromEntries(SOCIAL_PLATFORMS.map((p) => [p.key, form[p.key].trim() || null]));
     const { error } = await supabase.rpc("update_my_profile", {
-      p_phone: row.phone || null, p_facebook: fb.trim() || null, p_instagram: ig.trim() || null,
+      p_phone: row.phone || null, p_facebook: trimmed.facebook, p_instagram: trimmed.instagram,
       p_jersey_number: row.jersey_number || null, p_ruolo: row.ruolo || null, p_avatar_url: row.avatar_url || null,
+      p_tiktok: trimmed.tiktok, p_youtube: trimmed.youtube, p_snapchat: trimmed.snapchat,
     });
     setBusy(false);
-    if (!error) { onSaved({ ...row, instagram: ig.trim() || null, facebook: fb.trim() || null }); setEditing(false); }
+    if (!error) { onSaved({ ...row, ...trimmed }); setEditing(false); }
   };
 
   if (!isSelf && social.length === 0) return null;
 
   if (editing) {
     return (
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8, alignItems: "center" }}>
-        <input value={ig} onChange={(e) => setIg(e.target.value)} placeholder="@instagram"
-          style={{ ...font, fontSize: 12.5, padding: "7px 10px", borderRadius: 8, border: `1px solid ${C.grid}`, width: 140, boxSizing: "border-box" }} />
-        <input value={fb} onChange={(e) => setFb(e.target.value)} placeholder="Facebook"
-          style={{ ...font, fontSize: 12.5, padding: "7px 10px", borderRadius: 8, border: `1px solid ${C.grid}`, width: 140, boxSizing: "border-box" }} />
-        <button onClick={save} disabled={busy}
-          style={{ ...font, fontSize: 12.5, fontWeight: 600, padding: "7px 12px", borderRadius: 8, border: "none", background: C.orange, color: "#fff", cursor: busy ? "default" : "pointer" }}>
-          {busy ? "…" : "Salva"}
-        </button>
-        <button onClick={() => setEditing(false)} style={{ ...font, fontSize: 12.5, color: C.muted, background: "none", border: "none", cursor: "pointer" }}>Annulla</button>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {SOCIAL_PLATFORMS.map((p) => (
+            <input key={p.key} value={form[p.key]} onChange={(e) => setForm((f) => ({ ...f, [p.key]: e.target.value }))}
+              placeholder={`${p.label}: ${p.placeholder}`}
+              style={{ ...font, fontSize: 12.5, padding: "7px 10px", borderRadius: 8, border: `1px solid ${C.grid}`, width: 150, boxSizing: "border-box" }} />
+          ))}
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={save} disabled={busy}
+            style={{ ...font, fontSize: 12.5, fontWeight: 600, padding: "7px 12px", borderRadius: 8, border: "none", background: C.orange, color: "#fff", cursor: busy ? "default" : "pointer" }}>
+            {busy ? "…" : "Salva"}
+          </button>
+          <button onClick={() => setEditing(false)} style={{ ...font, fontSize: 12.5, color: C.muted, background: "none", border: "none", cursor: "pointer" }}>Annulla</button>
+        </div>
       </div>
     );
   }
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-      {social.map((s, i) => {
+      {social.map((s) => {
         const Icon = s.icon;
         return (
-          <a key={i} href={s.url} target="_blank" rel="noopener noreferrer" title={s.label}
+          <a key={s.key} href={s.url} target="_blank" rel="noopener noreferrer" title={s.label}
             style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 9, border: `1px solid ${C.grid}`, background: C.card, color: C.navy2 }}>
             <Icon size={16} />
           </a>
@@ -203,6 +221,7 @@ export default function ProfilePage({ target, model, viewer, onClose, onMessage,
     const { error } = await supabase.rpc("update_my_profile", {
       p_phone: row.phone || null, p_facebook: row.facebook || null, p_instagram: row.instagram || null,
       p_jersey_number: row.jersey_number || null, p_ruolo: row.ruolo || null, p_avatar_url: dataUrl,
+      p_tiktok: row.tiktok || null, p_youtube: row.youtube || null, p_snapchat: row.snapchat || null,
     });
     if (!error) setRow((r) => ({ ...r, avatar_url: dataUrl }));
     e.target.value = "";
