@@ -11,7 +11,6 @@ import AdminPanel from "./AdminPanel";
 import NewAssessment from "./NewAssessment";
 import PersonalArea, { Avatar } from "./PersonalArea";
 import ChatPage from "./ChatPage";
-import AdminChatLog from "./AdminChatLog";
 import PublicProfileCard from "./PublicProfileCard";
 import { getDemoParam, getDemoCredentials } from "./demoMode";
 import { StatusBox, DashboardSkeleton } from "./components/ui";
@@ -316,12 +315,7 @@ function Dashboard() {
   // Contenuto dell'area principale in base allo stato dei dati.
   let content;
   if (active.id === "admin") {
-    content = (
-      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        <AdminPanel onChange={reload} />
-        <AdminChatLog />
-      </div>
-    );
+    content = <AdminPanel onChange={reload} />;
   } else if (active.id === "rilevamento") {
     content = <NewAssessment onSaved={reload} />;
   } else if (active.id === "personale") {

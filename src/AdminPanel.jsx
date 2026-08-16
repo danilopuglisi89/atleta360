@@ -6,6 +6,8 @@ import { Avatar } from "./PersonalArea";
 import { Card } from "./components/ui";
 import UsageDashboard from "./components/UsageDashboard";
 import SettingsApp from "./components/settings/SettingsApp";
+import AdminChatLog from "./AdminChatLog";
+import Tabs from "./components/Tabs";
 
 const STATUS_META = {
   pending: { label: "In attesa", color: "#B4520A", bg: "#FFE9D5" },
@@ -35,6 +37,7 @@ export default function AdminPanel({ onChange }) {
   const [dform, setDform] = useState({});
   const [inviteUrl, setInviteUrl] = useState({});   // athlete.id -> url generato
   const [showSettings, setShowSettings] = useState(false);
+  const [tab, setTab] = useState("persone");
 
   const load = useCallback(async () => {
     const [p, a, s, push] = await Promise.all([
@@ -144,6 +147,15 @@ export default function AdminPanel({ onChange }) {
 
       <UsageDashboard />
 
+      <Tabs active={tab} onChange={setTab} tabs={[
+        { id: "persone", label: "Persone", badge: pending.length },
+        { id: "rosa", label: "Rosa" },
+        { id: "focus", label: "Focus" },
+        { id: "attivita", label: "Attività" },
+      ]} />
+
+      {tab === "persone" && (
+      <>
       {/* RICHIESTE IN ATTESA */}
       <Card title="Richieste in attesa" subtitle={pending.length ? `${pending.length} da valutare` : "Nessuna richiesta in attesa"}>
         {pending.length === 0 ? (
@@ -229,7 +241,11 @@ export default function AdminPanel({ onChange }) {
           </div>
         )}
       </Card>
+      </>
+      )}
 
+      {tab === "rosa" && (
+      <>
       {/* ATLETE */}
       <Card title="Atlete" subtitle="La rosa: aggiungi, rinomina o disattiva le atlete">
         <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
@@ -259,7 +275,11 @@ export default function AdminPanel({ onChange }) {
           {athletes.length === 0 && <div style={{ ...font, fontSize: 13, color: C.muted }}>Nessuna atleta. Aggiungine una qui sopra.</div>}
         </div>
       </Card>
+      </>
+      )}
 
+      {tab === "focus" && (
+      <>
       {/* FOCUS */}
       <Card title="Focus (competenze)" subtitle="Le competenze allenate: aggiungi, rinomina, riordina o disattiva">
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16, background: C.surface, borderRadius: 12, padding: 14 }}>
@@ -292,6 +312,10 @@ export default function AdminPanel({ onChange }) {
           {skills.length === 0 && <div style={{ ...font, fontSize: 13, color: C.muted }}>Nessun focus. Aggiungine uno qui sopra.</div>}
         </div>
       </Card>
+      </>
+      )}
+
+      {tab === "attivita" && <AdminChatLog />}
 
       {detail && (
         <div onClick={() => setDetail(null)} style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(10,19,48,0.5)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "5vh 16px", overflowY: "auto" }}>

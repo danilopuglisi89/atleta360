@@ -11,6 +11,7 @@ import AwardStarCard from "../components/AwardStarCard";
 import CoachChat from "../CoachChat";
 import GymMode from "../components/GymMode";
 import MondayInsightCard from "../components/MondayInsightCard";
+import Tabs from "../components/Tabs";
 import { useReports } from "../reports";
 import { useAttendance } from "../attendance";
 import { useCertificates } from "../certificates";
@@ -238,6 +239,13 @@ export default function StaffView({ d, onOpenCard }) {
   const { reports, saveReport, removeReport } = useReports();
   const { rows: attendanceRows, saveSession, removeSession } = useAttendance();
   const [gymMode, setGymMode] = useState(false);
+  // Schede: "Oggi" è il lavoro quotidiano e si apre per prima. Se si arriva
+  // da una notifica con ancoraggio (es. certificati), si apre la scheda giusta.
+  const [tab, setTab] = useState(() => {
+    const anchor = new URLSearchParams(window.location.search).get("anchor");
+    if (anchor === "a360-certificates") return "strumenti";
+    return "oggi";
+  });
   // Ultimo riconoscimento ricevuto (stella o giocatore del match) per atleta:
   // serve a segnalare al mister — solo a lui — chi sta restando senza niente.
   const [lastPraise, setLastPraise] = useState(null);   // null = non ancora caricato
@@ -341,139 +349,165 @@ export default function StaffView({ d, onOpenCard }) {
           style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 600, padding: "9px 13px", borderRadius: 10, border: "none", background: C.orange, color: "#fff", cursor: "pointer" }}>
           <Dumbbell size={16} /> Modalità palestra
         </button>
-        <button className="a360-noprint" onClick={() => window.print()}
-          style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500, padding: "9px 13px", borderRadius: 10, border: `1px solid ${C.grid}`, background: C.card, color: C.ink, cursor: "pointer" }}>
-          <Printer size={16} /> Stampa / PDF
-        </button>
       </div>
 
       {gymMode && <GymMode athletes={athletes} rows={attendanceRows} onSave={saveSession} onClose={() => setGymMode(false)} />}
 
-      <MondayInsightCard team={team} skills={skills} />
+      <Tabs active={tab} onChange={setTab} tabs={[
+        { id: "oggi", label: "Oggi", badge: attentionAlerts.length },
+        { id: "squadra", label: "Squadra" },
+        { id: "report", label: "Report" },
+        { id: "strumenti", label: "Strumenti" },
+      ]} />
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
-        {[
-          { l: "Atlete monitorate", v: NOMI.length },
-          { l: "Competenze core", v: CORE.length },
-          { l: "Media squadra", v: teamMean },
-          { l: "Ultimo rilevamento", v: lastPeriod },
-        ].map((s) => (
-          <div key={s.l} style={{ flex: "1 1 140px", background: C.card, border: `1px solid ${C.grid}`, borderRadius: 14, padding: "16px 18px" }}>
-            <div style={{ ...display, fontSize: 26, fontWeight: 700, color: C.ink }}>{s.v}</div>
-            <div style={{ ...font, fontSize: 12.5, color: C.muted, marginTop: 2 }}>{s.l}</div>
-          </div>
-        ))}
-      </div>
+      {/* ---------- OGGI: il lavoro del giorno ---------- */}
+      {tab === "oggi" && (
+        <>
+          <MondayInsightCard team={team} skills={skills} />
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
-        <Card title="Profilo medio della squadra" subtitle="Media delle competenze su tutte le atlete">
-          <ResponsiveContainer width="100%" height={300}>
-            <RadarChart data={TEAM_AVG} outerRadius="72%">
-              <PolarGrid stroke={C.grid} />
-              <PolarAngleAxis dataKey="skill" tick={{ fill: C.muted, fontSize: 11, ...font }} />
-              <PolarRadiusAxis domain={[0, 10]} tick={false} axisLine={false} />
-              <Radar name="Media" dataKey="valore" stroke={C.navy2} fill={C.navy2} fillOpacity={0.28} strokeWidth={2} />
-              <Tooltip contentStyle={tooltipStyle} />
-            </RadarChart>
-          </ResponsiveContainer>
-        </Card>
+          {attentionAlerts.length > 0 && (
+            <Card id="a360-attention" title="Da tenere d'occhio" subtitle="Segnali automatici calcolati dai dati esistenti" style={{ marginTop: 4 }} className="a360-noprint">
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {attentionAlerts.map(({ n, reasons }) => (
+                  <div key={n} style={{ display: "flex", alignItems: "flex-start", gap: 10, background: "#FDECEC", borderRadius: 10, padding: "9px 13px" }}>
+                    <AlertTriangle size={15} color="#B4232A" style={{ flexShrink: 0, marginTop: 2 }} />
+                    <div>
+                      <span className={onOpenCard ? "a360-clickname" : undefined} onClick={onOpenCard ? () => onOpenCard(n) : undefined}
+                        style={{ ...display, fontSize: 13.5, fontWeight: 700, color: C.ink }}>{n}</span>
+                      <div style={{ ...font, fontSize: 12.5, color: "#8A2A2E", marginTop: 2 }}>{reasons.join(" · ")}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
 
-        <Card title="Classifica generale" subtitle="Tocca un nome per vedere il profilo">
-          <Classifica RANK={RANK} overall={overall} onOpen={onOpenCard} />
-        </Card>
-      </div>
+          <AttendanceCard athletes={athletes} rows={attendanceRows} onSave={saveSession} onRemoveSession={removeSession} />
+        </>
+      )}
 
-      {attentionAlerts.length > 0 && (
-        <Card id="a360-attention" title="Da tenere d'occhio" subtitle="Segnali automatici calcolati dai dati esistenti" style={{ marginTop: 20 }} className="a360-noprint">
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {attentionAlerts.map(({ n, reasons }) => (
-              <div key={n} style={{ display: "flex", alignItems: "flex-start", gap: 10, background: "#FDECEC", borderRadius: 10, padding: "9px 13px" }}>
-                <AlertTriangle size={15} color="#B4232A" style={{ flexShrink: 0, marginTop: 2 }} />
-                <div>
-                  <span className={onOpenCard ? "a360-clickname" : undefined} onClick={onOpenCard ? () => onOpenCard(n) : undefined}
-                    style={{ ...display, fontSize: 13.5, fontWeight: 700, color: C.ink }}>{n}</span>
-                  <div style={{ ...font, fontSize: 12.5, color: "#8A2A2E", marginTop: 2 }}>{reasons.join(" · ")}</div>
-                </div>
+      {/* ---------- SQUADRA: il quadro generale + riconoscimenti ---------- */}
+      {tab === "squadra" && (
+        <>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
+            {[
+              { l: "Atlete monitorate", v: NOMI.length },
+              { l: "Competenze core", v: CORE.length },
+              { l: "Media squadra", v: teamMean },
+              { l: "Ultimo rilevamento", v: lastPeriod },
+            ].map((s) => (
+              <div key={s.l} style={{ flex: "1 1 140px", background: C.card, border: `1px solid ${C.grid}`, borderRadius: 14, padding: "16px 18px" }}>
+                <div style={{ ...display, fontSize: 26, fontWeight: 700, color: C.ink }}>{s.v}</div>
+                <div style={{ ...font, fontSize: 12.5, color: C.muted, marginTop: 2 }}>{s.l}</div>
               </div>
             ))}
           </div>
-        </Card>
-      )}
 
-      <AttendanceCard athletes={athletes} rows={attendanceRows} onSave={saveSession} onRemoveSession={removeSession} />
-      <AwardStarCard athletes={athletes} />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
+            <Card title="Profilo medio della squadra" subtitle="Media delle competenze su tutte le atlete">
+              <ResponsiveContainer width="100%" height={300}>
+                <RadarChart data={TEAM_AVG} outerRadius="72%">
+                  <PolarGrid stroke={C.grid} />
+                  <PolarAngleAxis dataKey="skill" tick={{ fill: C.muted, fontSize: 11, ...font }} />
+                  <PolarRadiusAxis domain={[0, 10]} tick={false} axisLine={false} />
+                  <Radar name="Media" dataKey="valore" stroke={C.navy2} fill={C.navy2} fillOpacity={0.28} strokeWidth={2} />
+                  <Tooltip contentStyle={tooltipStyle} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </Card>
 
-      <BirthdaysCard athletes={athletes} />
-
-      <CertificatesCard athletes={athletes} />
-
-      {selfGaps.length > 0 && (
-        <Card title="Scostamenti autovalutazione" subtitle="Differenza tra come si vedono le atlete e come le valuta il mister" style={{ marginTop: 20 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {selfGaps.map(({ n, avg }) => {
-              const over = avg > 0, under = avg < 0;
-              const col = over ? "#B4520A" : under ? C.navy2 : C.muted;
-              const bg = over ? "#FFE9D5" : under ? C.surface : C.surface;
-              return (
-                <div key={n} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <span className={onOpenCard ? "a360-clickname" : undefined} onClick={onOpenCard ? () => onOpenCard(n) : undefined}
-                    title={onOpenCard ? `Apri il profilo di ${n}` : undefined}
-                    style={{ ...font, fontSize: 14, color: C.ink, flex: 1 }}>{n}</span>
-                  <span style={{ ...font, fontSize: 12.5, fontWeight: 600, color: col, background: bg, borderRadius: 99, padding: "5px 12px" }}>
-                    {over ? `si sovrastima di ${avg}` : under ? `si sottostima di ${Math.abs(avg)}` : "in linea con il mister"}
-                  </span>
-                </div>
-              );
-            })}
+            <Card title="Classifica generale" subtitle="Tocca un nome per vedere il profilo">
+              <Classifica RANK={RANK} overall={overall} onOpen={onOpenCard} />
+            </Card>
           </div>
-        </Card>
-      )}
 
-      <Card title="Report & analisi" subtitle="Sintesi automatica dai dati della squadra" style={{ marginTop: 20 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
-          <ReportBlock label="Punti di forza (squadra)" color="#0F7A4E" items={strongest.map((s) => `${s.title} · ${s.value}/10`)} />
-          <ReportBlock label="Priorità di allenamento" color="#B4232A" items={weakest.map((s) => `${s.title} · ${s.value}/10`)} />
-          <ReportBlock label="Atlete da seguire" color={C.navy2} onOpen={onOpenCard} items={attention.map((n) => ({ name: n, label: `${n} · ${overall(n).toFixed(1)}` }))} />
-        </div>
-
-        <div style={{ marginTop: 16, borderTop: `1px solid ${C.grid}`, paddingTop: 16 }}>
-          <button onClick={genReport} disabled={repBusy} className="a360-noprint"
-            style={{ ...font, display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px", borderRadius: 10, border: "none", background: C.orange, color: "#fff", fontSize: 14, fontWeight: 600, cursor: repBusy ? "default" : "pointer", opacity: repBusy ? 0.7 : 1 }}>
-            <Sparkles size={16} /> {repBusy ? "Genero l'analisi…" : "Genera analisi con IA"}
-          </button>
-          {repErr && <div style={{ ...font, fontSize: 13, color: "#B4232A", marginTop: 10 }}>{repErr}</div>}
-          {report && (
-            <div style={{ ...font, fontSize: 14, color: C.ink, lineHeight: 1.6, whiteSpace: "pre-wrap", background: C.surface, borderRadius: 12, padding: "14px 16px", marginTop: 14, borderLeft: `3px solid ${C.orange}` }}>
-              {report}
-            </div>
+          {selfGaps.length > 0 && (
+            <Card title="Scostamenti autovalutazione" subtitle="Differenza tra come si vedono le atlete e come le valuta il mister" style={{ marginTop: 20 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {selfGaps.map(({ n, avg }) => {
+                  const over = avg > 0, under = avg < 0;
+                  const col = over ? "#B4520A" : under ? C.navy2 : C.muted;
+                  const bg = over ? "#FFE9D5" : under ? C.surface : C.surface;
+                  return (
+                    <div key={n} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <span className={onOpenCard ? "a360-clickname" : undefined} onClick={onOpenCard ? () => onOpenCard(n) : undefined}
+                        title={onOpenCard ? `Apri il profilo di ${n}` : undefined}
+                        style={{ ...font, fontSize: 14, color: C.ink, flex: 1 }}>{n}</span>
+                      <span style={{ ...font, fontSize: 12.5, fontWeight: 600, color: col, background: bg, borderRadius: 99, padding: "5px 12px" }}>
+                        {over ? `si sovrastima di ${avg}` : under ? `si sottostima di ${Math.abs(avg)}` : "in linea con il mister"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
           )}
-        </div>
-      </Card>
 
-      <ReminderCard />
+          <AwardStarCard athletes={athletes} />
+        </>
+      )}
 
-      <Card title="Storico report" subtitle={reports.length ? `${reports.length} salvati` : "Nessun report salvato ancora"} style={{ marginTop: 20 }} className="a360-noprint">
-        {reports.length === 0 ? (
-          <div style={{ ...font, fontSize: 13.5, color: C.muted }}>Genera la prima analisi qui sopra: resterà salvata qui.</div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {reports.map((r) => <ReportHistoryItem key={r.id} report={r} onRemove={() => removeReport(r.id)} />)}
-          </div>
-        )}
-      </Card>
+      {/* ---------- REPORT: il materiale che produci e consegni ---------- */}
+      {tab === "report" && (
+        <>
+          <Card title="Report & analisi" subtitle="Sintesi automatica dai dati della squadra">
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
+              <ReportBlock label="Punti di forza (squadra)" color="#0F7A4E" items={strongest.map((s) => `${s.title} · ${s.value}/10`)} />
+              <ReportBlock label="Priorità di allenamento" color="#B4232A" items={weakest.map((s) => `${s.title} · ${s.value}/10`)} />
+              <ReportBlock label="Atlete da seguire" color={C.navy2} onOpen={onOpenCard} items={attention.map((n) => ({ name: n, label: `${n} · ${overall(n).toFixed(1)}` }))} />
+            </div>
 
-      <PrintStamp label="Report squadra" />
+            <div style={{ marginTop: 16, borderTop: `1px solid ${C.grid}`, paddingTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <button onClick={genReport} disabled={repBusy} className="a360-noprint"
+                style={{ ...font, display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px", borderRadius: 10, border: "none", background: C.orange, color: "#fff", fontSize: 14, fontWeight: 600, cursor: repBusy ? "default" : "pointer", opacity: repBusy ? 0.7 : 1 }}>
+                <Sparkles size={16} /> {repBusy ? "Genero l'analisi…" : "Genera analisi con IA"}
+              </button>
+              <button className="a360-noprint" onClick={() => window.print()}
+                style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500, padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.grid}`, background: C.card, color: C.ink, cursor: "pointer" }}>
+                <Printer size={16} /> Stampa / PDF
+              </button>
+            </div>
+            {repErr && <div style={{ ...font, fontSize: 13, color: "#B4232A", marginTop: 10 }}>{repErr}</div>}
+            {report && (
+              <div style={{ ...font, fontSize: 14, color: C.ink, lineHeight: 1.6, whiteSpace: "pre-wrap", background: C.surface, borderRadius: 12, padding: "14px 16px", marginTop: 14, borderLeft: `3px solid ${C.orange}` }}>
+                {report}
+              </div>
+            )}
+          </Card>
 
-      <CoachChat
-        title="Coach IA — Squadra"
-        subtitle="Consigli allo staff su come allenare le soft skill del gruppo"
-        suggestions={[
-          "Su quale competenza dovremmo concentrarci come squadra?",
-          "Proponi una seduta di allenamento mentale di gruppo.",
-          "Come far crescere le atlete più in difficoltà?",
-        ]}
-        payload={{ team, skills }}
-      />
+          <Card title="Storico report" subtitle={reports.length ? `${reports.length} salvati` : "Nessun report salvato ancora"} style={{ marginTop: 20 }} className="a360-noprint">
+            {reports.length === 0 ? (
+              <div style={{ ...font, fontSize: 13.5, color: C.muted }}>Genera la prima analisi qui sopra: resterà salvata qui.</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {reports.map((r) => <ReportHistoryItem key={r.id} report={r} onRemove={() => removeReport(r.id)} />)}
+              </div>
+            )}
+          </Card>
+
+          <PrintStamp label="Report squadra" />
+
+          <CoachChat
+            title="Coach IA — Squadra"
+            subtitle="Consigli allo staff su come allenare le soft skill del gruppo"
+            suggestions={[
+              "Su quale competenza dovremmo concentrarci come squadra?",
+              "Proponi una seduta di allenamento mentale di gruppo.",
+              "Come far crescere le atlete più in difficoltà?",
+            ]}
+            payload={{ team, skills }}
+          />
+        </>
+      )}
+
+      {/* ---------- STRUMENTI: la segreteria, una volta al mese ---------- */}
+      {tab === "strumenti" && (
+        <>
+          <ReminderCard />
+          <BirthdaysCard athletes={athletes} />
+          <CertificatesCard athletes={athletes} />
+        </>
+      )}
     </div>
   );
 }
