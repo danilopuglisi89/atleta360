@@ -180,15 +180,14 @@ function PostRow({ post, wall, viewerUid, isStaff }) {
   );
 }
 
-export default function WallCard({ identifier, uid, viewerUid, isStaff, personal, institutional, title }) {
-  const wall = useWall({ identifier, uid, viewerUid });
+export default function WallCard({ identifier, uid, viewerUid, isStaff, personal, institutional, title, bare, wall: providedWall }) {
+  const ownWall = useWall({ identifier: providedWall ? undefined : identifier, uid: providedWall ? undefined : uid, viewerUid });
+  const wall = providedWall || ownWall;
 
   if (wall.posts === null || wall.unavailable) return null;
 
-  return (
-    <Card id="a360-wall" title={title || (personal ? "La tua bacheca" : institutional ? "Bacheca" : "Bacheca")}
-      subtitle={institutional ? "Pensieri e annunci per la squadra" : personal ? "Pensieri, foto e momenti — solo tu puoi scriverci" : "Solo lei può scrivere qui, tu puoi solo mettere un cuore"}
-      style={{ marginTop: 20 }} className="a360-noprint">
+  const body = (
+    <>
       {wall.isOwner && <Composer wall={wall} viewerUid={viewerUid} institutional={institutional} />}
       {wall.posts.length === 0 ? (
         <div style={{ ...font, fontSize: 13.5, color: C.muted }}>
@@ -197,6 +196,16 @@ export default function WallCard({ identifier, uid, viewerUid, isStaff, personal
       ) : (
         <div>{wall.posts.map((p) => <PostRow key={p.id} post={p} wall={wall} viewerUid={viewerUid} isStaff={isStaff} />)}</div>
       )}
+    </>
+  );
+
+  if (bare) return <div id="a360-wall" className="a360-noprint">{body}</div>;
+
+  return (
+    <Card id="a360-wall" title={title || (personal ? "La tua bacheca" : institutional ? "Bacheca" : "Bacheca")}
+      subtitle={institutional ? "Pensieri e annunci per la squadra" : personal ? "Pensieri, foto e momenti — solo tu puoi scriverci" : "Solo lei può scrivere qui, tu puoi solo mettere un cuore"}
+      style={{ marginTop: 20 }} className="a360-noprint">
+      {body}
     </Card>
   );
 }

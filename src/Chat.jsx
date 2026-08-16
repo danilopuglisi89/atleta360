@@ -145,16 +145,14 @@ export default function Chat({ onOpenCard }) {
         {messages.map((m) => {
           const mine = m.user_id && m.user_id === uid;
           const av = roster[m.user_id];
-          // Il nome è cliccabile solo se dietro c'è davvero una scheda atleta
-          // (av.athlete_id): il mister/staff in chat non ha un profilo pubblico.
-          const canOpen = onOpenCard && av?.athlete_id && av.category === "atleta";
+          const canOpen = onOpenCard && av?.id;
           return (
             <div key={m.id} style={{ display: "flex", flexDirection: "column", alignItems: mine ? "flex-end" : "flex-start" }}>
               <div style={{ display: "flex", alignItems: "flex-end", gap: 8, maxWidth: "85%", flexDirection: mine ? "row-reverse" : "row" }}>
                 {!mine && <MiniAvatar url={av?.avatar_url} name={m.author} />}
                 <div>
                   {!mine && (
-                    <div className={canOpen ? "a360-clickname" : undefined} onClick={canOpen ? () => onOpenCard(av.athlete_id) : undefined}
+                    <div className={canOpen ? "a360-clickname" : undefined} onClick={canOpen ? () => onOpenCard(av.id) : undefined}
                       style={{ ...font, fontSize: 11.5, color: C.muted, marginBottom: 3, marginLeft: 2 }}>
                       {m.author || "—"}
                     </div>

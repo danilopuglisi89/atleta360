@@ -11,7 +11,7 @@ import AdminPanel from "./AdminPanel";
 import NewAssessment from "./NewAssessment";
 import PersonalArea, { Avatar } from "./PersonalArea";
 import ChatPage from "./ChatPage";
-import PublicProfileCard from "./PublicProfileCard";
+import ProfilePage from "./components/ProfilePage";
 import { getDemoParam, getDemoCredentials } from "./demoMode";
 import { StatusBox, DashboardSkeleton } from "./components/ui";
 import Footer, { SiteLogo } from "./components/Footer";
@@ -177,13 +177,6 @@ function Dashboard() {
   // L'atleta che apre il proprio profilo legge le notifiche di nuovo rilevamento e obiettivo raggiunto.
   useEffect(() => { if (view === "profilo" && viewCtx.restricted) markTypeRead(["assessment", "goal", "star"]); }, [view, viewCtx.restricted, markTypeRead]);
 
-  // Roster dei membri (nome, foto, collegamento atleta) per le card social.
-  const [roster, setRoster] = useState([]);
-  useEffect(() => { supabase.rpc("chat_roster").then(({ data }) => setRoster(data || [])).catch(() => {}); }, []);
-  const rosterByAthlete = useMemo(
-    () => Object.fromEntries((roster || []).filter((r) => r.athlete_id).map((r) => [r.athlete_id, r])),
-    [roster]
-  );
 
   const [model, setModel] = useState(null);
   const [errore, setErrore] = useState(null);
@@ -319,7 +312,7 @@ function Dashboard() {
   } else if (active.id === "rilevamento") {
     content = <NewAssessment onSaved={reload} />;
   } else if (active.id === "personale") {
-    content = <PersonalArea accent={theme.accent} onPickAccent={theme.pickAccent} />;
+    content = <PersonalArea accent={theme.accent} onPickAccent={theme.pickAccent} onOpenCard={openCard} />;
   } else if (active.id === "chat") {
     content = <ChatPage dmTarget={dmTarget} onMarkDmRead={markFromRead} unreadDmFromIds={unreadDmFromIds} onOpenCard={openCard} />;
   } else if (errore) {
@@ -402,12 +395,11 @@ function Dashboard() {
         <SelfAssessmentWizard profile={profile} isStaff={isStaff} onDone={reload} />
       )}
 
-      {cardTarget && model?.atleti?.[cardTarget] && (
-        <PublicProfileCard
-          identifier={cardTarget}
+      {cardTarget && (
+        <ProfilePage
+          target={cardTarget}
           model={model}
-          entry={rosterByAthlete[cardTarget]}
-          viewer={{ isAthlete, uid: profile?.id }}
+          viewer={{ isAthlete, isStaff: isStaffViewer, uid: profile?.id }}
           onClose={() => setCardTarget(null)}
           onMessage={isAthlete ? openDM : undefined}
           onFullProfile={isStaffViewer ? openFullProfile : undefined}

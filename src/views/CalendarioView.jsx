@@ -105,13 +105,12 @@ function MvpBlock({ ev, isStaff, mvp, roster, onOpenCard }) {
   );
 }
 
-// Elenco di nomi separati da virgola, ognuno cliccabile quando c'è una
-// scheda atleta dietro (le atlete hanno athleteId, lo staff no).
+// Elenco di nomi separati da virgola, ognuno cliccabile verso il profilo.
 function NameList({ people, onOpenCard }) {
   return people.map((p, i) => (
     <span key={i}>
-      <span className={onOpenCard && p.athleteId ? "a360-clickname" : undefined}
-        onClick={onOpenCard && p.athleteId ? () => onOpenCard(p.athleteId) : undefined}>
+      <span className={onOpenCard && p.uid ? "a360-clickname" : undefined}
+        onClick={onOpenCard && p.uid ? () => onOpenCard(p.uid) : undefined}>
         {p.name}
       </span>
       {i < people.length - 1 ? ", " : ""}
@@ -275,7 +274,7 @@ export default function CalendarioView({ auth, d, onOpenCard }) {
       (data || []).forEach((p) => {
         map[p.id] = {
           name: [p.first_name, p.last_name].filter(Boolean).join(" ") || "?",
-          athleteId: p.category === "atleta" ? p.athlete_id : null,
+          uid: p.id,
         };
       });
       setPeople(map);

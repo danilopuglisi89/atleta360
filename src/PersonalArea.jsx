@@ -1,11 +1,10 @@
 import { useRef, useState } from "react";
-import { Camera, Save, CheckCircle2, AlertCircle, Lock } from "lucide-react";
+import { Camera, Save, CheckCircle2, AlertCircle, Lock, UserCircle } from "lucide-react";
 import { C, font, display, ACCENTS } from "./theme";
 import { supabase } from "./supabaseClient";
 import { useAuth } from "./auth";
 import { useParticipation } from "./participation";
 import AvatarBuilder from "./components/AvatarBuilder";
-import WallCard from "./components/WallCard";
 
 const CATEGORY_LABEL = { direzione: "Direzione", staff: "Staff", atleta: "Atleta" };
 
@@ -58,7 +57,7 @@ function Field({ label, ...props }) {
   );
 }
 
-export default function PersonalArea({ accent, onPickAccent }) {
+export default function PersonalArea({ accent, onPickAccent, onOpenCard }) {
   const { profile, refreshProfile } = useAuth();
   const fileRef = useRef(null);
   const [form, setForm] = useState({
@@ -146,6 +145,14 @@ export default function PersonalArea({ accent, onPickAccent }) {
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
+      {onOpenCard && profile?.id && (
+        <button onClick={() => onOpenCard(profile.id)}
+          style={{ ...font, gridColumn: "1 / -1", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 9,
+            padding: "13px 18px", borderRadius: 14, border: "none", background: `linear-gradient(120deg, ${C.navy} 0%, ${C.navy2} 100%)`,
+            color: "#fff", fontSize: 14.5, fontWeight: 600, cursor: "pointer" }}>
+          <UserCircle size={18} /> Vedi il mio profilo
+        </button>
+      )}
       <Card title="I tuoi dati" subtitle="Inseriti alla registrazione (li modifica lo staff)">
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 18 }}>
           <Avatar url={form.avatar_url} name={fullName} size={72} />
@@ -293,11 +300,6 @@ export default function PersonalArea({ accent, onPickAccent }) {
 
       {profile?.role !== "admin" && profile?.category === "atleta" && (
         <AvatarBuilder initial={profile?.avatar_config} onSaved={refreshProfile} />
-      )}
-
-      {(profile?.role === "admin" || ["staff", "direzione"].includes(profile?.category)) && (
-        <WallCard uid={profile?.id} viewerUid={profile?.id} isStaff institutional
-          title="La tua bacheca" />
       )}
     </div>
   );
