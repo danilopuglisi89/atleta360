@@ -486,6 +486,32 @@ concettuale (form 1–10 per focus + storico): una feature aggiunta a una delle 
 replicata identica sulle altre due, salvo differenze strutturali note (Oasi ha selettore atleta,
 Aurora/Chiara no; Chiara ha in più il campo "nota di Chiara" per i messaggi WhatsApp dell'atleta).
 
+## Endpoint di riepilogo per il desktop Windows 12 (2026-08-17)
+
+**`api/summary.js`** — unico endpoint HTTP di **lettura dati di dominio** di questo progetto
+(gli altri due, `coach.js` e `push.js`, sono chat e relay push). Nasce per il widget "Oasi"
+del desktop **Windows 12 Beta** (`windows12/`, progetto sorella): quel widget non poteva
+mostrare nulla perché qui tutto passa da Supabase diretto lato client con RLS — non c'era
+niente da chiamare da fuori.
+
+- Montato in `coach-server.mjs` su **`/api/summary`**, quindi gira nel processo PM2
+  `atleta360-coach` già esistente, dietro nginx `/api/` — nessun processo nuovo da avviare.
+- Risponde con **soli numeri e il prossimo impegno**: `athletes` (solo attive),
+  `nextEvent` (kind/title/startsAt/location del primo evento futuro non annullato),
+  `unreadNotifications`. **Nessun dato personale delle atlete** — niente nomi, punteggi,
+  note, diari: scelta deliberata, un riepilogo che anche finendo nel posto sbagliato non
+  racconta nulla di nessuno.
+- Usa la **service-role key** (scavalca la RLS) via REST PostgREST con
+  `Prefer: count=exact`, quindi conta senza scaricare le righe.
+- Env in `.env.coach` sul VPS: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (le stesse del
+  progetto), più `SUMMARY_SECRET` **facoltativa** (se impostata, va inviata in
+  `x-summary-secret`). Senza le prime due risponde **503** con un messaggio chiaro invece
+  di rompersi. `/api/health` riporta anche `summary: true/false`.
+- **Deploy**: serve il solito giro sul VPS (`git pull` + `pm2 restart atleta360-coach`) —
+  il file è nuovo, Node lo carica solo al riavvio del processo. Ricordarsi che le env nuove
+  non entrano con un semplice `pm2 restart --update-env` (vedi sezione deploy sopra):
+  vanno esportate nella shell prima di far ripartire il processo.
+
 ## Brand
 
 Palette propria Atleta360 (navy `#0A1650`/`#17297A` + arancio `#FF7A18`), **non** segue la
