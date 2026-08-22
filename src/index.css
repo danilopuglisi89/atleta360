@@ -75,6 +75,14 @@ body {
 .a360-settings-slide-fwd { animation: a360-settings-in-fwd 0.28s cubic-bezier(0.16, 1, 0.3, 1) both; background: inherit; }
 .a360-settings-slide-back { animation: a360-settings-in-back 0.28s cubic-bezier(0.16, 1, 0.3, 1) both; background: inherit; }
 
+/* Schermata di accesso: 100dvh evita il salto quando la barra indirizzi
+   di Safari si ritrae (100vh la conta sempre come visibile). La riga
+   100vh resta prima come ripiego per i browser che non conoscono dvh. */
+.a360-authshell {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
 /* Nomi cliccabili → profilo pubblico. */
 .a360-clickname { cursor: pointer; transition: color 0.15s; }
 .a360-clickname:hover { color: #FF7A18 !important; text-decoration: underline; }

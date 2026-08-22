@@ -11,7 +11,7 @@ export default defineConfig({
       strategies: "injectManifest",      // service worker nostro (src/sw.js): precache + push
       srcDir: "src",
       filename: "sw.js",
-      includeAssets: ["favicon.png", "apple-touch-icon.png", "logo-oasivolley.png"],
+      includeAssets: ["favicon.png", "apple-touch-icon.png", "logo-oasivolley.png", "login-hero.jpg"],
       manifest: {
         name: "Oasi Volley Dashboard",
         short_name: "Oasi Volley",
