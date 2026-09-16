@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { supabase, supabaseConfigured } from "./supabaseClient";
 
 const AuthCtx = createContext(null);
@@ -10,35 +10,53 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [recovery, setRecovery] = useState(false);
 
+  // Contatore delle richieste: se arrivano due caricamenti del profilo
+  // sovrapposti (avvio + rinnovo del token), vince solo l'ultimo.
+  const profileReq = useRef(0);
+
   const loadProfile = useCallback(async (sess) => {
+    const req = ++profileReq.current;
     if (!sess?.user) { setProfile(null); return; }
     const { data } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", sess.user.id)
       .maybeSingle();
-    setProfile(data ?? null);
+    if (req === profileReq.current) setProfile(data ?? null);
   }, []);
 
   useEffect(() => {
     if (!supabaseConfigured) { setLoading(false); return; }
     let active = true;
 
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!active) return;
-      setSession(data.session);
-      await loadProfile(data.session);
-      setLoading(false);
-    });
+    // Rete di sicurezza: qualunque cosa succeda, lo schermo "Un attimo…"
+    // non può restare per sempre.
+    const watchdog = setTimeout(() => { if (active) setLoading(false); }, 10000);
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (event, sess) => {
+    supabase.auth.getSession()
+      .then(async ({ data }) => {
+        if (!active) return;
+        setSession(data.session);
+        await loadProfile(data.session);
+      })
+      .catch(() => { /* senza sessione si vede il login */ })
+      .finally(() => { if (active) { clearTimeout(watchdog); setLoading(false); } });
+
+    // ⚠️ Questo callback NON deve fare await di chiamate Supabase.
+    // Gira mentre il client tiene il lucchetto dell'autenticazione: una query
+    // lanciata qui dentro aspetta lo stesso lucchetto e tutto si blocca.
+    // Succedeva riaprendo l'app installata dopo ore, col token scaduto: il
+    // rinnovo scatenava l'evento, il profilo restava in attesa e l'app
+    // rimaneva ferma su "Un attimo…" / "Attendi…" finché non si ricaricava.
+    // Il setTimeout sposta il caricamento fuori dal lucchetto.
+    const { data: sub } = supabase.auth.onAuthStateChange((event, sess) => {
       if (!active) return;
       if (event === "PASSWORD_RECOVERY") setRecovery(true);
       setSession(sess);
-      await loadProfile(sess);
+      setTimeout(() => { if (active) loadProfile(sess); }, 0);
     });
 
-    return () => { active = false; sub.subscription.unsubscribe(); };
+    return () => { active = false; clearTimeout(watchdog); sub.subscription.unsubscribe(); };
   }, [loadProfile]);
 
   const signUp = async ({ firstName, lastName, email, password, category }) => {
