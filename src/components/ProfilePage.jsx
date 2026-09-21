@@ -234,8 +234,14 @@ export default function ProfilePage({ target, model, viewer, onClose, onMessage,
 
   return (
     <div className="a360-noprint" style={{ position: "fixed", inset: 0, zIndex: 120, background: C.surface, overflowY: "auto" }}>
-      <div style={{ position: "sticky", top: 0, zIndex: 2, display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", background: C.card, borderBottom: `1px solid ${C.grid}` }}>
-        <button onClick={onClose} aria-label="Chiudi" style={{ background: "none", border: "none", color: C.ink, cursor: "pointer", display: "inline-flex", padding: 4 }}><X size={20} /></button>
+      {/* La zona sicura in alto è obbligatoria: da app installata questa barra
+          finisce sotto l'orologio di sistema e la X diventa intoccabile.
+          Stesso accorgimento di GymMode, SettingsApp e dell'header dell'app. */}
+      <div style={{ position: "sticky", top: 0, zIndex: 2, display: "flex", alignItems: "center", gap: 6, padding: "calc(8px + env(safe-area-inset-top, 0px)) 12px 8px", background: C.card, borderBottom: `1px solid ${C.grid}` }}>
+        <button onClick={onClose} aria-label="Chiudi"
+          style={{ background: "none", border: "none", color: C.ink, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, flexShrink: 0, marginLeft: -6 }}>
+          <X size={22} />
+        </button>
         <div style={{ ...display, fontSize: 15, fontWeight: 700, color: C.ink }}>Profilo</div>
       </div>
 
@@ -259,7 +265,7 @@ export default function ProfilePage({ target, model, viewer, onClose, onMessage,
           </div>
 
           {/* Avatar + identità */}
-          <div style={{ padding: `0 ${pad}px 16px` }}>
+          <div style={{ padding: `0 ${pad}px calc(24px + env(safe-area-inset-bottom, 0px))` }}>
             <div style={{ position: "relative", flexShrink: 0, width: avatarSize, marginTop: -(avatarSize / 2) }}>
               <div style={{ background: C.surface, borderRadius: "50%", padding: 4, display: "inline-block" }}>
                 <Avatar url={row.avatar_url} name={fullName} size={avatarSize} ring={ring} />

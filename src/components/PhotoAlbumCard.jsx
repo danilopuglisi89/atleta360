@@ -70,7 +70,7 @@ export default function PhotoAlbumCard({ uid, isStaff }) {
           style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(6,10,30,0.92)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
           <img src={viewer} alt="" style={{ maxWidth: "100%", maxHeight: "100%", borderRadius: 12, boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }} />
           <button onClick={() => setViewer(null)} aria-label="Chiudi"
-            style={{ position: "fixed", top: 16, right: 16, width: 40, height: 40, borderRadius: 12, border: "none", background: "rgba(255,255,255,0.15)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            style={{ position: "fixed", top: "calc(16px + env(safe-area-inset-top, 0px))", right: 16, width: 44, height: 44, borderRadius: 12, border: "none", background: "rgba(255,255,255,0.15)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <X size={20} />
           </button>
         </div>
