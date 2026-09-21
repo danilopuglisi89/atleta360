@@ -653,6 +653,12 @@ problema quale script eseguire. Nasce da tre guasti rimasti invisibili per
 settimane (colonna `last_seen_at` mancante, Coach IA fermo dieci giorni,
 vista in differita non registrata).
 
+⚠️ **`last_seen_at` e `pwa_installed` registrano solo dal 21/09/2026 verso mezzogiorno**
+(colonna aggiunta con `fix-last-seen.sql`): tutto ciò che è avvenuto prima non c'è, e
+"mai entrata" prima di quella data non vuol dire niente. Per misurare l'uso vero si
+guardano le attività nelle tabelle (messaggi, momenti, voti, punti…), che esistono da
+sempre: lette così, il 21/09 le atlete attive almeno una volta erano 14 su 15, non 1.
+
 ⚠️ Due regole per chi ci mette mano: **niente script SQL** (uno script che
 scopre gli script non eseguiti avrebbe lo stesso problema che risolve), e si
 sondano **solo funzioni di sola lettura** — mai `send_reminder`, `admin_*` o
