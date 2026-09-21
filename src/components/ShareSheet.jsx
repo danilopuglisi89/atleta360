@@ -6,6 +6,7 @@
 // ignorato dal telefono. I tag li disegniamo dentro l'immagine (sempre
 // visibili) e la didascalia si copia con un tocco, pronta da incollare.
 import { useEffect, useRef, useState } from "react";
+import { logEvent, EVENTI } from "../appEvents";
 import { Share2, Download, Check, Copy, X, Instagram } from "lucide-react";
 import { C, font, display } from "../theme";
 import { SIZES, captionFor, drawProfile, drawBadge, drawRecap, drawMatch, drawTeam } from "../shareCards";
@@ -64,6 +65,7 @@ export default function ShareSheet({ kind, data, onClose }) {
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 4000);
       }
+      logEvent(EVENTI.SHARE_CARD, { kind, format });
       setShared(true);
       setTimeout(() => setShared(false), 2500);
     } catch (e) {

@@ -4,6 +4,7 @@ import { Printer } from "lucide-react";
 import { C, font, display, ringForScore } from "../theme";
 import { SKILLS, SHORT, SKILL_META } from "../skills";
 import { Card, Row, InitialsCircle, StatusBox, Select, tooltipStyle, PrintStamp } from "../components/ui";
+import { logEvent, EVENTI } from "../appEvents";
 import { BadgeStrip } from "../components/bits";
 import BadgeBoard from "../components/BadgeBoard";
 import { computeBadges } from "../badges";
@@ -217,7 +218,7 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
           <SeasonWrappedButton uid={auth.uid} name={sel} avatarUrl={shareAvatarUrl} bgUrl={auth?.cardBg} bgStyle={auth?.cardBgStyle}
             streak={participationStreak} level={participationLevel} starsCount={(stars || []).length} badgesCount={badges.length} />
         )}
-        <button className="a360-noprint" onClick={() => window.print()}
+        <button className="a360-noprint" onClick={() => { logEvent(EVENTI.PRINT_PROFILE); window.print(); }}
           style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500,
             padding: "9px 13px", borderRadius: 10, border: `1px solid ${C.grid}`, background: C.card, color: C.ink, cursor: "pointer" }}>
           <Printer size={16} /> Stampa / PDF

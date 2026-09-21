@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logEvent, EVENTI } from "../appEvents";
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip, ResponsiveContainer } from "recharts";
 import { Printer, Sparkles, Trash2, ChevronDown, ChevronUp, Megaphone, AlertTriangle, CheckCircle2, FileClock, Plus, Dumbbell } from "lucide-react";
 import { C, font, display } from "../theme";
@@ -462,7 +463,7 @@ export default function StaffView({ d, onOpenCard }) {
                 style={{ ...font, display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px", borderRadius: 10, border: "none", background: C.orange, color: "#fff", fontSize: 14, fontWeight: 600, cursor: repBusy ? "default" : "pointer", opacity: repBusy ? 0.7 : 1 }}>
                 <Sparkles size={16} /> {repBusy ? "Genero l'analisi…" : "Genera analisi con IA"}
               </button>
-              <button className="a360-noprint" onClick={() => window.print()}
+              <button className="a360-noprint" onClick={() => { logEvent(EVENTI.PRINT_REPORT); window.print(); }}
                 style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500, padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.grid}`, background: C.card, color: C.ink, cursor: "pointer" }}>
                 <Printer size={16} /> Stampa / PDF
               </button>

@@ -1,6 +1,8 @@
 // Genera un file .ics per un evento e lo scarica: finisce nel calendario
 // personale del telefono (Google/Apple) con "Aggiungi al calendario".
 // Nessuna libreria: il formato iCalendar per un evento singolo è poche righe.
+import { logEvent, EVENTI } from "./appEvents";
+
 const pad = (n) => String(n).padStart(2, "0");
 const toICSDate = (d) => `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}00Z`;
 
@@ -27,4 +29,5 @@ export function downloadEventICS(ev, titlePrefix = "") {
   a.download = `${summary.replace(/[^\w\-]+/g, "_")}.ics`;
   a.click();
   URL.revokeObjectURL(a.href);
+  logEvent(EVENTI.EXPORT_ICS, { kind: ev.kind || null });
 }
