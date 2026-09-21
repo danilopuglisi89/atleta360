@@ -118,7 +118,11 @@ declare
   v_atlete int; v_con_self int; v_con_app int; v_con_push int;
   v_sedute int; v_attivita jsonb; v_eventi jsonb;
 begin
-  if not public.is_staff() then
+  -- Il controllo vale per chi è collegato dall'app. Quando auth.uid() è nullo
+  -- la chiamata arriva dal SQL Editor o dalla chiave di servizio, che hanno
+  -- già pieno accesso al database: bloccarli servirebbe solo a rendere lo
+  -- script non verificabile (la funzione è comunque revocata ad anon).
+  if auth.uid() is not null and not public.is_staff() then
     raise exception 'Solo lo staff può vedere le statistiche di stagione';
   end if;
 
@@ -189,16 +193,14 @@ revoke all on function public.season_stats(date, date) from public, anon;
 grant execute on function public.season_stats(date, date) to authenticated;
 
 -- ---------- 5. Fotografia automatica ogni lunedì alle 6 ----------
+-- Stesso schema di calendar.sql, che è già in produzione e funziona.
 do $$
 begin
-  if exists (select 1 from pg_extension where extname = 'pg_cron') then
-    perform cron.unschedule('a360-season-snapshot')
-      where exists (select 1 from cron.job where jobname = 'a360-season-snapshot');
-    perform cron.schedule('a360-season-snapshot', '0 6 * * 1',
-      $job$select public.take_season_snapshot()$job$);
-  else
-    raise notice 'pg_cron non attivo: la fotografia settimanale va pianificata a mano';
+  if exists (select 1 from cron.job where jobname = 'a360-season-snapshot') then
+    perform cron.unschedule('a360-season-snapshot');
   end if;
+  perform cron.schedule('a360-season-snapshot', '0 6 * * 1',
+    $job$select public.take_season_snapshot()$job$);
 end;
 $$;
 
@@ -206,5 +208,10 @@ $$;
 select public.take_season_snapshot();
 
 -- ---------- Verifica ----------
-select * from public.season_snapshots order by taken_on desc limit 1;
-select public.season_stats();
+-- ⚠️ Il SQL Editor esegue tutto in UNA transazione: se una riga qui sotto
+-- fallisce, viene annullato l'intero script (trappola già documentata in
+-- CLAUDE.md). Queste due righe non possono fallire.
+select taken_on, atlete_totali, con_app, con_push, attive_7gg
+  from public.season_snapshots order by taken_on desc limit 1;
+
+select jsonb_pretty(public.season_stats());
