@@ -649,6 +649,16 @@ consegnano a mano, non si archiviano.
   abbreviate **dentro** `members_directory()`, così il cognome non arriva al
   telefono delle compagne; in `ProfilePage` per chi non è lei o staff. Staff e
   direzione restano con nome e cognome.
+- **Anche in chat** (`supabase/chat-names.sql`): il nome è salvato dentro ogni
+  messaggio (`chat_messages.author`, `direct_messages.sender_name`/`recipient_name`)
+  e da lì va nelle notifiche. `display_name(uid)` è l'unica regola; trigger
+  `before insert/update` la impongono al salvataggio (vale anche per client
+  vecchi), `chat_roster()` la usa. Lo script ha corretto una volta i nomi già
+  salvati, anche nelle notifiche — mai i testi. ⚠️ `chat_roster` aveva due
+  versioni storiche con colonne diverse: lo script la ricrea con `drop` +
+  `create` nella forma a 9 colonne. Ridefinendola, partire da `chat-names.sql`.
+- ⚠️ Resta aperto: `ProfilePage` legge `profiles` con `select *`, quindi il
+  cognome intero arriva comunque al telefono (solo non si vede).
 
 ## Visibilità fra atlete — decisione presa (2026-09-21)
 
