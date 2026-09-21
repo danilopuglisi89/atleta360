@@ -19,6 +19,7 @@ import { GateScreen, SetupNotice } from "./components/GateScreens";
 import NotificationBell from "./components/NotificationBell";
 import InstallPrompt from "./components/InstallPrompt";
 import SelfAssessmentWizard from "./components/SelfAssessmentWizard";
+import ProfileWizard from "./components/ProfileWizard";
 import WelcomeAvatar, { needsWelcomeAvatar } from "./components/WelcomeAvatar";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { useNotifications } from "./notifications";
@@ -35,6 +36,7 @@ const StaffView = lazy(() => import("./views/StaffView"));
 const InfoView = lazy(() => import("./views/InfoView"));
 const CalendarioView = lazy(() => import("./views/CalendarioView"));
 const AtleteView = lazy(() => import("./views/AtleteView"));
+
 
 function ViewFallback() {
   return <DashboardSkeleton />;
@@ -335,7 +337,10 @@ function Dashboard() {
     // vuota — invece di bloccare tutta l'app dietro un unico avviso.
     content = <ViewComp d={model} auth={viewCtx} target={profileTarget} onOpenCard={openCard} onOpenFullProfile={openFullProfile} onReload={reload} onGoView={goTo} />;
   }
-  const needsSuspense = ["home", "profilo", "confronto", "andamento", "info", "staff", "calendario"].includes(active.id);
+  // ⚠️ Ogni vista caricata con lazy() va elencata qui, altrimenti React
+  // solleva un'eccezione al primo render e si vede "Qualcosa non ha
+  // funzionato" (successo con "atlete", aggiunta senza toccare la lista).
+  const needsSuspense = ["home", "profilo", "confronto", "andamento", "info", "staff", "calendario", "atlete"].includes(active.id);
 
   const isStaffViewer = isStaff;
 
@@ -400,6 +405,7 @@ function Dashboard() {
       {!needsWelcomeAvatar(profile) && settings.flags.feature_selfassessment && (
         <SelfAssessmentWizard profile={profile} isStaff={isStaff} onDone={reload} />
       )}
+      {!needsWelcomeAvatar(profile) && <ProfileWizard profile={profile} onDone={refreshProfile} />}
 
       {cardTarget && (
         <ProfilePage
