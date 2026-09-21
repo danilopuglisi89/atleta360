@@ -11,6 +11,7 @@ import { C, font, display } from "../theme";
 import { supabase } from "../supabaseClient";
 import { compressImage } from "../photos";
 import { Avatar } from "../PersonalArea";
+import { avatarImageUrl } from "../avatar";
 
 const LATER_KEY = "a360-profilo-piu-tardi";
 
@@ -78,7 +79,12 @@ export default function ProfileWizard({ profile, onDone }) {
   };
 
   const haContatto = CONTATTI.some((c) => (form[c.key] || "").trim());
-  const puoAvanzare = step === 0 ? !!form.avatar_url : step === 1 ? !!form.ruolo.trim() : haContatto;
+  // L'avatar della galleria vale quanto una foto: prima il passo 1 chiedeva
+  // per forza una foto caricata, e tutte le atlete (che hanno l'avatar)
+  // restavano ferme lì.
+  const avatarGalleria = profile?.avatar_config ? avatarImageUrl(profile.avatar_config) : null;
+  const haVolto = !!form.avatar_url || !!avatarGalleria;
+  const puoAvanzare = step === 0 ? haVolto : step === 1 ? !!form.ruolo.trim() : haContatto;
 
   const salva = async () => {
     setBusy(true); setErr(null);
@@ -117,19 +123,21 @@ export default function ProfileWizard({ profile, onDone }) {
 
         {step === 0 && (
           <>
-            <div style={{ ...display, fontSize: 21, fontWeight: 700, color: C.ink }}>Mettici la faccia</div>
+            <div style={{ ...display, fontSize: 21, fontWeight: 700, color: C.ink }}>{avatarGalleria && !form.avatar_url ? "Il tuo avatar c'è già" : "Mettici la faccia"}</div>
             <p style={{ ...font, fontSize: 14, color: C.muted, lineHeight: 1.5, margin: "6px 0 18px" }}>
-              La tua foto compare accanto al nome in tutta l'app: nella squadra, in chat, sul tuo profilo.
+              {avatarGalleria && !form.avatar_url
+                ? "Compare accanto al tuo nome in tutta l'app. Puoi tenerlo così e andare avanti, oppure mettere una tua foto."
+                : "La tua foto compare accanto al nome in tutta l'app: nella squadra, in chat, sul tuo profilo."}
             </p>
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <Avatar url={form.avatar_url} name={fullName} size={84} />
+              <Avatar url={form.avatar_url || avatarGalleria} name={fullName} size={84} />
               <div>
                 <input ref={fileRef} type="file" accept="image/*" onChange={onFile} style={{ display: "none" }} />
                 <button onClick={() => fileRef.current?.click()}
                   style={{ ...font, display: "inline-flex", alignItems: "center", gap: 8, height: 44, padding: "0 16px", borderRadius: 11, border: `1px solid ${C.grid}`, background: C.card, color: C.ink, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-                  <Camera size={16} /> {form.avatar_url ? "Cambia foto" : "Scegli una foto"}
+                  <Camera size={16} /> {form.avatar_url ? "Cambia foto" : avatarGalleria ? "Usa una foto" : "Scegli una foto"}
                 </button>
-                {isAtleta && (
+                {isAtleta && !avatarGalleria && (
                   <div style={{ ...font, fontSize: 12, color: C.muted, marginTop: 8, lineHeight: 1.45 }}>
                     Preferisci un avatar disegnato? Lo trovi in Area personale.
                   </div>

@@ -15,6 +15,7 @@ import ProfilePage from "./components/ProfilePage";
 import { getDemoParam, getDemoCredentials } from "./demoMode";
 import { StatusBox, DashboardSkeleton } from "./components/ui";
 import Footer, { SiteLogo } from "./components/Footer";
+import { avatarImageUrl } from "./avatar";
 import { GateScreen, SetupNotice } from "./components/GateScreens";
 import NotificationBell from "./components/NotificationBell";
 import InstallPrompt from "./components/InstallPrompt";
@@ -287,7 +288,7 @@ function Dashboard() {
   const UserFooter = () => (
     <div style={{ marginTop: "auto", padding: 16, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-        <Avatar url={profile?.avatar_url} name={[profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.email} size={34} ring={ringForRole(profile?.role, profile?.category)} />
+        <Avatar url={profile?.avatar_url || (profile?.avatar_config ? avatarImageUrl(profile.avatar_config) : null)} name={[profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.email} size={34} ring={ringForRole(profile?.role, profile?.category)} />
         <div style={{ minWidth: 0 }}>
           <div style={{ ...display, fontSize: 13, color: "#fff", fontWeight: 600, ...ellipsis }}>
             {[profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.email}

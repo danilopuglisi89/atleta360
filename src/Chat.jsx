@@ -4,6 +4,7 @@ import { C, font, display } from "./theme";
 import { supabase } from "./supabaseClient";
 import { useAuth } from "./auth";
 import { fileToResizedDataUrl } from "./imageUtils";
+import { useAvatarOf } from "./memberAvatars";
 
 function Card({ title, subtitle, children, style }) {
   return (
@@ -25,7 +26,8 @@ const timeLabel = (iso) => {
 
 const REACTION_EMOJIS = ["👍", "❤️", "🔥", "😂", "😮", "💪"];
 
-function MiniAvatar({ url, name, size = 30 }) {
+function MiniAvatar({ url, uid, name, size = 30 }) {
+  url = useAvatarOf(uid, url);
   if (url) return <img src={url} alt={name} style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />;
   return (
     <div style={{ width: size, height: size, borderRadius: "50%", background: C.navy2, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", ...display, fontWeight: 700, fontSize: size * 0.4, flexShrink: 0 }}>
@@ -149,7 +151,7 @@ export default function Chat({ onOpenCard }) {
           return (
             <div key={m.id} style={{ display: "flex", flexDirection: "column", alignItems: mine ? "flex-end" : "flex-start" }}>
               <div style={{ display: "flex", alignItems: "flex-end", gap: 8, maxWidth: "85%", flexDirection: mine ? "row-reverse" : "row" }}>
-                {!mine && <MiniAvatar url={av?.avatar_url} name={m.author} />}
+                {!mine && <MiniAvatar url={av?.avatar_url} uid={m.user_id} name={m.author} />}
                 <div>
                   {!mine && (
                     <div className={canOpen ? "a360-clickname" : undefined} onClick={canOpen ? () => onOpenCard(av.id) : undefined}

@@ -203,7 +203,14 @@ export default function ProfilePage({ target, model, viewer, onClose, onMessage,
   const isAthlete = row?.category === "atleta";
   const canMessage = viewer?.isAthlete && row && !isSelf;
   const canOpenScore = viewer?.isStaff && isAthlete;
-  const fullName = row ? [row.first_name, row.last_name].filter(Boolean).join(" ") : "";
+  // Le atlete, viste dalle altre, sono "Nome C." come nella pagina La squadra
+  // (decisione di Danilo, sono minorenni). Il nome intero lo vedono solo lei
+  // e lo staff.
+  const cognome = (row?.last_name || "").trim();
+  const fullName = !row ? ""
+    : isAthlete && !isSelf && !viewer?.isStaff
+      ? [(row.first_name || "").trim(), cognome ? cognome[0].toUpperCase() + "." : ""].filter(Boolean).join(" ")
+      : [row.first_name, row.last_name].filter(Boolean).join(" ");
   const overall = isAthlete && model?.overall ? model.overall(row.athlete_id) : null;
   const ring = overall != null ? ringForScore(overall) : ringForRole(row?.role, row?.category);
 
@@ -268,7 +275,7 @@ export default function ProfilePage({ target, model, viewer, onClose, onMessage,
           <div style={{ padding: `0 ${pad}px calc(24px + env(safe-area-inset-bottom, 0px))` }}>
             <div style={{ position: "relative", flexShrink: 0, width: avatarSize, marginTop: -(avatarSize / 2) }}>
               <div style={{ background: C.surface, borderRadius: "50%", padding: 4, display: "inline-block" }}>
-                <Avatar url={row.avatar_url} name={fullName} size={avatarSize} ring={ring} />
+                <Avatar url={row.avatar_url} uid={row.id} name={fullName} size={avatarSize} ring={ring} />
               </div>
               {isSelf && !isAthlete && (
                 <>

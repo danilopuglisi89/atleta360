@@ -27,7 +27,7 @@ function MemberCard({ m, onOpen, mioUid }) {
       style={{ ...font, display: "flex", alignItems: "center", gap: 12, textAlign: "left", width: "100%",
         background: C.card, border: `1px solid ${C.grid}`, borderRadius: 14, padding: "12px 14px",
         cursor: "pointer", color: C.ink, boxSizing: "border-box" }}>
-      <Avatar url={m.avatar_url} name={m.name} size={48} ring={ringForRole(m.role, m.category)} />
+      <Avatar url={m.avatar_url} uid={m.id} name={m.name} size={48} ring={ringForRole(m.role, m.category)} />
       <div style={{ minWidth: 0, flex: 1 }}>
         <div style={{ ...display, fontSize: 15, fontWeight: 700, color: C.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {m.name || "—"} {m.flair && <span>{m.flair}</span>}

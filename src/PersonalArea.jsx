@@ -5,6 +5,7 @@ import { supabase } from "./supabaseClient";
 import { useAuth } from "./auth";
 import { useParticipation } from "./participation";
 import AvatarBuilder from "./components/AvatarBuilder";
+import { useAvatarOf, refreshMemberAvatars } from "./memberAvatars";
 
 const CATEGORY_LABEL = { direzione: "Direzione", staff: "Staff", atleta: "Atleta" };
 
@@ -35,7 +36,9 @@ function Card({ title, subtitle, children, style }) {
 const labelStyle = { ...font, fontSize: 12.5, color: C.muted, fontWeight: 500, marginBottom: 6, display: "block" };
 const inputStyle = { ...font, fontSize: 14, color: C.ink, background: C.card, border: `1px solid ${C.grid}`, borderRadius: 10, padding: "10px 12px", width: "100%", boxSizing: "border-box", outline: "none" };
 
-export function Avatar({ url, name, size = 96, ring }) {
+// `uid`: senza foto si mostra l'avatar della galleria di quella persona.
+export function Avatar({ url, uid, name, size = 96, ring }) {
+  url = useAvatarOf(uid, url);
   const initials = (name || "").split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "?";
   // Anello colorato: bordo più marcato + alone, in base a punteggio o ruolo.
   const border = ring ? `3px solid ${ring}` : `2px solid ${C.grid}`;
@@ -304,7 +307,7 @@ export default function PersonalArea({ accent, onPickAccent, onOpenCard }) {
       </Card>
 
       {profile?.role !== "admin" && profile?.category === "atleta" && (
-        <AvatarBuilder initial={profile?.avatar_config} onSaved={refreshProfile} />
+        <AvatarBuilder initial={profile?.avatar_config} onSaved={() => { refreshProfile(); refreshMemberAvatars(); }} />
       )}
     </div>
   );

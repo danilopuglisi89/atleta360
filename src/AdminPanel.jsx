@@ -3,6 +3,7 @@ import { Check, X, Clock, RotateCcw, Plus, Trash2, ArrowUp, ArrowDown, Power, Sa
 import { C, font, display } from "./theme";
 import { supabase } from "./supabaseClient";
 import { Avatar } from "./PersonalArea";
+import { avatarImageUrl } from "./avatar";
 import { Card } from "./components/ui";
 import UsageDashboard from "./components/UsageDashboard";
 import SettingsApp from "./components/settings/SettingsApp";
@@ -328,7 +329,7 @@ export default function AdminPanel({ onChange }) {
         <div onClick={() => setDetail(null)} style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(10,19,48,0.5)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "5vh 16px", overflowY: "auto" }}>
           <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 560, background: C.card, borderRadius: 16, border: `1px solid ${C.grid}`, padding: 22, boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-              <Avatar url={detail.avatar_url} name={fullName(detail)} size={48} />
+              <Avatar url={detail.avatar_url || (detail.avatar_config ? avatarImageUrl(detail.avatar_config) : null)} name={fullName(detail)} size={48} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ ...display, fontSize: 16, fontWeight: 700, color: C.ink }}>{fullName(detail)}</div>
                 <div style={{ ...font, fontSize: 12.5, color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{detail.email}</div>

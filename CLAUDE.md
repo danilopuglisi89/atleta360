@@ -633,6 +633,23 @@ privacy. ⚠️ **Il repository è pubblico**: in `studio/` non vanno mai nomi d
 né punteggi individuali. I dossier con i nomi si rigenerano dal vivo e si
 consegnano a mano, non si archiviano.
 
+## Avatar della galleria e nomi abbreviati (2026-09-21)
+
+- **Tutte le atlete hanno l'avatar anime** (`avatar_config`), nessuna una foto
+  (`avatar_url`). Le funzioni di squadra, chat, messaggi e profilo restituiscono
+  solo `avatar_url`, quindi fuori dal proprio profilo si vedevano le iniziali.
+  Ora `src/memberAvatars.js` (`useAvatarOf(uid, url)`) ricava l'immagine della
+  galleria da `member_avatars()` (`supabase/avatars-names.sql`), con una sola
+  chiamata a sessione: `Avatar` (PersonalArea) e i `MiniAvatar` di Chat/DM
+  accettano `uid`. Un avatar nuovo va passato con `uid`, altrimenti ricompaiono
+  le iniziali.
+- Il passo 1 del `ProfileWizard` chiedeva per forza una foto caricata: con
+  l'avatar della galleria nessuna poteva andare avanti. Ora l'avatar basta.
+- **Nella squadra le atlete sono "Nome C."**, decisione di Danilo (minorenni):
+  abbreviate **dentro** `members_directory()`, così il cognome non arriva al
+  telefono delle compagne; in `ProfilePage` per chi non è lei o staff. Staff e
+  direzione restano con nome e cognome.
+
 ## Visibilità fra atlete — decisione presa (2026-09-21)
 
 ⚠️ `ConfrontoView`, `AndamentoView`, la classifica generale e il radar di squadra

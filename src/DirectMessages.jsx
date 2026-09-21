@@ -5,6 +5,7 @@ import { C, font, display } from "./theme";
 import { supabase } from "./supabaseClient";
 import { useAuth } from "./auth";
 import { fileToResizedDataUrl } from "./imageUtils";
+import { useAvatarOf } from "./memberAvatars";
 
 function Card({ title, subtitle, children, style }) {
   return (
@@ -23,7 +24,8 @@ const timeLabel = (iso) => {
   const t = d.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
   return d.toDateString() === now.toDateString() ? t : `${d.toLocaleDateString("it-IT", { day: "2-digit", month: "short" })} ${t}`;
 };
-function MiniAvatar({ url, name, size = 30 }) {
+function MiniAvatar({ url, uid, name, size = 30 }) {
+  url = useAvatarOf(uid, url);
   if (url) return <img src={url} alt={name} style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />;
   return <div style={{ width: size, height: size, borderRadius: "50%", background: C.navy2, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", ...display, fontWeight: 700, fontSize: size * 0.4, flexShrink: 0 }}>{initials(name)}</div>;
 }
@@ -175,7 +177,7 @@ export default function DirectMessages({ initialToId, initialToName, onConversat
               {mates.map((m) => (
                 <button key={m.id} onClick={() => { setToId(m.id); setPickerOpen(false); }}
                   style={{ ...font, display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 10, border: "none", background: m.id === toId ? C.surface : "transparent", cursor: "pointer", textAlign: "left" }}>
-                  <MiniAvatar url={m.avatar_url} name={m.name} size={32} />
+                  <MiniAvatar url={m.avatar_url} uid={m.id} name={m.name} size={32} />
                   <span style={{ ...font, fontSize: 14, color: C.ink, flex: 1 }}>{m.name || "—"}</span>
                   {unreadFromIds.includes(m.id) && <span style={{ width: 8, height: 8, borderRadius: 99, background: "#E11D48", flexShrink: 0 }} />}
                 </button>
