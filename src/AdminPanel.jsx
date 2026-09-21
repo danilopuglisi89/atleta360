@@ -9,6 +9,7 @@ import SettingsApp from "./components/settings/SettingsApp";
 import AdminChatLog from "./AdminChatLog";
 import Tabs from "./components/Tabs";
 import SeasonStats from "./components/SeasonStats";
+import SystemHealth from "./components/SystemHealth";
 
 const STATUS_META = {
   pending: { label: "In attesa", color: "#B4520A", bg: "#FFE9D5" },
@@ -145,6 +146,8 @@ export default function AdminPanel({ onChange }) {
         <Settings size={16} /> Impostazioni
       </button>
       {showSettings && <SettingsApp onClose={() => setShowSettings(false)} />}
+
+      <SystemHealth />
 
       <UsageDashboard />
 

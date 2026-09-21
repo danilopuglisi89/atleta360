@@ -337,11 +337,6 @@ function Dashboard() {
     // vuota — invece di bloccare tutta l'app dietro un unico avviso.
     content = <ViewComp d={model} auth={viewCtx} target={profileTarget} onOpenCard={openCard} onOpenFullProfile={openFullProfile} onReload={reload} onGoView={goTo} />;
   }
-  // ⚠️ Ogni vista caricata con lazy() va elencata qui, altrimenti React
-  // solleva un'eccezione al primo render e si vede "Qualcosa non ha
-  // funzionato" (successo con "atlete", aggiunta senza toccare la lista).
-  const needsSuspense = ["home", "profilo", "confronto", "andamento", "info", "staff", "calendario", "atlete"].includes(active.id);
-
   const isStaffViewer = isStaff;
 
   return (
@@ -390,7 +385,11 @@ function Dashboard() {
             </div>
           </div>
           <ErrorBoundary key={active.id}>
-            {needsSuspense ? <Suspense fallback={<ViewFallback />}>{content}</Suspense> : content}
+            {/* Sempre dentro Suspense: quando non c'è niente da attendere non
+                costa nulla, e toglie di mezzo la lista scritta a mano di quali
+                viste sono caricate in differita — dimenticarcene una faceva
+                crashare l'app (successo con "La squadra"). */}
+            <Suspense fallback={<ViewFallback />}>{content}</Suspense>
           </ErrorBoundary>
         </main>
         <Footer />

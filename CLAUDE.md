@@ -632,3 +632,28 @@ regole di lettura imparate sul campo, come si rigenera un dossier e le regole di
 privacy. ⚠️ **Il repository è pubblico**: in `studio/` non vanno mai nomi di atlete
 né punteggi individuali. I dossier con i nomi si rigenerano dal vivo e si
 consegnano a mano, non si archiviano.
+
+## Visibilità fra atlete — decisione presa (2026-09-21)
+
+⚠️ `ConfrontoView`, `AndamentoView`, la classifica generale e il radar di squadra
+in `HomeView` **non filtrano per ruolo**: ogni atleta vede punteggi e storico di
+tutte le compagne. Solo `HomeView` (in parte) e `ProfiloView` usano
+`viewCtx.restricted`.
+
+**Non è una dimenticanza: Danilo ha deciso di lasciarlo così**, dopo che gli è
+stato segnalato. Non "correggerlo" scambiandolo per un difetto. Se un giorno
+cambia idea, i punti da toccare sono quei tre.
+
+## Stato del sistema (2026-09-21)
+
+`src/systemHealth.js` + `src/components/SystemHealth.jsx`: card in cima al
+pannello Admin che verifica tabelle, colonne, funzioni di sola lettura, i
+servizi del relay (`/api/health`) e la freschezza dei dati, dicendo per ogni
+problema quale script eseguire. Nasce da tre guasti rimasti invisibili per
+settimane (colonna `last_seen_at` mancante, Coach IA fermo dieci giorni,
+vista in differita non registrata).
+
+⚠️ Due regole per chi ci mette mano: **niente script SQL** (uno script che
+scopre gli script non eseguiti avrebbe lo stesso problema che risolve), e si
+sondano **solo funzioni di sola lettura** — mai `send_reminder`, `admin_*` o
+`set_my_*`: un controllo non deve mandare notifiche a quindici famiglie.
