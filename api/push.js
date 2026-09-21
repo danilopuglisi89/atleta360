@@ -31,6 +31,8 @@ export default async function handler(req, res) {
   const payload = JSON.stringify({ title, body: body || "", view: view || "home", type: type || "generic", anchor: anchor || null });
   let ok = 0, gone = 0, failed = 0;
 
+  const morte = [];
+
   await Promise.all(subs.map(async (s) => {
     if (!s?.endpoint || !s?.p256dh || !s?.auth) { failed++; return; }
     try {
@@ -41,12 +43,32 @@ export default async function handler(req, res) {
       );
       ok++;
     } catch (err) {
-      // 404/410 = subscription morta (app disinstallata, permesso revocato):
-      // il client la ricrea da solo alla prossima apertura, qui basta contarla.
-      if (err?.statusCode === 404 || err?.statusCode === 410) gone++;
-      else failed++;
+      // 404/410 = subscription morta (app disinstallata, permesso revocato).
+      if (err?.statusCode === 404 || err?.statusCode === 410) { gone++; morte.push(s.endpoint); }
+      else { failed++; console.error("[push] errore", err?.statusCode, err?.message); }
     }
   }));
+
+  // Le morte vanno cancellate, non solo contate. Prima restavano lì per
+  // sempre — chi non riapre l'app non le ricrea mai — e continuavano a
+  // farsi contare fra le "notifiche attive": il pannello diceva otto atlete
+  // raggiungibili quando non era vero.
+  const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
+  if (morte.length && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const filtro = morte.map((e) => `"${e.replace(/"/g, '\\"')}"`).join(",");
+      await fetch(`${SUPABASE_URL}/rest/v1/push_subscriptions?endpoint=in.(${encodeURIComponent(filtro)})`, {
+        method: "DELETE",
+        headers: { apikey: SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
+      });
+    } catch (e) {
+      console.error("[push] non sono riuscito a cancellare le iscrizioni morte:", e?.message || e);
+    }
+  }
+
+  // Il database chiama e butta via la risposta: senza questa riga nessuno
+  // saprebbe mai quante notifiche sono davvero arrivate.
+  console.log(`[push] "${title}" → consegnate ${ok}, morte ${gone}, fallite ${failed}`);
 
   return res.status(200).json({ ok, gone, failed });
 }
