@@ -106,7 +106,11 @@ function Dashboard() {
   useEffect(() => {
     if (!profile?.id) return;
     const installed = window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone === true;
-    supabase.rpc("touch_last_seen", { p_installed: !!installed });
+    // L'errore va almeno in console: ignorandolo del tutto, "ultimo accesso"
+    // è rimasto vuoto per mesi senza che nulla lo segnalasse (mancava la
+    // colonna last_seen_at, vedi supabase/fix-last-seen.sql).
+    supabase.rpc("touch_last_seen", { p_installed: !!installed })
+      .then(({ error }) => { if (error) console.warn("touch_last_seen:", error.message); });
   }, [profile?.id]);
   // Un'atleta "semplice" (non staff/admin) vede solo il proprio profilo.
   const viewCtx = {
