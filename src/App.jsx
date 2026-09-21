@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState, useEffect, useMemo, useRef } from "react";
-import { Home, User, Users, TrendingUp, Info, Menu, X, ShieldCheck, LogOut, ClipboardList, ClipboardPlus, UserCircle, MessagesSquare, MoreHorizontal, CalendarDays } from "lucide-react";
+import { Home, User, Users, UsersRound, TrendingUp, Info, Menu, X, ShieldCheck, LogOut, ClipboardList, ClipboardPlus, UserCircle, MessagesSquare, MoreHorizontal, CalendarDays } from "lucide-react";
 import { C, font, display, ringForRole, applyTheme, getStoredThemeMode, setStoredThemeMode, getStoredAccent, setStoredAccent } from "./theme";
 import ThemeToggle from "./components/ThemeToggle";
 import { AuthProvider, useAuth } from "./auth";
@@ -34,6 +34,7 @@ const AndamentoView = lazy(() => import("./views/AndamentoView"));
 const StaffView = lazy(() => import("./views/StaffView"));
 const InfoView = lazy(() => import("./views/InfoView"));
 const CalendarioView = lazy(() => import("./views/CalendarioView"));
+const AtleteView = lazy(() => import("./views/AtleteView"));
 
 function ViewFallback() {
   return <DashboardSkeleton />;
@@ -53,6 +54,7 @@ function scrollToAnchor(id, attempt = 0) {
 const BASE_NAV = [
   { id: "home", label: "Home", icon: Home, comp: HomeView },
   { id: "profilo", label: "Profilo Atleta", icon: User, comp: ProfiloView },
+  { id: "atlete", label: "La squadra", icon: UsersRound, comp: AtleteView },
   { id: "confronto", label: "Confronto", icon: Users, comp: ConfrontoView },
   { id: "andamento", label: "Andamento", icon: TrendingUp, comp: AndamentoView },
   { id: "calendario", label: "Calendario", icon: CalendarDays, comp: CalendarioView },
@@ -147,7 +149,7 @@ function Dashboard() {
   // il service worker passa ?view=... nell'URL (vedi src/sw.js).
   const [view, setView] = useState(() => {
     const v = new URLSearchParams(window.location.search).get("view");
-    return ["home", "profilo", "chat", "andamento", "staff", "info", "calendario"].includes(v) ? v : "home";
+    return ["home", "profilo", "chat", "andamento", "staff", "info", "calendario", "atlete"].includes(v) ? v : "home";
   });
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cardTarget, setCardTarget] = useState(null);          // card social aperta cliccando un nome
