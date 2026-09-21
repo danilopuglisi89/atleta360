@@ -13,7 +13,7 @@ app.all("/api/push/dispatch", (req, res) => pushHandler(req, res));
 app.all("/api/summary", (req, res) => summaryHandler(req, res));
 app.get("/api/health", (_req, res) => res.json({
   status: "ok",
-  coach: Boolean(process.env.GEMINI_API_KEY),
+  coach: Boolean(process.env.ANTHROPIC_API_KEY),
   push: Boolean(process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY),
   summary: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY),
 }));

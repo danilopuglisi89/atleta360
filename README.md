@@ -140,7 +140,7 @@ La chiave IA è un segreto e vive lato server nella funzione [`api/coach.js`](ap
 1. Crea una chiave gratuita su [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
    (serve un account Google; niente carta di credito).
 2. Vercel → progetto → **Settings → Environment Variables** → aggiungi
-   `GEMINI_API_KEY` con la tua chiave (ambiente **Production**).
+   `ANTHROPIC_API_KEY` con la tua chiave (ambiente **Production**).
 3. Fai un **Redeploy** (o un nuovo push): la chat si attiva.
 
 > La chat non funziona con `npm run dev` (le funzioni `/api` girano solo su Vercel).

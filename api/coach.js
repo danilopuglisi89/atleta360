@@ -1,14 +1,21 @@
 /*
- * Funzione serverless "Coach IA" (gira su Vercel, lato server).
- * Usa GOOGLE GEMINI, che ha un piano gratuito (nessuna carta di credito).
+ * Funzione serverless "Coach IA" (gira sul VPS dentro atleta360-coach, e su
+ * Vercel). Usa CLAUDE di Anthropic.
  *
- * La chiave GEMINI_API_KEY è un segreto: vive solo qui, come variabile
- * d'ambiente su Vercel — mai nel frontend né nel repository.
- * Crea la chiave gratis su https://aistudio.google.com/apikey
+ * Passato a Claude il 21/09/2026: girava su Google Gemini, che l'11 settembre
+ * ha esaurito i crediti prepagati lasciando il Coach fermo per dieci giorni
+ * senza che nessuno se ne accorgesse.
+ *
+ * La chiave ANTHROPIC_API_KEY è un segreto: vive in .env.coach sul VPS (e
+ * nelle variabili d'ambiente su Vercel) — mai nel frontend né nel repository.
  */
-// Alias sempre valido sulla versione flash corrente (non si "rompe" quando
-// Google dismette una versione specifica). Gratuito e veloce.
-const MODEL = "gemini-flash-latest";
+import Anthropic from "@anthropic-ai/sdk";
+
+// Claude Haiku 4.5: il più economico del listino ($1 per milione di token in
+// ingresso, $5 in uscita). Adatto qui, dove il contesto è piccolo e le
+// risposte corte. Niente "thinking": non serve per consigli brevi e
+// costerebbe di più.
+const MODEL = "claude-haiku-4-5";
 
 // Origini esterne autorizzate a usare il coach (CORS): l'app di Aurora è un
 // sito statico su danilopuglisi.com senza un proprio backend e riusa questa
@@ -60,11 +67,12 @@ export default async function handler(req, res) {
     res.status(405).json({ error: "Metodo non consentito." });
     return;
   }
-  const key = process.env.GEMINI_API_KEY;
+  const key = process.env.ANTHROPIC_API_KEY;
   if (!key) {
-    res.status(500).json({ error: "Coach IA non ancora configurato: manca GEMINI_API_KEY su Vercel." });
+    res.status(500).json({ error: "Coach IA non ancora configurato: manca ANTHROPIC_API_KEY." });
     return;
   }
+  const anthropic = new Anthropic({ apiKey: key });
 
   // Limiti d'uso: messaggi onesti e amichevoli, mai risposte finte.
   const ip = req.headers["x-real-ip"] || (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket?.remoteAddress || "?";
@@ -99,18 +107,14 @@ ${notesList}
 
 Punteggi attuali (scala 1-10):
 ${scoreLines}`;
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(key)}`;
-      const r = await fetch(url, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: sys }] },
-          contents: [{ role: "user", parts: [{ text: "Scrivi la bozza." }] }],
-          generationConfig: { maxOutputTokens: 300, temperature: 0.6, thinkingConfig: { thinkingBudget: 0 } },
-        }),
+      const r = await anthropic.messages.create({
+        model: MODEL,
+        max_tokens: 300,
+        temperature: 0.6,
+        system: sys,
+        messages: [{ role: "user", content: "Scrivi la bozza." }],
       });
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok) { res.status(502).json({ error: "Il coach IA non è raggiungibile in questo momento." }); return; }
-      const text = (data.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("").trim();
+      const text = r.content.filter((b) => b.type === "text").map((b) => b.text).join("").trim();
       res.status(200).json({ reply: text || "Non ho una bozza da proporre." });
       return;
     }
@@ -165,44 +169,39 @@ ${goalLines ? `\nObiettivi personali fissati dall'atleta (tienine conto nei cons
 ${regole}`;
     }
 
-    // Gemini usa i ruoli "user" e "model" (non "assistant").
-    const contents = messages
+    // Claude usa i ruoli "user" e "assistant", come li abbiamo già nel client.
+    // La cronologia deve iniziare con "user": tagliando agli ultimi 12 messaggi
+    // si potrebbe restare con una risposta dell'assistente in testa.
+    let storia = messages
       .slice(-12)
       .filter((m) => m && (m.role === "user" || m.role === "assistant") && m.content)
-      .map((m) => ({
-        role: m.role === "assistant" ? "model" : "user",
-        parts: [{ text: String(m.content) }],
-      }));
+      .map((m) => ({ role: m.role, content: String(m.content) }));
+    while (storia.length && storia[0].role !== "user") storia = storia.slice(1);
+    if (storia.length === 0) {
+      res.status(400).json({ error: "Nessun messaggio." });
+      return;
+    }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(key)}`;
-    const r = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: system }] },
-        contents,
-        // thinkingBudget: 0 → niente token di "ragionamento": risposte complete,
-        // rapide ed economiche (adatte a una chat di consigli brevi).
-        generationConfig: { maxOutputTokens: 800, temperature: 0.7, thinkingConfig: { thinkingBudget: 0 } },
-      }),
-    });
-
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) {
-      console.error("[coach] Gemini error:", JSON.stringify(data));
-      // 429 = quota/crediti Gemini esauriti: messaggio diverso, così chi legge
-      // capisce che non è un guasto e che si risolve da solo (o col rinnovo).
-      const msg = r.status === 429
+    let r;
+    try {
+      r = await anthropic.messages.create({
+        model: MODEL,
+        max_tokens: 800,
+        temperature: 0.7,
+        system,
+        messages: storia,
+      });
+    } catch (err) {
+      console.error("[coach] Anthropic error:", err?.status, err?.message || err);
+      // 429 = troppe richieste o credito esaurito; 401 = chiave non valida.
+      const msg = err?.status === 429
         ? "Il Coach IA è molto richiesto in questo momento: riprova tra qualche minuto. 🙏"
         : "Il Coach IA sta riposando: riprova più tardi. Se continua, avvisa lo staff.";
       res.status(502).json({ error: msg });
       return;
     }
 
-    const text = (data.candidates?.[0]?.content?.parts || [])
-      .map((p) => p.text || "")
-      .join("")
-      .trim();
+    const text = r.content.filter((b) => b.type === "text").map((b) => b.text).join("").trim();
 
     res.status(200).json({ reply: text || "Non ho una risposta al momento, riprova." });
   } catch (e) {
