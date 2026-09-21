@@ -135,47 +135,60 @@ export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile, onGoV
         {flags.feature_teampet && <TeamPetCard />}
         {flags.feature_teamfeed && <TeamFeedCard onOpenCard={onOpenCard} />}
 
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
-          {[
-            { l: "Atlete monitorate", v: NOMI.length },
-            { l: "Focus allenati", v: CORE.length },
-            { l: "Media squadra", v: (NOMI.reduce((a, n) => a + overall(n), 0) / Math.max(NOMI.length, 1)).toFixed(1) },
-            { l: "Ultimo rilevamento", v: lastPeriod },
-          ].map((s) => (
-            <div key={s.l} style={{ flex: "1 1 140px", background: C.card, border: `1px solid ${C.grid}`, borderRadius: 14, padding: "16px 18px" }}>
-              <div style={{ ...display, fontSize: 26, fontWeight: 700, color: C.ink }}>{s.v}</div>
-              <div style={{ ...font, fontSize: 12.5, color: C.muted, marginTop: 2 }}>{s.l}</div>
+        {NOMI.length === 0 ? (
+          <Card title="I numeri della squadra arrivano col primo rilevamento"
+            subtitle="Medie, profilo di squadra e classifica">
+            <div style={{ ...font, fontSize: 13.5, color: C.muted, lineHeight: 1.55 }}>
+              Appena il mister salva le prime valutazioni, qui compaiono la media
+              della squadra, il radar dei focus e la classifica. Nel frattempo il
+              resto dell'app funziona già: autovalutazione, calendario, quiz e bacheca.
             </div>
-          ))}
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
-          <Card title="Profilo medio della squadra" subtitle="Media delle competenze su tutte le atlete">
-            <ResponsiveContainer width="100%" height={300}>
-              <RadarChart data={TEAM_AVG} outerRadius="72%">
-                <PolarGrid stroke={C.grid} />
-                <PolarAngleAxis dataKey="skill" tick={{ fill: C.muted, fontSize: 11, ...font }} />
-                <PolarRadiusAxis domain={[0, 10]} tick={false} axisLine={false} />
-                <Radar name="Media" dataKey="valore" stroke={C.navy2} fill={C.navy2} fillOpacity={0.28} strokeWidth={2} />
-                <Tooltip contentStyle={tooltipStyle} />
-              </RadarChart>
-            </ResponsiveContainer>
-            {NOMI.length > 0 && (
-              <div style={{ marginTop: 12 }}>
-                <ShareButton kind="team" label="Condividi la squadra" variant="ghost"
-                  data={{
-                    teamName: "Oasi Volley", keys: CORE, SHORT: d.SHORT, athleteCount: NOMI.length, lastPeriod,
-                    avg: Object.fromEntries(CORE.map((k) => [k,
-                      Math.round((NOMI.reduce((a, n) => a + (atleti[n].scores[k] ?? 0), 0) / Math.max(NOMI.length, 1)) * 10) / 10])),
-                  }} />
+          </Card>
+        ) : (
+          <>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
+            {[
+              { l: "Atlete monitorate", v: NOMI.length },
+              { l: "Focus allenati", v: CORE.length },
+              { l: "Media squadra", v: (NOMI.reduce((a, n) => a + overall(n), 0) / Math.max(NOMI.length, 1)).toFixed(1) },
+              { l: "Ultimo rilevamento", v: lastPeriod },
+            ].map((s) => (
+              <div key={s.l} style={{ flex: "1 1 140px", background: C.card, border: `1px solid ${C.grid}`, borderRadius: 14, padding: "16px 18px" }}>
+                <div style={{ ...display, fontSize: 26, fontWeight: 700, color: C.ink }}>{s.v}</div>
+                <div style={{ ...font, fontSize: 12.5, color: C.muted, marginTop: 2 }}>{s.l}</div>
               </div>
-            )}
-          </Card>
+            ))}
+          </div>
 
-          <Card id="a360-classifica" title="Classifica generale" subtitle="Tocca un nome per vedere il profilo">
-            <Classifica RANK={RANK} overall={overall} onOpen={onOpenCard} />
-          </Card>
-        </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
+            <Card title="Profilo medio della squadra" subtitle="Media delle competenze su tutte le atlete">
+              <ResponsiveContainer width="100%" height={300}>
+                <RadarChart data={TEAM_AVG} outerRadius="72%">
+                  <PolarGrid stroke={C.grid} />
+                  <PolarAngleAxis dataKey="skill" tick={{ fill: C.muted, fontSize: 11, ...font }} />
+                  <PolarRadiusAxis domain={[0, 10]} tick={false} axisLine={false} />
+                  <Radar name="Media" dataKey="valore" stroke={C.navy2} fill={C.navy2} fillOpacity={0.28} strokeWidth={2} />
+                  <Tooltip contentStyle={tooltipStyle} />
+                </RadarChart>
+              </ResponsiveContainer>
+              {NOMI.length > 0 && (
+                <div style={{ marginTop: 12 }}>
+                  <ShareButton kind="team" label="Condividi la squadra" variant="ghost"
+                    data={{
+                      teamName: "Oasi Volley", keys: CORE, SHORT: d.SHORT, athleteCount: NOMI.length, lastPeriod,
+                      avg: Object.fromEntries(CORE.map((k) => [k,
+                        Math.round((NOMI.reduce((a, n) => a + (atleti[n].scores[k] ?? 0), 0) / Math.max(NOMI.length, 1)) * 10) / 10])),
+                    }} />
+                </div>
+              )}
+            </Card>
+
+            <Card id="a360-classifica" title="Classifica generale" subtitle="Tocca un nome per vedere il profilo">
+              <Classifica RANK={RANK} overall={overall} onOpen={onOpenCard} />
+            </Card>
+          </div>
+          </>
+        )}
 
         {flags.feature_polls && <PollsCard uid={auth?.uid} isStaff={auth?.isStaff} />}
         {flags.feature_photoalbum && <PhotoAlbumCard uid={auth?.uid} isStaff={auth?.isStaff} />}

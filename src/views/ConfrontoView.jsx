@@ -7,6 +7,7 @@ import { Card, tooltipStyle } from "../components/ui";
 export default function ConfrontoView({ d }) {
   const { NOMI, atleti } = d;
   const [sel, setSel] = useState(() => [NOMI[0], NOMI[1]].filter(Boolean));
+  const squadraVuota = NOMI.length === 0;
   const toggle = (n) => setSel((s) => s.includes(n) ? s.filter((x) => x !== n) : (s.length < 3 ? [...s, n] : s));
 
   const radar = CORE.map((k) => {
@@ -14,6 +15,20 @@ export default function ConfrontoView({ d }) {
     sel.forEach((n) => (row[n] = atleti[n]?.scores[k] ?? 0));
     return row;
   });
+
+  // Prima del primo rilevamento qui comparivano un selettore senza nomi e un
+  // grafico piatto: meglio dire perché è vuoto.
+  if (squadraVuota) {
+    return (
+      <Card title="Ancora niente da confrontare"
+        subtitle="Il confronto si accende col primo rilevamento del mister">
+        <div style={{ ...font, fontSize: 13.5, color: C.muted, lineHeight: 1.55 }}>
+          Qui potrai mettere a confronto fino a tre profili sugli stessi focus.
+          Serve però che il mister abbia salvato almeno una valutazione.
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <div>

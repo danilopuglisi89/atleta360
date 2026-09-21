@@ -38,6 +38,16 @@ function Podium({ names, overall, onOpen }) {
 
 /* Classifica: podio in alto + barre per le altre atlete. */
 export default function Classifica({ RANK, overall, onOpen }) {
+  // Senza rilevamenti la classifica era un riquadro bianco: sembrava rotta,
+  // invece sta solo aspettando il primo voto del mister.
+  if (!RANK || RANK.length === 0) {
+    return (
+      <div style={{ ...font, fontSize: 13.5, color: C.muted, lineHeight: 1.55 }}>
+        La classifica compare dopo il primo rilevamento del mister. Fino ad allora
+        non c'è niente da ordinare.
+      </div>
+    );
+  }
   const max = Math.max(...RANK.map(overall), 1);
   const hasPodium = RANK.length >= 3;
   const rest = hasPodium ? RANK.slice(3) : RANK;
