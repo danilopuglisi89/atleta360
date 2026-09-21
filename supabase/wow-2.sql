@@ -21,7 +21,10 @@ create policy "buddies read" on public.streak_buddies for select using (public.i
 create policy "buddies write own" on public.streak_buddies for all using (
   exists (select 1 from public.profiles p join public.athletes a on a.identifier = p.athlete_id where p.id = auth.uid() and a.id = streak_buddies.athlete_id)
 ) with check (
-  exists (select 1 from public.profiles p join public.athletes a on a.identifier = p.athlete_id where p.id = auth.uid() and a.id = athlete_id)
+  -- athlete_id va SEMPRE qualificato: qui dentro c'è profiles nel FROM e
+  -- Postgres lo risolverebbe come profiles.athlete_id (testo) invece della
+  -- riga in inserimento (uuid) → "operator does not exist: uuid = text".
+  exists (select 1 from public.profiles p join public.athletes a on a.identifier = p.athlete_id where p.id = auth.uid() and a.id = streak_buddies.athlete_id)
 );
 
 create or replace function public.my_streak_buddy()
