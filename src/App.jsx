@@ -54,17 +54,23 @@ function scrollToAnchor(id, attempt = 0) {
    APP + LAYOUT RESPONSIVE
    ============================================================ */
 const BASE_NAV = [
-  { id: "home", label: "Home", icon: Home, comp: HomeView },
-  { id: "profilo", label: "Profilo Atleta", icon: User, comp: ProfiloView },
-  { id: "atlete", label: "La squadra", icon: UsersRound, comp: AtleteView },
-  { id: "confronto", label: "Confronto", icon: Users, comp: ConfrontoView },
-  { id: "andamento", label: "Andamento", icon: TrendingUp, comp: AndamentoView },
-  { id: "calendario", label: "Calendario", icon: CalendarDays, comp: CalendarioView },
-  { id: "info", label: "Info & Legenda", icon: Info, comp: InfoView },
+  { id: "home", label: "Home", icon: Home, comp: HomeView, group: "tu" },
+  { id: "profilo", label: "Profilo Atleta", icon: User, comp: ProfiloView, group: "tu" },
+  { id: "atlete", label: "La squadra", icon: UsersRound, comp: AtleteView, group: "squadra" },
+  { id: "confronto", label: "Confronto", icon: Users, comp: ConfrontoView, group: "squadra" },
+  { id: "andamento", label: "Andamento", icon: TrendingUp, comp: AndamentoView, group: "squadra" },
+  { id: "calendario", label: "Calendario", icon: CalendarDays, comp: CalendarioView, group: "squadra" },
+  { id: "info", label: "Info & Legenda", icon: Info, comp: InfoView, group: "app" },
 ];
 
-// Le voci che entrano nella tab bar mobile (le altre restano nel drawer "Altro").
-const MOBILE_TAB_IDS = ["home", "profilo", "chat", "andamento"];
+// Con 9-12 voci un elenco piatto si legge male: due titoletti bastano a dargli
+// un ritmo. Il primo e l'ultimo gruppo non hanno titolo, sarebbe rumore.
+const NAV_GROUPS = [
+  { key: "tu", label: null },
+  { key: "squadra", label: "Squadra" },
+  { key: "staff", label: "Staff" },
+  { key: "app", label: null },
+];
 
 // Tema chiaro/scuro/automatico: mutando gli hex condivisi in theme.js e
 // forzando un re-render, ogni schermata legge da sola i colori nuovi.
@@ -138,13 +144,15 @@ function Dashboard() {
     isStaff,
     isAdmin,
   };
+  // Per un'atleta "Profilo Atleta" suona come uno strumento dello staff:
+  // quello che apre è il suo.
   const NAV = [
-    ...BASE_NAV,
-    ...(isStaff ? [{ id: "staff", label: "Area Staff", icon: ClipboardList, comp: StaffView }] : []),
-    ...(canAssess ? [{ id: "rilevamento", label: "Nuovo rilevamento", icon: ClipboardPlus, comp: NewAssessment }] : []),
-    { id: "personale", label: "Area personale", icon: UserCircle, comp: PersonalArea },
-    ...(isChatMember ? [{ id: "chat", label: "Chat", icon: MessagesSquare, comp: ChatPage }] : []),
-    ...(isAdmin ? [{ id: "admin", label: "Admin", icon: ShieldCheck, comp: AdminPanel }] : []),
+    ...BASE_NAV.map((x) => (x.id === "profilo" && viewCtx.restricted ? { ...x, label: "Il mio profilo" } : x)),
+    ...(isStaff ? [{ id: "staff", label: "Area Staff", icon: ClipboardList, comp: StaffView, group: "staff" }] : []),
+    ...(canAssess ? [{ id: "rilevamento", label: "Nuovo rilevamento", icon: ClipboardPlus, comp: NewAssessment, group: "staff" }] : []),
+    { id: "personale", label: "Area personale", icon: UserCircle, comp: PersonalArea, group: "tu" },
+    ...(isChatMember ? [{ id: "chat", label: "Chat", icon: MessagesSquare, comp: ChatPage, group: "squadra" }] : []),
+    ...(isAdmin ? [{ id: "admin", label: "Admin", icon: ShieldCheck, comp: AdminPanel, group: "staff" }] : []),
   ];
 
   // Vista iniziale: se l'app è stata aperta toccando una notifica push,
@@ -206,33 +214,56 @@ function Dashboard() {
   const active = NAV.find((x) => x.id === view) || NAV[0];
   const ViewComp = active.comp;
 
-  const mobileTabs = MOBILE_TAB_IDS.map((id) => NAV.find((x) => x.id === id)).filter(Boolean);
-  const moreItems = NAV.filter((x) => !MOBILE_TAB_IDS.includes(x.id));
+  // La barra in basso teneva "Andamento" per tutti: per un'atleta e quasi
+  // sempre vuoto, mentre "La squadra" e la pagina che usa davvero. Allo staff
+  // servono invece l'area di lavoro e il calendario.
+  // Piu di quattro id del necessario: si prendono i primi quattro che esistono
+  // davvero per questo ruolo (uno staff non admin, per esempio, non ha la chat).
+  const tabIds = viewCtx.restricted
+    ? ["home", "profilo", "atlete", "chat", "calendario"]
+    : ["home", "staff", "calendario", "chat", "atlete"];
+  const mobileTabs = tabIds.map((id) => NAV.find((x) => x.id === id)).filter(Boolean).slice(0, 4);
+  const mobileIds = mobileTabs.map((x) => x.id);
+  const moreItems = NAV.filter((x) => !mobileIds.includes(x.id));
   const moreActive = moreItems.some((x) => x.id === view);
 
   const goTo = (id) => { setView(id); setMobileOpen(false); if (id === "profilo") setProfileTarget(null); };
 
+  const NavVoce = (item) => {
+    const on = item.id === view;
+    const Icon = item.icon;
+    const badge = item.id === "chat" ? unreadChat.length : 0;
+    return (
+      <button key={item.id} onClick={() => goTo(item.id)}
+        style={{ ...font, display: "flex", alignItems: "center", gap: 12, padding: "11px 14px", borderRadius: 11,
+          border: "none", cursor: "pointer", textAlign: "left", fontSize: 14.5,
+          background: on ? "rgba(255,122,24,0.15)" : "transparent",
+          color: on ? "#FFB27A" : "rgba(255,255,255,0.72)",
+          fontWeight: on ? 600 : 400, borderLeft: on ? `3px solid ${C.orange}` : "3px solid transparent", transition: "all .15s" }}>
+        <Icon size={19} /> {item.label}
+        {badge > 0 && (
+          <span style={{ marginLeft: "auto", minWidth: 18, height: 18, borderRadius: 99, background: "#E11D48", color: "#fff",
+            ...display, fontSize: 10.5, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
+            {badge > 9 ? "9+" : badge}
+          </span>
+        )}
+      </button>
+    );
+  };
+
   const NavList = () => (
     <nav style={{ display: "flex", flexDirection: "column", gap: 4, padding: "8px 12px" }}>
-      {NAV.map((item) => {
-        const on = item.id === view;
-        const Icon = item.icon;
-        const badge = item.id === "chat" ? unreadChat.length : 0;
+      {NAV_GROUPS.map((g) => {
+        const voci = NAV.filter((x) => (x.group || "app") === g.key);
+        if (voci.length === 0) return null;
         return (
-          <button key={item.id} onClick={() => goTo(item.id)}
-            style={{ ...font, display: "flex", alignItems: "center", gap: 12, padding: "11px 14px", borderRadius: 11,
-              border: "none", cursor: "pointer", textAlign: "left", fontSize: 14.5,
-              background: on ? "rgba(255,122,24,0.15)" : "transparent",
-              color: on ? "#FFB27A" : "rgba(255,255,255,0.72)",
-              fontWeight: on ? 600 : 400, borderLeft: on ? `3px solid ${C.orange}` : "3px solid transparent", transition: "all .15s" }}>
-            <Icon size={19} /> {item.label}
-            {badge > 0 && (
-              <span style={{ marginLeft: "auto", minWidth: 18, height: 18, borderRadius: 99, background: "#E11D48", color: "#fff",
-                ...display, fontSize: 10.5, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
-                {badge > 9 ? "9+" : badge}
-              </span>
+          <div key={g.key} style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: g.label ? 14 : 0 }}>
+            {g.label && (
+              <div style={{ ...font, fontSize: 10.5, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase",
+                color: "rgba(255,255,255,0.38)", padding: "0 14px 2px" }}>{g.label}</div>
             )}
-          </button>
+            {voci.map(NavVoce)}
+          </div>
         );
       })}
     </nav>
