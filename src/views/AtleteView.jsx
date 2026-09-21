@@ -2,11 +2,12 @@
 // foto e ruolo. Un tocco apre il profilo stile Facebook già esistente.
 // Vedi supabase/members-directory.sql per la funzione che alimenta l'elenco.
 import { useEffect, useMemo, useState } from "react";
-import { Search, Shirt, Users } from "lucide-react";
+import { Search, Shirt, Users, Send } from "lucide-react";
 import { C, font, display, ringForRole } from "../theme";
 import { supabase } from "../supabaseClient";
 import { Card } from "../components/ui";
 import { Avatar } from "../PersonalArea";
+import { useMessagePerson } from "../profileLink";
 
 const GRUPPI = [
   { key: "atlete", titolo: "Atlete", test: (m) => m.category === "atleta" },
@@ -14,13 +15,18 @@ const GRUPPI = [
   { key: "direzione", titolo: "Direzione", test: (m) => m.category === "direzione" },
 ];
 
-function MemberCard({ m, onOpen }) {
+function MemberCard({ m, onOpen, mioUid }) {
+  const scrivi = useMessagePerson();
   const ruolo = m.category === "atleta" ? (m.ruolo || "Atleta") : (m.ruolo || (m.role === "admin" ? "Amministrazione" : "Staff"));
+  // Un <button> dentro un <button> non è HTML valido: la scheda è un div
+  // cliccabile, così la scorciatoia al messaggio può starci dentro.
   return (
-    <button onClick={() => onOpen(m.id)} title={`Apri il profilo di ${m.name || "questa persona"}`}
+    <div role="button" tabIndex={0} onClick={() => onOpen(m.id)}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(m.id); } }}
+      title={`Apri il profilo di ${m.name || "questa persona"}`}
       style={{ ...font, display: "flex", alignItems: "center", gap: 12, textAlign: "left", width: "100%",
         background: C.card, border: `1px solid ${C.grid}`, borderRadius: 14, padding: "12px 14px",
-        cursor: "pointer", color: C.ink }}>
+        cursor: "pointer", color: C.ink, boxSizing: "border-box" }}>
       <Avatar url={m.avatar_url} name={m.name} size={48} ring={ringForRole(m.role, m.category)} />
       <div style={{ minWidth: 0, flex: 1 }}>
         <div style={{ ...display, fontSize: 15, fontWeight: 700, color: C.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -36,11 +42,21 @@ function MemberCard({ m, onOpen }) {
           )}
         </div>
       </div>
-    </button>
+      {scrivi && m.category === "atleta" && m.id !== mioUid && (
+        <button onClick={(e) => { e.stopPropagation(); scrivi(m.id, m.name || ""); }}
+          aria-label={`Scrivi a ${m.name || "questa persona"}`} title="Messaggio privato"
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40,
+            flexShrink: 0, borderRadius: 11, border: `1px solid ${C.grid}`, background: C.surface,
+            color: C.navy2, cursor: "pointer" }}>
+          <Send size={16} />
+        </button>
+      )}
+    </div>
   );
 }
 
-export default function AtleteView({ onOpenCard }) {
+export default function AtleteView({ onOpenCard, auth }) {
+  const mioUid = auth?.uid || null;
   const [rows, setRows] = useState(null);       // null = caricamento
   const [unavailable, setUnavailable] = useState(false);
   const [q, setQ] = useState("");
@@ -97,7 +113,7 @@ export default function AtleteView({ onOpenCard }) {
                 {titolo} · {gruppo.length}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 10 }}>
-                {gruppo.map((m) => <MemberCard key={m.id} m={m} onOpen={onOpenCard} />)}
+                {gruppo.map((m) => <MemberCard key={m.id} m={m} onOpen={onOpenCard} mioUid={mioUid} />)}
               </div>
             </div>
           );

@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
+import PersonName from "./profileLink";
 import { Send, ImagePlus, X, Trash2, Plus } from "lucide-react";
 import { C, font, display } from "./theme";
 import { supabase } from "./supabaseClient";
@@ -112,7 +113,7 @@ export default function DirectMessages({ initialToId, initialToName, onConversat
           <Plus size={17} /> Nuovo messaggio privato
           {unreadFromIds.length > 0 && <span style={{ position: "absolute", top: -3, right: -3, width: 12, height: 12, borderRadius: 99, background: "#E11D48", border: "2px solid #fff" }} />}
         </button>
-        {to && <span style={{ ...font, fontSize: 13.5, color: C.muted }}>Conversazione con <b style={{ color: C.ink }}>{to.name}</b></span>}
+        {to && <span style={{ ...font, fontSize: 13.5, color: C.muted }}>Conversazione con <PersonName target={to.id} style={{ color: C.ink, fontWeight: 700 }}>{to.name}</PersonName></span>}
       </div>
 
       {!toId ? (

@@ -2,6 +2,7 @@
 // vicenda la fiamma cresce solo quando fate ENTRAMBE il check-in lo stesso
 // giorno. Non è mia, è nostra — non la lasci morire.
 import { useState } from "react";
+import PersonName from "../profileLink";
 import { Flame, Users, Check } from "lucide-react";
 import { C, font, display } from "../theme";
 import { Card, Select } from "./ui";
@@ -45,7 +46,7 @@ export default function StreakBuddyCard({ myAthleteId, roster }) {
 
       {buddy && !buddy.confirmed && (
         <div style={{ ...font, fontSize: 13.5, color: C.muted, display: "flex", alignItems: "center", gap: 8 }}>
-          <Users size={16} color={C.navy2} /> Hai proposto <b style={{ color: C.ink }}>{buddy.buddy_name}</b> — aspetta che vi scelga anche lei per far partire la streak.
+          <Users size={16} color={C.navy2} /> Hai proposto <PersonName target={buddy.buddy_name} style={{ color: C.ink, fontWeight: 700 }}>{buddy.buddy_name}</PersonName> — aspetta che vi scelga anche lei per far partire la streak.
         </div>
       )}
 

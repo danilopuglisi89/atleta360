@@ -7,6 +7,7 @@ import { C, font, display } from "../theme";
 import { Card } from "./ui";
 import { supabase } from "../supabaseClient";
 import { useWall } from "../wall";
+import PersonName, { useMessagePerson } from "../profileLink";
 
 const MOODS = ["😄", "💪", "😌", "😅", "😞", "🔥"];
 const fmtDate = (iso) => new Date(iso).toLocaleDateString("it-IT", { day: "2-digit", month: "short" });
@@ -139,6 +140,7 @@ function Composer({ wall, viewerUid, institutional }) {
 }
 
 function PostRow({ post, wall, viewerUid, isStaff }) {
+  const scrivi = useMessagePerson();
   const canDelete = post.author_id === viewerUid || isStaff;
   const myTag = post.tags.find((t) => t.mine);
 
@@ -159,7 +161,11 @@ function PostRow({ post, wall, viewerUid, isStaff }) {
           {post.photo_url && <img src={post.photo_url} alt="" style={{ maxWidth: "100%", borderRadius: 10, marginTop: 8, display: "block" }} />}
           {post.tags.length > 0 && (
             <div style={{ ...font, fontSize: 12, color: C.muted, marginTop: 8 }}>
-              con {post.tags.map((t) => t.name).join(", ")}
+              con {post.tags.map((t, i) => (
+                <span key={t.userId}>
+                  <PersonName target={t.userId}>{t.name}</PersonName>{i < post.tags.length - 1 ? ", " : ""}
+                </span>
+              ))}
               {myTag && <button onClick={() => wall.removeMyTag(post.id)} style={{ ...font, fontSize: 11.5, color: C.navy2, background: "none", border: "none", cursor: "pointer", marginLeft: 6, textDecoration: "underline" }}>togliti il tag</button>}
             </div>
           )}

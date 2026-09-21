@@ -2,7 +2,8 @@
 // facoltative, visibile a tutta la squadra con reazioni rapide (tabelle
 // daily_moments/moment_reactions, Ondata A + WOW-1).
 import { useRef, useState } from "react";
-import { Sparkles, Camera, X } from "lucide-react";
+import PersonName, { useMessagePerson } from "../profileLink";
+import { Sparkles, Camera, X, Send } from "lucide-react";
 import { C, font, display } from "../theme";
 import { Card } from "./ui";
 import { useDailyMoments } from "../participation";
@@ -12,6 +13,7 @@ const EMOJI = ["😄", "💪", "😅", "😴", "🔥", "😤", "🥳", "😌"];
 const QUICK_REACTIONS = ["❤️", "😂", "🔥", "👏"];
 
 export default function DailyMomentCard({ uid }) {
+  const scrivi = useMessagePerson();
   const { feed, mine, save, reactions, myReactions, react, unavailable } = useDailyMoments(uid);
   const [picked, setPicked] = useState(null);
   const [note, setNote] = useState("");
@@ -88,7 +90,7 @@ export default function DailyMomentCard({ uid }) {
               {m.photo && <img src={m.photo} alt="" onClick={() => setViewer(m.photo)} style={{ width: 34, height: 34, borderRadius: 8, objectFit: "cover", cursor: "pointer", flexShrink: 0 }} />}
               <div title={m.note || ""} style={{ display: "flex", alignItems: "center", gap: 6, background: C.surface, borderRadius: 99, padding: "6px 12px" }}>
                 <span style={{ fontSize: 17 }}>{m.emoji}</span>
-                <span style={{ ...font, fontSize: 12.5, color: C.ink }}>{m.first_name || "?"}</span>
+                <PersonName target={m.user_id} style={{ ...font, fontSize: 12.5, color: C.ink }}>{m.first_name || "?"}</PersonName>
               </div>
               <div style={{ display: "flex", gap: 3 }}>
                 {(reactions[m.id] || []).map((r) => (
@@ -104,6 +106,13 @@ export default function DailyMomentCard({ uid }) {
                     {e}
                   </button>
                 ))}
+                {scrivi && m.user_id !== uid && (
+                  <button onClick={() => scrivi(m.user_id, m.first_name || "")} title={`Scrivi a ${m.first_name || ""}`}
+                    style={{ ...font, fontSize: 11.5, display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px",
+                      borderRadius: 99, border: `1px dashed ${C.grid}`, background: "none", color: C.navy2, cursor: "pointer" }}>
+                    <Send size={11} /> Scrivile
+                  </button>
+                )}
               </div>
             </div>
           ))}

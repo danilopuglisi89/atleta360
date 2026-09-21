@@ -25,6 +25,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { useNotifications } from "./notifications";
 import SecretEgg from "./components/SecretEgg";
 import { useAppSettings } from "./settings";
+import { ProfileLinkProvider } from "./profileLink";
 
 // Le viste con grafici (recharts) pesano parecchio: caricate on-demand così
 // il primo avvio da telefono non le scarica finché non servono davvero.
@@ -371,6 +372,9 @@ function Dashboard() {
   const isStaffViewer = isStaff;
 
   return (
+    // Il collegamento ai profili viaggia da qui a qualsiasi profondità: le
+    // schermate non devono più passarsi onOpenCard di mano in mano.
+    <ProfileLinkProvider open={openCard} message={isAthlete ? openDM : null}>
     <div style={{ ...font, display: "flex", minHeight: "100vh", background: C.surface, color: C.ink }}>
       {/* Sidebar desktop */}
       <aside style={{ width: 250, background: C.navy, flexShrink: 0, position: "sticky", top: 0, height: "100vh", display: "none", flexDirection: "column" }} className="a360-sidebar">
@@ -448,6 +452,7 @@ function Dashboard() {
         />
       )}
     </div>
+    </ProfileLinkProvider>
   );
 }
 
