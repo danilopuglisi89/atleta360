@@ -624,3 +624,11 @@ I ragazzi di Oasi hanno rifatto **oasivolley.it** (Joomla). Cose recepite nella 
 
 **Da eseguire nel SQL Editor** (in quest'ordine, tutti idempotenti): `q1.sql` → `q3.sql` →
 `q4.sql` → `admin-status.sql` → `notification-anchors.sql`. Q2 e gli avatar non richiedono SQL.
+
+## Studio — metodo di lettura delle autovalutazioni (2026-09-21)
+
+`studio/METODO.md` raccoglie come si leggono i dati delle autovalutazioni: soglie,
+regole di lettura imparate sul campo, come si rigenera un dossier e le regole di
+privacy. ⚠️ **Il repository è pubblico**: in `studio/` non vanno mai nomi di atlete
+né punteggi individuali. I dossier con i nomi si rigenerano dal vivo e si
+consegnano a mano, non si archiviano.
