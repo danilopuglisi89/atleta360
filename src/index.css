@@ -130,6 +130,18 @@ body {
   .a360-sitelogo {
     bottom: calc(70px + 10px + env(safe-area-inset-bottom, 0)) !important;
   }
+  /* Nel login la tab bar non c'è: alzato di 80px il logo finiva sopra il
+     pulsante "Entra", e un tocco sul bordo destro apriva danilopuglisi.com
+     invece di far entrare. Qualsiasi posizione fissa su una pagina che scorre
+     copre qualcosa su qualche telefono, quindi lì va in alto a destra sulla
+     foto, di fianco al logo del club, e scorre via con la pagina. Senza
+     supporto a :has() la regola cade e resta il comportamento di prima. */
+  body:has(.a360-authshell) .a360-sitelogo {
+    position: absolute !important;
+    top: calc(23px + env(safe-area-inset-top, 0px));
+    right: 24px !important;
+    bottom: auto !important;
+  }
 }
 @media (min-width: 900px) {
   .a360-sitelogo {
