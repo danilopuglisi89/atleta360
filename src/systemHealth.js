@@ -129,7 +129,7 @@ async function controllaFreschezza() {
     dettaglio: `${nPush} atlete su ${atlete}`,
     fix: nPush <= atlete / 2 ? "Meno di metà squadra riceve le notifiche: ricordaglielo in palestra." : undefined });
 
-  out.push({ id: "accessi", label: "Atlete che sono entrate", ok: atlete === 0 || nEntrate > 0,
+  out.push({ id: "accessi", label: "Atlete entrate dal 21/09", ok: atlete === 0 || nEntrate > 0,
     dettaglio: `${nEntrate} su ${atlete}`,
     fix: nEntrate === 0 ? "Nessuna è ancora entrata da quando l'ultimo accesso viene registrato." : undefined });
 

@@ -96,7 +96,7 @@ export default function UsageDashboard() {
               <div key={x.id} style={{ display: "flex", alignItems: "center", gap: 10, background: "#FFF3E6", borderRadius: 9, padding: "8px 12px" }}>
                 <span style={{ ...font, fontSize: 13.5, color: C.ink, flex: 1 }}>{name(x)}</span>
                 <span style={{ ...font, fontSize: 12, color: "#B4520A", fontWeight: 600 }}>
-                  {x.d === null ? "mai entrata" : `${x.d} giorni fa`}
+                  {x.d === null ? "nessun accesso dal 21/09" : `${x.d} giorni fa`}
                 </span>
               </div>
             ))}

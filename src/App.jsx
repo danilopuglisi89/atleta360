@@ -121,8 +121,21 @@ function Dashboard() {
     // L'errore va almeno in console: ignorandolo del tutto, "ultimo accesso"
     // è rimasto vuoto per mesi senza che nulla lo segnalasse (mancava la
     // colonna last_seen_at, vedi supabase/fix-last-seen.sql).
-    supabase.rpc("touch_last_seen", { p_installed: !!installed })
-      .then(({ error }) => { if (error) console.warn("touch_last_seen:", error.message); });
+    // Non basta all'avvio: su iPhone l'app installata resta in memoria per
+    // giorni e chi ci torna dal multitasking non la riavvia mai — per il
+    // contatore risultava "mai entrata" pur usandola. Si registra anche al
+    // ritorno in primo piano, al massimo ogni 5 minuti.
+    let ultimo = 0;
+    const tocca = () => {
+      if (Date.now() - ultimo < 5 * 60000) return;
+      ultimo = Date.now();
+      supabase.rpc("touch_last_seen", { p_installed: !!installed })
+        .then(({ error }) => { if (error) console.warn("touch_last_seen:", error.message); });
+    };
+    tocca();
+    const onVisible = () => { if (document.visibilityState === "visible") tocca(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
   }, [profile?.id]);
   // Un'atleta "semplice" (non staff/admin) vede solo il proprio profilo.
   const viewCtx = {

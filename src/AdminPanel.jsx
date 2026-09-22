@@ -216,7 +216,7 @@ export default function AdminPanel({ onChange }) {
                     </div>
                     <div style={{ ...font, fontSize: 12, color: C.muted, marginTop: 2 }}>{r.email}</div>
                   </div>
-                  <span title={r.last_seen_at ? new Date(r.last_seen_at).toLocaleString("it-IT") : "Non ha ancora effettuato l'accesso"}
+                  <span title={r.last_seen_at ? new Date(r.last_seen_at).toLocaleString("it-IT") : "Nessun accesso registrato dal 21/09/2026 (prima di quella data non veniva registrato)"}
                     style={{ ...font, fontSize: 11.5, color: r.last_seen_at ? C.muted : "#B4520A", whiteSpace: "nowrap" }}>
                     ⏱ {fmtLastSeen(r.last_seen_at)}
                   </span>
@@ -400,7 +400,7 @@ function fmtDate(iso) {
 // Ultimo accesso: relativo se recente (più facile da leggere di un
 // timestamp), data secca oltre la settimana.
 function fmtLastSeen(iso) {
-  if (!iso) return "mai";
+  if (!iso) return "non dal 21/09";   // prima di quella data non si registrava
   const diffMs = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diffMs / 60000);
   if (mins < 1) return "adesso";
