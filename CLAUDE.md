@@ -685,6 +685,9 @@ vista in differita non registrata).
 "mai entrata" prima di quella data non vuol dire niente. Per misurare l'uso vero si
 guardano le attività nelle tabelle (messaggi, momenti, voti, punti…), che esistono da
 sempre: lette così, il 21/09 le atlete attive almeno una volta erano 14 su 15, non 1.
+Fino al 22/09 si registrava **solo all'avvio**: su iPhone l'app installata resta in
+memoria per giorni, quindi chi ci tornava dal multitasking non veniva contata. Ora
+`App.jsx` registra anche al `visibilitychange`, al massimo ogni 5 minuti.
 
 ⚠️ Due regole per chi ci mette mano: **niente script SQL** (uno script che
 scopre gli script non eseguiti avrebbe lo stesso problema che risolve), e si
