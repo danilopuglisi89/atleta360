@@ -7,7 +7,9 @@ import { Card } from "./components/ui";
 
 const fmt = (iso) => new Date(iso).toLocaleDateString("it-IT", { day: "2-digit", month: "short", year: "numeric" });
 
-export default function NewAssessment({ onSaved }) {
+// `initialAthleteId`: arrivando da "Dai valutazione" (Area Staff o profilo)
+// l'atleta è già scelta, invece della prima in ordine alfabetico.
+export default function NewAssessment({ onSaved, initialAthleteId }) {
   const [athletes, setAthletes] = useState(null);
   const [skills, setSkills] = useState([]);
   const [athleteId, setAthleteId] = useState("");
@@ -21,6 +23,7 @@ export default function NewAssessment({ onSaved }) {
   const [quickNote, setQuickNote] = useState("");
   const [draftBusy, setDraftBusy] = useState(false);
   const athleteNotes = useAthleteNotes(athleteId);
+  const [selfLatest, setSelfLatest] = useState(null);   // come si è vista lei
   const athleteName = athletes?.find((a) => a.id === athleteId)?.identifier || "";
 
   const resetScores = (list, base) => {
@@ -48,9 +51,20 @@ export default function NewAssessment({ onSaved }) {
       setSkills(s.data || []);
       const init = {}; (s.data || []).forEach((k) => (init[k.key] = 6));
       setScores(init);
-      if ((a.data || []).length) setAthleteId(a.data[0].id);
+      const lista = a.data || [];
+      if (lista.length) setAthleteId(lista.some((x) => x.id === initialAthleteId) ? initialAthleteId : lista[0].id);
     })();
   }, []);
+
+  // L'ultima autovalutazione dell'atleta scelta: il mister la vede accanto a
+  // ogni focus ("lei 7") mentre dà la sua. Se la tabella non c'è, niente.
+  useEffect(() => {
+    setSelfLatest(null);
+    if (!athleteId) return;
+    supabase.from("self_assessments").select("scores,created_at").eq("athlete_id", athleteId)
+      .order("created_at", { ascending: false }).limit(1)
+      .then(({ data }) => setSelfLatest(data?.[0] || null));
+  }, [athleteId]);
 
   useEffect(() => {
     (async () => {
@@ -157,6 +171,12 @@ export default function NewAssessment({ onSaved }) {
           </div>
         )}
 
+        {selfLatest && !editingId && (
+          <div style={{ ...font, fontSize: 12.5, color: C.muted, marginBottom: 10 }}>
+            "lei" accanto a ogni focus è la sua autovalutazione del {fmt(selfLatest.created_at)}.
+          </div>
+        )}
+
         {previous && (
           <div style={{ background: C.surface, borderRadius: 10, padding: "8px 12px", marginBottom: 14 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, ...font, fontSize: 12.5, color: C.muted }}>
@@ -176,6 +196,9 @@ export default function NewAssessment({ onSaved }) {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
                 <span style={{ ...font, fontSize: 14, color: C.ink }}>{k.title}</span>
                 <span style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                  {selfLatest?.scores?.[k.key] != null && (
+                    <span title="Come si è valutata lei" style={{ ...font, fontSize: 12, fontWeight: 600, color: C.navy2, background: C.surface, borderRadius: 99, padding: "1px 8px" }}>lei {selfLatest.scores[k.key]}</span>
+                  )}
                   {previous?.scores?.[k.key] != null && (
                     <span style={{ ...font, fontSize: 12, color: C.muted }}>prec. {previous.scores[k.key]}</span>
                   )}

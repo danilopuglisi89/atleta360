@@ -30,8 +30,9 @@ import { useParticipation } from "../participation";
 import { useStars } from "../stars";
 import { Heart } from "lucide-react";
 import { useReactions } from "../reactions";
+import SelfPeek from "../components/SelfPeek";
 
-export default function ProfiloView({ d, auth, target, onOpenFullProfile, onReload }) {
+export default function ProfiloView({ d, auth, target, onOpenFullProfile, onReload, onAssess }) {
   const { NOMI, atleti, overall, storico, roster } = d;
   const restricted = !!auth?.restricted;
   const myId = auth?.athleteId;
@@ -50,6 +51,8 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
   const selfOnlyEntry = !hasData && sel ? d.selfOnly?.[sel] : null;
   const effectiveAthleteId = atleti[sel]?.athleteId ?? selfOnlyEntry?.athleteId ?? roster?.find((r) => r.identifier === sel)?.id;
   const personal = restricted;                    // l'atleta guarda sempre sé stessa
+  // Chi può dare rilevamenti vede in cima l'autovalutazione dell'atleta.
+  const mister = !restricted && !!auth?.canAssess;
   const { goals, addGoal, removeGoal } = useGoals(effectiveAthleteId);
   const { level: participationLevel, streak: participationStreak } = useParticipation(effectiveAthleteId);
   const { stars } = useStars(effectiveAthleteId);
@@ -122,6 +125,12 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
           <div style={{ ...display, fontSize: 18, fontWeight: 700, color: C.ink, marginBottom: -6 }}>
             Ciao {firstName}! 👋 <span style={{ ...font, fontSize: 14, fontWeight: 400, color: C.muted }}>Ecco il tuo profilo.</span>
           </div>
+        )}
+        {mister && auth?.flags?.feature_selfassessment && (
+          <Card title={`Come si vede ${sel}`} subtitle="La sua autovalutazione, da guardare prima di dare la tua" className="a360-noprint">
+            <SelfPeek self={selfOnlyEntry?.self} misterScores={null} name={sel.split(" ")[0]}
+              onAssess={onAssess && effectiveAthleteId ? () => onAssess(effectiveAthleteId) : undefined} />
+          </Card>
         )}
         <Card title="Ancora nessun rilevamento del mister" subtitle="Quando il mister salverà la prima valutazione, qui comparirà il profilo completo.">
           <div style={{ ...font, fontSize: 14, color: C.muted }}>Tutto pronto: si parte! 💪</div>
@@ -227,6 +236,13 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
           Dove {personal ? "sei" : "è"} ora <b style={{ color: C.orange, fontSize: 20, marginLeft: 6 }}>{overall(sel).toFixed(1)}</b>
         </div>
       </div>
+
+      {mister && auth?.flags?.feature_selfassessment && (
+          <Card title={`Come si vede ${sel}`} subtitle="La sua autovalutazione, da guardare prima di dare la tua" className="a360-noprint" style={{ marginBottom: 20 }}>
+            <SelfPeek self={atleti[sel]?.self} misterScores={scores} name={sel.split(" ")[0]}
+              onAssess={onAssess && effectiveAthleteId ? () => onAssess(effectiveAthleteId) : undefined} />
+          </Card>
+        )}
 
       {/* I numeri delle soft skill non sono voti scolastici: dirlo apertamente
           protegge l'atleta (e la lettura che ne dà un genitore). */}

@@ -158,6 +158,7 @@ function Dashboard() {
     uid: profile?.id || null,
     isStaff,
     isAdmin,
+    canAssess,
   };
   // Per un'atleta "Profilo Atleta" suona come uno strumento dello staff:
   // quello che apre è il suo.
@@ -179,10 +180,16 @@ function Dashboard() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cardTarget, setCardTarget] = useState(null);          // card social aperta cliccando un nome
   const [profileTarget, setProfileTarget] = useState(null);    // scheda completa (solo staff)
+  const [assessTarget, setAssessTarget] = useState(null);      // atleta da valutare (uuid), da "Dai valutazione"
   const [dmTarget, setDmTarget] = useState(null);              // destinataria messaggio privato
 
   const openCard = (name) => setCardTarget(name);
   const openFullProfile = (name) => { setCardTarget(null); setProfileTarget(name); setView("profilo"); setMobileOpen(false); };
+  // "Dai valutazione": dritti al rilevamento con l'atleta già scelta.
+  const openAssess = (athleteUuid) => {
+    setCardTarget(null); setAssessTarget(athleteUuid); setView("rilevamento"); setMobileOpen(false);
+    window.scrollTo(0, 0);
+  };
   const openDM = (userId, name) => { setCardTarget(null); setDmTarget({ id: userId, name }); setView("chat"); setMobileOpen(false); };
 
   // Notifiche: chat di squadra, messaggi privati, nuovi rilevamenti, approvazione.
@@ -364,7 +371,7 @@ function Dashboard() {
   if (active.id === "admin") {
     content = <AdminPanel onChange={reload} />;
   } else if (active.id === "rilevamento") {
-    content = <NewAssessment onSaved={reload} />;
+    content = <NewAssessment key={assessTarget || "nuovo"} onSaved={reload} initialAthleteId={assessTarget} />;
   } else if (active.id === "personale") {
     content = <PersonalArea accent={theme.accent} onPickAccent={theme.pickAccent} onOpenCard={openCard} />;
   } else if (active.id === "chat") {
@@ -381,7 +388,8 @@ function Dashboard() {
     // giorno del lancio, prima che il mister ne inserisca uno), le viste
     // restano comunque accessibili — ognuna gestisce da sé la squadra
     // vuota — invece di bloccare tutta l'app dietro un unico avviso.
-    content = <ViewComp d={model} auth={viewCtx} target={profileTarget} onOpenCard={openCard} onOpenFullProfile={openFullProfile} onReload={reload} onGoView={goTo} />;
+    content = <ViewComp d={model} auth={viewCtx} target={profileTarget} onOpenCard={openCard} onOpenFullProfile={openFullProfile} onReload={reload} onGoView={goTo}
+      onAssess={canAssess ? openAssess : undefined} />;
   }
   const isStaffViewer = isStaff;
 
@@ -463,6 +471,7 @@ function Dashboard() {
           onClose={() => setCardTarget(null)}
           onMessage={isAthlete ? openDM : undefined}
           onFullProfile={isStaffViewer ? openFullProfile : undefined}
+          onAssess={canAssess ? openAssess : undefined}
         />
       )}
     </div>

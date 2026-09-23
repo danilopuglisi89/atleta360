@@ -12,6 +12,7 @@ import AwardStarCard from "../components/AwardStarCard";
 import CoachChat from "../CoachChat";
 import GymMode from "../components/GymMode";
 import MondayInsightCard from "../components/MondayInsightCard";
+import SelfPeek from "../components/SelfPeek";
 import Tabs from "../components/Tabs";
 import { useReports } from "../reports";
 import { useAttendance } from "../attendance";
@@ -232,7 +233,60 @@ function CertificatesCard({ athletes }) {
   );
 }
 
-export default function StaffView({ d, onOpenCard }) {
+// Il mister, prima di dare la sua valutazione, guarda come si è vista
+// l'atleta: un elenco di nomi, un tocco apre la sua autovalutazione sotto il
+// nome, e da lì un tocco porta al rilevamento con l'atleta già scelta.
+function SelfAssessmentsCard({ d, onAssess, onOpenFullProfile }) {
+  const [open, setOpen] = useState(null);
+  const rows = (d.roster || []).map((r) => ({
+    ...r,
+    self: d.atleti?.[r.identifier]?.self || d.selfOnly?.[r.identifier]?.self || null,
+    mister: d.atleti?.[r.identifier]?.scores || null,
+  }));
+  if (!rows.length) return null;
+  const fatte = rows.filter((r) => r.self).length;
+  const giorno = (iso) => new Date(iso).toLocaleDateString("it-IT", { day: "numeric", month: "short" });
+
+  return (
+    <Card id="a360-self-list" title="Autovalutazioni delle atlete"
+      subtitle={`${fatte} su ${rows.length} l'hanno fatta · tocca un nome per vederla prima di dare la tua`}
+      style={{ marginTop: 4 }} className="a360-noprint">
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {rows.map((r) => {
+          const aperta = open === r.id;
+          return (
+            <div key={r.id} style={{ border: `1px solid ${aperta ? C.orange : C.grid}`, borderRadius: 12, overflow: "hidden" }}>
+              <button onClick={() => setOpen(aperta ? null : r.id)} aria-expanded={aperta}
+                style={{ ...font, width: "100%", display: "flex", alignItems: "center", gap: 10, minHeight: 48, padding: "8px 14px",
+                  border: "none", background: aperta ? C.orangeSoft : C.card, cursor: "pointer", textAlign: "left" }}>
+                <span style={{ fontSize: 14.5, fontWeight: 600, color: C.ink, flex: 1 }}>{r.identifier}</span>
+                {r.self
+                  ? <span style={{ fontSize: 11.5, fontWeight: 600, color: "#0F7A4E", background: "#DDF3E7", borderRadius: 99, padding: "3px 9px" }}>✓ {giorno(r.self.ts)}</span>
+                  : <span style={{ fontSize: 11.5, color: C.muted, background: C.surface, borderRadius: 99, padding: "3px 9px" }}>non ancora</span>}
+                {aperta ? <ChevronUp size={17} color={C.muted} /> : <ChevronDown size={17} color={C.muted} />}
+              </button>
+              {aperta && (
+                <div style={{ padding: "4px 14px 14px", background: C.card }}>
+                  <SelfPeek self={r.self} misterScores={r.mister} name={r.identifier.split(" ")[0]}
+                    onAssess={onAssess ? () => onAssess(r.id) : undefined} />
+                  {onOpenFullProfile && (
+                    <button onClick={() => onOpenFullProfile(r.identifier)}
+                      style={{ ...font, fontSize: 12.5, color: C.navy2, background: "none", border: "none", cursor: "pointer",
+                        textDecoration: "underline", padding: "10px 0 0" }}>
+                      Apri il profilo completo
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+export default function StaffView({ d, auth, onOpenCard, onOpenFullProfile, onAssess }) {
   const { NOMI, atleti, overall, RANK, TEAM_AVG, lastPeriod } = d;
   const [report, setReport] = useState(null);
   const [repBusy, setRepBusy] = useState(false);
@@ -364,6 +418,8 @@ export default function StaffView({ d, onOpenCard }) {
       {/* ---------- OGGI: il lavoro del giorno ---------- */}
       {tab === "oggi" && (
         <>
+          {auth?.canAssess && <SelfAssessmentsCard d={d} onAssess={onAssess} onOpenFullProfile={onOpenFullProfile} />}
+
           <MondayInsightCard team={team} skills={skills} />
 
           {attentionAlerts.length > 0 && (

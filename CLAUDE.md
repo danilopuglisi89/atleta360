@@ -660,6 +660,25 @@ consegnano a mano, non si archiviano.
 - ⚠️ Resta aperto: `ProfilePage` legge `profiles` con `select *`, quindi il
   cognome intero arriva comunque al telefono (solo non si vede).
 
+## Autovalutazione a colpo d'occhio per il mister (2026-09-23)
+
+Richiesta del mister: vedere come si è valutata ogni atleta **prima** di dare
+la sua valutazione, per confrontarle. Tutto riservato a chi può valutare
+(`canAssess`, ora anche in `viewCtx`), nessun SQL nuovo.
+
+- `src/components/SelfPeek.jsx`: radar con i soli valori di lei (la linea
+  tratteggiata del mister compare solo se esiste un suo rilevamento), i numeri
+  focus per focus, pulsante **"Dai valutazione"** (`AssessButton`).
+- Area Staff → scheda "Oggi", in cima: `SelfAssessmentsCard` in `StaffView`,
+  elenco dei nomi con "✓ data" / "non ancora"; un tocco apre la scheda sotto il nome.
+- Profilo atleta (`ProfiloView`, entrambi i rami): card "Come si vede …" in cima.
+  Popup profilo (`ProfilePage`): pulsante "Dai valutazione".
+- "Dai valutazione" → `openAssess(uuid)` in `App.jsx` → vista `rilevamento` con
+  `NewAssessment initialAthleteId` (il `key` forza il rimontaggio). In
+  `NewAssessment` accanto a ogni focus compare "lei N", l'ultima autovalutazione.
+- `SelfAssessmentCard` più in basso nel profilo resta com'è: serve anche a
+  inserirla per conto di un'atleta che non usa l'app.
+
 ## Visibilità fra atlete — decisione presa (2026-09-21)
 
 ⚠️ `ConfrontoView`, `AndamentoView`, la classifica generale e il radar di squadra

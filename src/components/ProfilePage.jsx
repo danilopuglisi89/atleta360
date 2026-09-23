@@ -5,7 +5,7 @@
 // Vedi supabase/profile-page.sql (colonna cover_url, set_my_cover,
 // chat_roster allargato, team_feed agganciato all'uuid del profilo).
 import { useEffect, useRef, useState } from "react";
-import { X, Camera, MessageCircle, ClipboardList, Instagram, Facebook, Youtube, Music2, Ghost, Shirt, Pencil, Save } from "lucide-react";
+import { X, Camera, MessageCircle, ClipboardList, ClipboardPlus, Instagram, Facebook, Youtube, Music2, Ghost, Shirt, Pencil, Save } from "lucide-react";
 import { C, font, display, ringForScore, ringForRole } from "../theme";
 import { supabase } from "../supabaseClient";
 import { compressImage } from "../photos";
@@ -177,7 +177,7 @@ function PhotoGrid({ wall, onOpenPhoto }) {
    Pagina profilo a schermo intero — mobile: pila unica; desktop:
    colonna centrata più larga, copertina/avatar più grandi.
    ============================================================ */
-export default function ProfilePage({ target, model, viewer, onClose, onMessage, onFullProfile }) {
+export default function ProfilePage({ target, model, viewer, onClose, onMessage, onFullProfile, onAssess }) {
   const isDesktop = useIsDesktop();
   const [row, setRow] = useState(null);
   const [notFound, setNotFound] = useState(false);
@@ -317,6 +317,12 @@ export default function ProfilePage({ target, model, viewer, onClose, onMessage,
                 <button onClick={() => onFullProfile(row.athlete_id)}
                   style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 14px", borderRadius: 10, border: `1px solid ${C.grid}`, background: C.card, color: C.navy2, fontSize: 13.5, fontWeight: 600, cursor: "pointer" }}>
                   <ClipboardList size={15} /> Scheda completa
+                </button>
+              )}
+              {isAthlete && onAssess && model?.roster?.find((r) => r.identifier === row.athlete_id) && (
+                <button onClick={() => onAssess(model.roster.find((r) => r.identifier === row.athlete_id).id)}
+                  style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 14px", borderRadius: 10, border: "none", background: C.orange, color: "#fff", fontSize: 13.5, fontWeight: 600, cursor: "pointer" }}>
+                  <ClipboardPlus size={15} /> Dai valutazione
                 </button>
               )}
               {isSelf && (
