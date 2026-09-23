@@ -249,6 +249,33 @@ function Dashboard() {
   const moreItems = NAV.filter((x) => !mobileIds.includes(x.id));
   const moreActive = moreItems.some((x) => x.id === view);
 
+  // Cassetto aperto: la pagina dietro non deve scorrere. Su iPhone
+  // "overflow: hidden" sul body non basta, serve fissarlo e poi rimetterlo
+  // dov'era. Si chiude anche con Esc o allargando la finestra oltre i 900px,
+  // dove il cassetto non ha più senso.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const y = window.scrollY;
+    const b = document.body.style;
+    const prima = { position: b.position, top: b.top, left: b.left, right: b.right, overflow: b.overflow };
+    Object.assign(b, { position: "fixed", top: `-${y}px`, left: "0", right: "0", overflow: "hidden" });
+    const onResize = () => { if (window.innerWidth >= 900) setMobileOpen(false); };
+    const onKey = (e) => { if (e.key === "Escape") setMobileOpen(false); };
+    window.addEventListener("resize", onResize);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      Object.assign(b, prima);
+      window.scrollTo(0, y);
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [mobileOpen]);
+
+  // Cambiando pagina si riparte dall'alto: prima la nuova vista si apriva
+  // all'altezza a cui era rimasta la vecchia. Viene dopo il blocco qui sopra,
+  // così vince sul "rimetti dov'era" quando si sceglie una voce dal cassetto.
+  useEffect(() => { window.scrollTo(0, 0); }, [view, profileTarget]);
+
   const goTo = (id) => { setView(id); setMobileOpen(false); if (id === "profilo") setProfileTarget(null); };
 
   const NavVoce = (item) => {
@@ -274,7 +301,7 @@ function Dashboard() {
   };
 
   const NavList = () => (
-    <nav style={{ display: "flex", flexDirection: "column", gap: 4, padding: "8px 12px" }}>
+    <nav className="a360-navscroll" style={{ display: "flex", flexDirection: "column", gap: 4, padding: "8px 12px 12px" }}>
       {NAV_GROUPS.map((g) => {
         const voci = NAV.filter((x) => (x.group || "app") === g.key);
         if (voci.length === 0) return null;
@@ -306,7 +333,7 @@ function Dashboard() {
 
   const ellipsis = { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" };
   const UserFooter = () => (
-    <div style={{ marginTop: "auto", padding: 16, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+    <div style={{ marginTop: "auto", flexShrink: 0, padding: "16px 16px calc(16px + env(safe-area-inset-bottom, 0px))", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
         <Avatar url={profile?.avatar_url || (profile?.avatar_config ? avatarImageUrl(profile.avatar_config) : null)} name={[profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.email} size={34} ring={ringForRole(profile?.role, profile?.category)} />
         <div style={{ minWidth: 0 }}>
@@ -399,7 +426,7 @@ function Dashboard() {
     <ProfileLinkProvider open={openCard} message={isAthlete ? openDM : null}>
     <div style={{ ...font, display: "flex", minHeight: "100vh", background: C.surface, color: C.ink }}>
       {/* Sidebar desktop */}
-      <aside style={{ width: 250, background: C.navy, flexShrink: 0, position: "sticky", top: 0, height: "100vh", display: "none", flexDirection: "column" }} className="a360-sidebar">
+      <aside style={{ width: 250, background: C.navy, flexShrink: 0, position: "sticky", top: 0, display: "none", flexDirection: "column" }} className="a360-sidebar">
         <Brand />
         <NavList />
         <UserFooter />
@@ -409,11 +436,11 @@ function Dashboard() {
       {/* Drawer mobile (aperto dalla topbar o dal tasto "Altro" della tab bar) */}
       {mobileOpen && (
         <div style={{ position: "fixed", inset: 0, zIndex: 50 }} onClick={() => setMobileOpen(false)}>
-          <div style={{ position: "absolute", inset: 0, background: "rgba(10,19,48,0.5)" }} />
-          <aside onClick={(e) => e.stopPropagation()} style={{ position: "absolute", left: 0, top: 0, height: "100%", width: 260, background: C.navy, display: "flex", flexDirection: "column", paddingTop: "env(safe-area-inset-top, 0px)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(10,19,48,0.5)", touchAction: "none" }} />
+          <aside onClick={(e) => e.stopPropagation()} className="a360-drawer" style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "min(280px, 86vw)", background: C.navy, display: "flex", flexDirection: "column", overflow: "hidden", paddingTop: "env(safe-area-inset-top, 0px)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
               <Brand />
-              <button onClick={() => setMobileOpen(false)} aria-label="Chiudi menu" style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", padding: 22 }}><X size={22} /></button>
+              <button onClick={() => setMobileOpen(false)} aria-label="Chiudi menu" style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", padding: 14, flexShrink: 0 }}><X size={22} /></button>
             </div>
             <NavList />
             <UserFooter />

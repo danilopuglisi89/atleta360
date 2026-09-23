@@ -174,3 +174,27 @@ body {
     margin: 14mm;
   }
 }
+
+/* ============================================================
+   MENU — barra laterale (desktop) e cassetto (telefono).
+   Logo in alto e "Esci" in basso restano fermi; scorre solo
+   l'elenco delle voci. Con 12 voci (staff/admin) l'elenco è più
+   alto di un portatile o di un telefono: prima le ultime voci ed
+   "Esci" restavano fuori schermo, irraggiungibili.
+   ============================================================ */
+.a360-sidebar {
+  height: 100vh;
+  height: 100dvh;            /* Safari su iPad: la barra indirizzi non ruba spazio */
+}
+.a360-navscroll {
+  flex: 1 1 auto;
+  min-height: 0;             /* senza, un figlio flex non si restringe e non scorre */
+  overflow-y: auto;
+  overscroll-behavior: contain;   /* arrivati in fondo non trascina la pagina dietro */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+.a360-navscroll::-webkit-scrollbar { width: 6px; }
+.a360-navscroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.22); border-radius: 99px; }
+.a360-navscroll::-webkit-scrollbar-track { background: transparent; }

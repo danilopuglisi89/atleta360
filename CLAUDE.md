@@ -75,6 +75,17 @@ Andamento + "Altro" che apre il drawer con il resto). Regole CSS in `src/index.c
 per i telefoni con notch/home indicator. Il footer normale (copyright/WhatsApp) è nascosto su
 mobile per non duplicare la navigazione: le informazioni di contatto restano in "Info & Legenda".
 
+**Menu che scorre (2026-09-23)**: con 12 voci (staff/admin) l'elenco è più alto di
+un portatile o di un telefono, e le ultime voci ed "Esci" restavano fuori schermo. Ora
+in barra laterale e cassetto scorre solo `.a360-navscroll` (`min-height: 0` è ciò che
+lo fa funzionare dentro il flex), logo e "Esci" restano fermi; sidebar alta `100dvh`;
+"Esci" sopra la barretta di iPhone (`safe-area-inset-bottom`). Cassetto aperto =
+pagina dietro bloccata (`body` fissato e rimesso dov'era: su iPhone `overflow: hidden`
+non basta), si chiude anche con Esc o allargando oltre i 900px. Cambiando vista si
+riparte dall'alto (`useEffect` su `view`/`profileTarget`, dichiarato **dopo** il blocco
+così vince sul "rimetti dov'era"). X del cassetto con padding 14: con 22 usciva dal
+cassetto sui telefoni da 320px.
+
 ## Notifiche in-app (2026-07-21)
 
 Una sola tabella `public.notifications` (vedi `supabase/notifications.sql`) alimentata da 4
