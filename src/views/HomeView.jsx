@@ -1,4 +1,5 @@
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip, ResponsiveContainer } from "recharts";
+import { Instagram } from "lucide-react";
 import { C, font, display } from "../theme";
 import { CORE } from "../skills";
 import { resolveAthleteId } from "../data";
@@ -74,6 +75,20 @@ export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile, onGoV
 
   return (
     <div>
+      {/* Instagram: link esterno, quindi target="_blank" va bene (la regola
+          "mai window.open" vale per i contenuti interni dell'app). */}
+      <a href="https://www.instagram.com/atleta360.volley/" target="_blank" rel="noopener noreferrer"
+        className="a360-noprint"
+        style={{ ...font, display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: C.ink,
+          background: C.surface, border: `1px solid ${C.grid}`, borderRadius: 12,
+          padding: "10px 14px", marginBottom: 14, textDecoration: "none", lineHeight: 1.4 }}>
+        <Instagram size={16} color="#E1306C" style={{ flexShrink: 0 }} />
+        <span>
+          Segui la pagina Instagram di <strong style={{ color: "#E1306C" }}>Atleta-360</strong> per
+          restare aggiornata sulle ultime novità
+        </span>
+      </a>
+
       <MatchdayBanner uid={auth?.uid} />
 
       {restricted && (
