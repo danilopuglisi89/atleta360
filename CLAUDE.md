@@ -689,6 +689,10 @@ la sua valutazione, per confrontarle. Tutto riservato a chi può valutare
   `NewAssessment` accanto a ogni focus compare "lei N", l'ultima autovalutazione.
 - `SelfAssessmentCard` più in basso nel profilo resta com'è: serve anche a
   inserirla per conto di un'atleta che non usa l'app.
+- ⚠️ In `ProfiloView` **`sel` può essere vuoto**: finché non esiste un rilevamento
+  `NOMI` è vuoto e, aprendo "Profilo Atleta" dal menu, nessuna atleta è scelta. Il
+  24/09 `sel.split` su null ha fatto crollare la pagina per admin e mister. Ora la
+  scheda richiede `sel`, e in quel ramo lo staff trova l'elenco da cui scegliere.
 
 ## Visibilità fra atlete — decisione presa (2026-09-21)
 
