@@ -52,7 +52,10 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
   const effectiveAthleteId = atleti[sel]?.athleteId ?? selfOnlyEntry?.athleteId ?? roster?.find((r) => r.identifier === sel)?.id;
   const personal = restricted;                    // l'atleta guarda sempre sé stessa
   // Chi può dare rilevamenti vede in cima l'autovalutazione dell'atleta.
-  const mister = !restricted && !!auth?.canAssess;
+  // Senza "sel" (nessuna atleta scelta, nessun rilevamento in squadra) la
+  // scheda non ha di chi parlare: il 24/09 usarla lo stesso ha fatto
+  // crollare tutta la pagina per il mister e l'admin.
+  const mister = !restricted && !!auth?.canAssess && !!sel;
   const { goals, addGoal, removeGoal } = useGoals(effectiveAthleteId);
   const { level: participationLevel, streak: participationStreak } = useParticipation(effectiveAthleteId);
   const { stars } = useStars(effectiveAthleteId);
@@ -128,8 +131,26 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
         )}
         {mister && auth?.flags?.feature_selfassessment && (
           <Card title={`Come si vede ${sel}`} subtitle="La sua autovalutazione, da guardare prima di dare la tua" className="a360-noprint">
-            <SelfPeek self={selfOnlyEntry?.self} misterScores={null} name={sel.split(" ")[0]}
+            <SelfPeek self={selfOnlyEntry?.self} misterScores={null} name={String(sel).split(" ")[0]}
               onAssess={onAssess && effectiveAthleteId ? () => onAssess(effectiveAthleteId) : undefined} />
+          </Card>
+        )}
+        {/* Finché non c'è un rilevamento il menu a tendina delle atlete non
+            esiste (si costruisce dai rilevamenti): senza questo, lo staff che
+            apriva "Profilo Atleta" dal menu non poteva scegliere nessuna. */}
+        {!restricted && roster?.length > 0 && (
+          <Card title={sel ? "Cambia atleta" : "Scegli un'atleta"} className="a360-noprint">
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {roster.map((r) => (
+                <button key={r.id} onClick={() => onOpenFullProfile?.(r.identifier)}
+                  style={{ ...font, fontSize: 13, padding: "7px 12px", borderRadius: 99, cursor: "pointer",
+                    border: `1px solid ${r.identifier === sel ? C.orange : C.grid}`,
+                    background: r.identifier === sel ? C.orangeSoft : C.card, color: C.ink,
+                    fontWeight: r.identifier === sel ? 600 : 400 }}>
+                  {r.identifier}
+                </button>
+              ))}
+            </div>
           </Card>
         )}
         <Card title="Ancora nessun rilevamento del mister" subtitle="Quando il mister salverà la prima valutazione, qui comparirà il profilo completo.">
@@ -239,7 +260,7 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
 
       {mister && auth?.flags?.feature_selfassessment && (
           <Card title={`Come si vede ${sel}`} subtitle="La sua autovalutazione, da guardare prima di dare la tua" className="a360-noprint" style={{ marginBottom: 20 }}>
-            <SelfPeek self={atleti[sel]?.self} misterScores={scores} name={sel.split(" ")[0]}
+            <SelfPeek self={atleti[sel]?.self} misterScores={scores} name={String(sel).split(" ")[0]}
               onAssess={onAssess && effectiveAthleteId ? () => onAssess(effectiveAthleteId) : undefined} />
           </Card>
         )}
