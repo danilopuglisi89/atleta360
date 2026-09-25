@@ -704,6 +704,25 @@ la sua valutazione, per confrontarle. Tutto riservato a chi può valutare
   24/09 `sel.split` su null ha fatto crollare la pagina per admin e mister. Ora la
   scheda richiede `sel`, e in quel ramo lo staff trova l'elenco da cui scegliere.
 
+## Raccolta dati per lo studio (2026-09-25)
+
+Il 25/09 il mister ha fatto il **primo rilevamento** (14 atlete su 15): da qui parte
+la raccolta dati.
+
+- **Questionario "Conosciamoci meglio"** (`src/components/StudyWizard.jsx`,
+  `supabase/study.sql`): 5 schermate al primo accesso utile. Data di nascita
+  **obbligatoria** (scritta anche in `athletes.birth_date` → compleanni), poi storia
+  sportiva, altezza e mano, scuola e tempo di viaggio, sonno e ore di telefono: tutto
+  saltabile. Torna a ogni accesso finché non è salvato una volta ("Più tardi" =
+  sessionStorage), zIndex 86 in fila dopo autovalutazione (90) e profilo (88).
+- ⚠️ **Riservatezza**: tabella `athlete_study` leggibile **solo dall'atleta e
+  dall'admin** (`is_admin()`), non da mister, direzione o compagne; nessuna policy di
+  scrittura, si scrive solo con `set_my_study()`. Scelte di Danilo: tutti e quattro i
+  gruppi di domande, proposto ma non bloccante.
+- **Report per la dirigenza** (PDF, nomi e cognomi per scelta di Danilo): generato
+  **fuori dal repository** dai dati estratti in sola lettura sul VPS, senza note del
+  mister né diario. Contiene dati di minorenni: non va mai committato.
+
 ## Visibilità fra atlete — decisione presa (2026-09-21)
 
 ⚠️ `ConfrontoView`, `AndamentoView`, la classifica generale e il radar di squadra

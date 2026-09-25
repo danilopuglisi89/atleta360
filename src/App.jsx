@@ -21,6 +21,7 @@ import NotificationBell from "./components/NotificationBell";
 import InstallPrompt from "./components/InstallPrompt";
 import SelfAssessmentWizard from "./components/SelfAssessmentWizard";
 import ProfileWizard from "./components/ProfileWizard";
+import StudyWizard from "./components/StudyWizard";
 import WelcomeAvatar, { needsWelcomeAvatar } from "./components/WelcomeAvatar";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { useNotifications } from "./notifications";
@@ -489,6 +490,7 @@ function Dashboard() {
         <SelfAssessmentWizard profile={profile} isStaff={isStaff} onDone={reload} />
       )}
       {!needsWelcomeAvatar(profile) && <ProfileWizard profile={profile} onDone={refreshProfile} />}
+      {!needsWelcomeAvatar(profile) && <StudyWizard profile={profile} onDone={reload} />}
 
       {cardTarget && (
         <ProfilePage

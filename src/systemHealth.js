@@ -24,6 +24,7 @@ const TABELLE = [
   ["checkins", "wave3.sql"],
   ["photos", "wave4.sql"],
   ["certificates", "wave5.sql"],
+  ["athlete_study", "study.sql"],
   ["participation_points", "gamify-a.sql"],
   ["quiz_scores", "gamify-b.sql"],
   ["photo_reactions", "gamify-c.sql"],
@@ -54,6 +55,7 @@ const FUNZIONI = [
   ["staff_push_status", {}, "admin-status.sql"],
   ["my_participation_level", {}, "gamify-a.sql"],
   ["weekly_quiz_leaderboard", { p_week_key: "check" }, "gamify-b.sql"],
+  ["my_study", {}, "study.sql"],
 ];
 
 const manca = (error) =>
