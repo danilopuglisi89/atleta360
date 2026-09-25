@@ -723,6 +723,24 @@ la raccolta dati.
   **fuori dal repository** dai dati estratti in sola lettura sul VPS, senza note del
   mister né diario. Contiene dati di minorenni: non va mai committato.
 
+## Note del rilevamento: solo staff (2026-09-26)
+
+Decisione di Danilo: **nessuna atleta vede le note del mister**, né la propria né
+quelle delle compagne. Prima stavano in `assessments.note`, leggibile da chiunque sia
+approvato: ogni atleta riceveva sul telefono le note di tutte (profilo e Andamento).
+Scoperto il 26/09 con 9 note del primo rilevamento già esposte.
+
+- `supabase/assessment-notes-private.sql`: tabella `assessment_notes` (RLS
+  `is_staff()`), trigger che sposta ogni nota scritta in `assessments.note` e la
+  svuota (vale anche per app vecchie), migrazione delle note esistenti.
+- Client: `withNotes()` in `data.js` unisce le note a `fetchModel()` e alla storia di
+  `NewAssessment`; cancellare una nota in modifica la toglie anche dalla tabella
+  riservata (il trigger non vede le cancellazioni). Seconda cintura: profilo e
+  Andamento non mostrano note se `auth.restricted`.
+- ⚠️ La bozza IA della nota (`noteDraft` in `api/coach.js`) era pensata per
+  un'atleta che la legge: ora la legge solo lo staff.
+- Gli "appunti rapidi" (`athlete_notes`) erano già solo staff.
+
 ## Visibilità fra atlete — decisione presa (2026-09-21)
 
 ⚠️ `ConfrontoView`, `AndamentoView`, la classifica generale e il radar di squadra

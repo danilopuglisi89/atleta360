@@ -4,6 +4,7 @@ import { C, font, display } from "./theme";
 import { supabase } from "./supabaseClient";
 import { useAthleteNotes } from "./athleteNotes";
 import { Card } from "./components/ui";
+import { withNotes } from "./data";
 
 const fmt = (iso) => new Date(iso).toLocaleDateString("it-IT", { day: "2-digit", month: "short", year: "numeric" });
 
@@ -35,9 +36,12 @@ export default function NewAssessment({ onSaved, initialAthleteId }) {
 
   const loadHistory = useCallback(async (aid) => {
     if (!aid) { setHistory([]); return []; }
-    const { data } = await supabase.from("assessments").select("*").eq("athlete_id", aid).order("created_at", { ascending: false });
-    setHistory(data || []);
-    return data || [];
+    const { data: righe } = await supabase.from("assessments").select("*").eq("athlete_id", aid).order("created_at", { ascending: false });
+    const ids = (righe || []).map((r) => r.id);
+    const notesRes = ids.length ? await supabase.from("assessment_notes").select("assessment_id,note").in("assessment_id", ids) : null;
+    const data = withNotes(righe || [], notesRes);
+    setHistory(data);
+    return data;
   }, []);
 
   useEffect(() => {
@@ -84,6 +88,11 @@ export default function NewAssessment({ onSaved, initialAthleteId }) {
       res = await supabase.from("assessments").update(payload).eq("id", editingId);
     } else {
       res = await supabase.from("assessments").insert({ athlete_id: athleteId, created_by: u?.user?.id || null, ...payload });
+    }
+    // Nota cancellata in modifica: va tolta anche dalla tabella riservata
+    // (il database sposta lì le note scritte, ma non può capire le cancellazioni).
+    if (!res.error && editingId && !payload.note) {
+      await supabase.from("assessment_notes").delete().eq("assessment_id", editingId);
     }
     setBusy(false);
     if (res.error) { setError(res.error.message); return; }

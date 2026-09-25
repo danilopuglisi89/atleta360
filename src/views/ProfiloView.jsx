@@ -332,7 +332,9 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
         <WellbeingCard athleteId={atleti[sel]?.athleteId} showCheckin={auth?.flags?.feature_checkin} showDiary={auth?.flags?.feature_diary} />
       )}
 
-      {nota && (
+      {/* Le note sono dello staff: le atlete non le ricevono nemmeno (vedi
+          assessment-notes-private.sql), il controllo qui è una seconda cintura. */}
+      {nota && !restricted && (
         <Card title="Nota del mister" subtitle={`Ultimo rilevamento`} style={{ marginTop: 20 }}>
           <div style={{ ...font, fontSize: 14, color: C.ink, lineHeight: 1.6, background: C.surface, borderRadius: 12, padding: "14px 16px", borderLeft: `3px solid ${C.orange}` }}>
             {nota}

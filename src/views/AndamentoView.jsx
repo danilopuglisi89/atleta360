@@ -4,7 +4,7 @@ import { C, font, display, CORE_COLORS } from "../theme";
 import { CORE, SKILLS, SHORT } from "../skills";
 import { Card, Select, tooltipStyle } from "../components/ui";
 
-export default function AndamentoView({ d, onOpenCard }) {
+export default function AndamentoView({ d, auth, onOpenCard }) {
   const { NOMI, storico } = d;
   const [n, setN] = useState(NOMI[0]);
   const sel = storico[n] ? n : NOMI[0];
@@ -30,7 +30,8 @@ export default function AndamentoView({ d, onOpenCard }) {
     diff: Math.round(((data[ti][k] ?? 0) - (data[fi][k] ?? 0)) * 10) / 10,
   }));
 
-  const note = data.filter((e) => e.nota).map((e) => ({ periodo: e.periodo, nota: e.nota }));
+  // Note del mister: solo lo staff (le atlete non le ricevono, questa è una seconda cintura).
+  const note = auth?.restricted ? [] : data.filter((e) => e.nota).map((e) => ({ periodo: e.periodo, nota: e.nota }));
 
   // Chi è cresciuto di più: variazione della media dal primo all'ultimo rilevamento.
   const overallOf = (e) => {

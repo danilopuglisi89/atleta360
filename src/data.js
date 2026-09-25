@@ -116,16 +116,27 @@ export function resolveAthleteId(d, identifier) {
 }
 
 // Legge atlete, focus e rilevamenti da Supabase e costruisce il modello.
+// Aggiunge a ogni rilevamento la sua nota, se chi guarda può leggerla.
+// Prima dello script SQL la tabella non esiste: resta la vecchia colonna.
+export function withNotes(rows, notesRes) {
+  if (!notesRes || notesRes.error) return rows;
+  const byId = Object.fromEntries((notesRes.data || []).map((n) => [n.assessment_id, n.note]));
+  return rows.map((r) => ({ ...r, note: byId[r.id] ?? r.note ?? null }));
+}
+
 export async function fetchModel() {
-  const [skillsRes, athletesRes, assessmentsRes, selfRes] = await Promise.all([
+  const [skillsRes, athletesRes, assessmentsRes, selfRes, notesRes] = await Promise.all([
     supabase.from("skills").select("*").order("sort_order", { ascending: true }),
     supabase.from("athletes").select("*").order("identifier", { ascending: true }),
     supabase.from("assessments").select("*").order("created_at", { ascending: true }),
     // Tabella facoltativa (Ondata 3): se non è ancora stata creata, l'errore
     // non blocca il resto della dashboard, l'autovalutazione resta assente.
     supabase.from("self_assessments").select("*").order("created_at", { ascending: true }),
+    // Note del mister: tabella leggibile SOLO dallo staff (assessment-notes-private.sql).
+    // Alle atlete torna vuota, quindi le note non arrivano nemmeno sul telefono.
+    supabase.from("assessment_notes").select("assessment_id,note"),
   ]);
   const err = skillsRes.error || athletesRes.error || assessmentsRes.error;
   if (err) throw new Error(err.message);
-  return buildModel(skillsRes.data || [], athletesRes.data || [], assessmentsRes.data || [], selfRes.data || []);
+  return buildModel(skillsRes.data || [], athletesRes.data || [], withNotes(assessmentsRes.data || [], notesRes), selfRes.data || []);
 }
