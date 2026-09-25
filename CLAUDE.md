@@ -300,6 +300,16 @@ settimanale** + eventi singoli, conferme presenza, luogo→link Google Maps, ris
 - **Import da file**: Danilo può passare un CSV/Excel (data, ora, tipo, avversario, luogo, note)
   in chat → Claude genera le INSERT da incollare nel SQL Editor. Nessun uploader nell'app.
 
+**Notifica serale solo nei giorni di allenamento (2026-09-25)**, decisione di Danilo:
+"Com'è andata oggi?" (e "la tua serie sta per spegnersi", stessa funzione
+`send_daily_engagement()`) parte solo se oggi c'è un evento `training` non annullato —
+per quattro sere non l'aveva aperta nessuna. Script `supabase/evening-training-only.sql`;
+aggiornato anche `settings.sql`. ⚠️ `gamify-a.sql` e `notification-anchors.sql` contengono
+versioni **più vecchie** della stessa funzione: rieseguirli la riporterebbe a ogni sera.
+⚠️ Dipende dal calendario: al 25/09 c'erano solo 2 eventi in tutto (17/09 e 23/09) e
+**nessuna routine settimanale**, quindi senza allenamenti inseriti non parte mai — e non
+partono nemmeno il promemoria "Domani: allenamento" e il check-in del pomeriggio.
+
 **Importante**: `supabase/calendar.sql` (Oasi) e `Aurora Atleta360/supabase/calendar.sql` vanno
 eseguiti da Danilo nel SQL Editor — richiedono i rispettivi push.sql già eseguiti (pg_cron viene
 attivato dallo script).

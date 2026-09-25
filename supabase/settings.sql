@@ -187,6 +187,16 @@ begin
   if extract(hour from now() at time zone 'Europe/Rome') < 18 then
     return 0;
   end if;
+  -- Solo nei giorni di allenamento (decisione di Danilo, 25/09/2026): mandata
+  -- ogni sera a 15 atlete, per quattro giorni di fila non l'ha aperta nessuna.
+  -- Una notifica ignorata ogni giorno insegna a ignorare anche le altre.
+  if not exists (
+    select 1 from public.events
+    where kind = 'training' and not cancelled
+      and (starts_at at time zone 'Europe/Rome')::date = today
+  ) then
+    return 0;
+  end if;
 
   for r in
     select p.id as user_id, a.id as athlete_id from public.profiles p
