@@ -31,7 +31,7 @@ export default function SeasonReportCard({ athleteId, athleteName, isStaff, pers
   };
 
   return (
-    <Card title="Pagellone di fine stagione" subtitle={personal ? "Il commento di chiusura del mister" : `Commento di chiusura per ${athleteName}`} style={{ marginTop: 20 }}>
+    <Card title="Pagellone di fine stagione" subtitle={personal ? "Il commento di chiusura del mister" : `Commento di chiusura per ${athleteName} · riservato allo staff`} style={{ marginTop: 20 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, ...font, fontSize: 12, color: C.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>
         <GraduationCap size={14} /> Fine stagione
       </div>

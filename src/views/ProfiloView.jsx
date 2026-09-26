@@ -157,7 +157,7 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
           <div style={{ ...font, fontSize: 14, color: C.muted }}>Tutto pronto: si parte! 💪</div>
         </Card>
         {personal && <ParticipationCard athleteId={effectiveAthleteId} />}
-        <StarsCard athleteId={effectiveAthleteId} personal={personal} />
+        {!restricted && <StarsCard athleteId={effectiveAthleteId} personal={personal} />}
         <WallCard identifier={sel} viewerUid={auth?.uid} isStaff={auth?.isStaff} personal={personal} />
         {effectiveAthleteId && auth?.flags?.feature_selfassessment && (
           <SelfAssessmentCard athleteId={effectiveAthleteId} athleteName={sel} misterScores={null} self={selfOnlyEntry?.self} editable personal={personal} onSaved={onReload} />
@@ -318,7 +318,8 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
         </div>
       </div>
 
-      <StarsCard athleteId={effectiveAthleteId} personal={personal} />
+      {/* Stelle e pagella: solo staff dal 26/09 (le ragazze vedono solo le valutazioni). */}
+      {!restricted && <StarsCard athleteId={effectiveAthleteId} personal={personal} />}
       <MvpCard athleteId={effectiveAthleteId} athleteName={sel} personal={personal} />
       <WallCard identifier={sel} viewerUid={auth?.uid} isStaff={auth?.isStaff} personal={personal} />
 
@@ -344,7 +345,7 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
 
       {personal && <PathMirror athleteId={effectiveAthleteId} history={storico?.[sel]} keys={SKILLS} />}
 
-      <SeasonReportCard athleteId={effectiveAthleteId} athleteName={sel} isStaff={!!auth?.isStaff} personal={personal} />
+      {!restricted && <SeasonReportCard athleteId={effectiveAthleteId} athleteName={sel} isStaff={!!auth?.isStaff} personal={personal} />}
 
       <PrintStamp label={sel} />
 

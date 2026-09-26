@@ -22,11 +22,8 @@ create table if not exists public.season_reports (
 alter table public.season_reports enable row level security;
 drop policy if exists "season reports read" on public.season_reports;
 drop policy if exists "season reports write staff" on public.season_reports;
-create policy "season reports read" on public.season_reports for select using (
-  public.is_staff() or exists (
-    select 1 from public.profiles p where p.id = auth.uid() and p.athlete_id = (select identifier from public.athletes a where a.id = season_reports.athlete_id)
-  )
-);
+-- Solo staff dal 26/09/2026: le ragazze vedono solo le valutazioni (staff-texts-private.sql).
+create policy "season reports read" on public.season_reports for select using (public.is_staff());
 create policy "season reports write staff" on public.season_reports for all using (public.is_staff()) with check (public.is_staff());
 
 create or replace function public.set_season_report_updated_at()

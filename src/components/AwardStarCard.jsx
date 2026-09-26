@@ -28,7 +28,7 @@ export default function AwardStarCard({ athletes }) {
   };
 
   return (
-    <Card title="Dai una stella" subtitle="Un riconoscimento con due parole: arriva come notifica push" style={{ marginTop: 20 }} className="a360-noprint">
+    <Card title="Dai una stella" subtitle="Un riconoscimento con due parole, riservato allo staff: le atlete non lo vedono" style={{ marginTop: 20 }} className="a360-noprint">
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
         <Select value={athleteId} onChange={setAthleteId} options={["", ...options]} />
         <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="es. Bellissimo atteggiamento in allenamento oggi!" maxLength={140}

@@ -740,6 +740,14 @@ Scoperto il 26/09 con 9 note del primo rilevamento già esposte.
 - ⚠️ La bozza IA della nota (`noteDraft` in `api/coach.js`) era pensata per
   un'atleta che la legge: ora la legge solo lo staff.
 - Gli "appunti rapidi" (`athlete_notes`) erano già solo staff.
+- **Stesso giorno, allargato a tutto**: "le ragazze vedono solo le valutazioni". Anche la
+  **stella del mister** (la motivazione la leggeva tutta la squadra, e arrivava come
+  notifica push) e la **pagella di fine stagione** (la leggeva l'atleta) sono ora solo
+  staff: `supabase/staff-texts-private.sql` (lettura `is_staff()`, trigger
+  `on_star_notify` spento), allineati anche `gamify-d.sql` e `q3.sql` perché rieseguirli
+  non riapra niente. Nel profilo `StarsCard`/`SeasonReportCard` solo se `!restricted`.
+  Restano rivolti alle atlete i **messaggi** (chat, promemoria dello staff): sono
+  comunicazioni, non giudizi.
 
 ## Visibilità fra atlete — decisione presa (2026-09-21)
 

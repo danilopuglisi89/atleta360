@@ -20,7 +20,8 @@ alter table public.stars enable row level security;
 drop policy if exists "stars read" on public.stars;
 drop policy if exists "stars insert staff" on public.stars;
 drop policy if exists "stars delete staff" on public.stars;
-create policy "stars read" on public.stars for select using (public.is_approved());
+-- Solo staff dal 26/09/2026: le ragazze vedono solo le valutazioni (staff-texts-private.sql).
+create policy "stars read" on public.stars for select using (public.is_staff());
 create policy "stars insert staff" on public.stars for insert with check (public.is_staff());
 create policy "stars delete staff" on public.stars for delete using (public.is_staff());
 
@@ -40,6 +41,5 @@ begin
   return new;
 end;
 $$;
+-- Nessuna notifica all'atleta dal 26/09/2026: portava il testo della stella.
 drop trigger if exists on_star_notify on public.stars;
-create trigger on_star_notify after insert on public.stars
-  for each row execute function public.notify_star();
