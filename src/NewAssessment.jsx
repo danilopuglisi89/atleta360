@@ -223,7 +223,7 @@ export default function NewAssessment({ onSaved, initialAthleteId }) {
 
         <div style={{ marginTop: 18 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-            <label style={{ ...font, fontSize: 12.5, color: C.muted, fontWeight: 500 }}>Nota (facoltativa)</label>
+            <label style={{ ...font, fontSize: 12.5, color: C.muted, fontWeight: 500 }}>Nota riservata allo staff (facoltativa) · le atlete non la vedono</label>
             {athleteNotes.notes.length > 0 && (
               <button onClick={async () => {
                 setDraftBusy(true);
@@ -241,7 +241,7 @@ export default function NewAssessment({ onSaved, initialAthleteId }) {
               </button>
             )}
           </div>
-          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} placeholder="Osservazioni del mister…"
+          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} placeholder="Osservazioni del mister: le leggete solo voi dello staff…"
             style={{ ...font, fontSize: 14, color: C.ink, background: C.card, border: `1px solid ${C.grid}`, borderRadius: 10, padding: "10px 12px", width: "100%", boxSizing: "border-box", resize: "vertical", outline: "none" }} />
         </div>
 
