@@ -5,8 +5,11 @@ import express from "express";
 import handler from "./api/coach.js";
 import pushHandler from "./api/push.js";
 import summaryHandler from "./api/summary.js";
+import cspReport from "./api/csp-report.js";
 
 const app = express();
+// Le segnalazioni CSP arrivano con tipi propri: parser dedicato, piccolo.
+app.post("/api/csp-report", express.json({ type: ["application/csp-report", "application/reports+json", "application/json"], limit: "16kb" }), cspReport);
 app.use(express.json({ limit: "1mb" }));
 app.all("/api/coach", (req, res) => handler(req, res));
 app.all("/api/push/dispatch", (req, res) => pushHandler(req, res));
