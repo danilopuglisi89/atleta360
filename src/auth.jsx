@@ -59,11 +59,13 @@ export function AuthProvider({ children }) {
     return () => { active = false; clearTimeout(watchdog); sub.subscription.unsubscribe(); };
   }, [loadProfile]);
 
-  const signUp = async ({ firstName, lastName, email, password, category }) => {
+  // Il ruolo non si sceglie iscrivendosi: si nasce atleta, lo staff entra
+  // con un invito dell'amministratore (vedi supabase/ruoli-inviti.sql).
+  const signUp = async ({ firstName, lastName, email, password }) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { first_name: firstName, last_name: lastName, category } },
+      options: { data: { first_name: firstName, last_name: lastName } },
     });
     return error;
   };

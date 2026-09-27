@@ -19,6 +19,16 @@ const STATUS_META = {
 };
 const CATEGORY_LABEL = { direzione: "Direzione", staff: "Staff", atleta: "Atleta" };
 
+// Dare un ruolo da staff è concedere l'accesso a dati di minorenni: si
+// conferma sempre, dicendo cosa si concede (segnalazione di Codex, 27/09).
+const confermaRuolo = (nome, category) => category === "atleta" || window.confirm(
+  `Dare a ${nome || "questa persona"} il ruolo ${category === "direzione" ? "Direzione" : "Staff"}?
+
+` +
+  "Potrà vedere i rilevamenti e le autovalutazioni di tutte le atlete, le note del mister, le stelle e le pagelle, " +
+  "e usare gli strumenti dello staff. Confermi?");
+
+
 const inp = { ...font, fontSize: 13.5, color: C.ink, background: C.card, border: `1px solid ${C.grid}`, borderRadius: 9, padding: "8px 10px", outline: "none" };
 const iconBtn = (color) => ({ ...font, display: "inline-flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 9, border: `1px solid ${C.grid}`, background: C.card, color, cursor: "pointer" });
 
@@ -62,7 +72,7 @@ export default function AdminPanel({ onChange }) {
 
   // --- richieste / iscritti ---
   const setStatus = (id, status) => guard(() => supabase.from("profiles").update({ status }).eq("id", id));
-  const setCategory = (id, category) => guard(() => supabase.from("profiles").update({ category }).eq("id", id));
+  const setCategory = (r, category) => { if (confermaRuolo(fullName(r), category)) guard(() => supabase.from("profiles").update({ category }).eq("id", r.id)); };
   const setAthleteLink = (id, athlete_id) => guard(() => supabase.from("profiles").update({ athlete_id: athlete_id || null }).eq("id", id));
   const setAssess = (id, can_assess) => guard(() => supabase.from("profiles").update({ can_assess }).eq("id", id));
   const delUser = async (r) => {
@@ -84,6 +94,7 @@ export default function AdminPanel({ onChange }) {
   };
   const df = (k) => (e) => setDform((v) => ({ ...v, [k]: e.target.value }));
   const saveDetail = async () => {
+    if (dform.category !== (detail.category || "atleta") && !confermaRuolo(fullName(detail), dform.category)) return;
     const { error } = await supabase.from("profiles").update({
       first_name: dform.first_name.trim() || null, last_name: dform.last_name.trim() || null,
       category: dform.category, status: dform.status, can_assess: dform.can_assess,
@@ -105,6 +116,15 @@ export default function AdminPanel({ onChange }) {
   const setPosition = (a, position) => { const v = position.trim(); if (v !== (a.position || "")) guard(() => supabase.from("athletes").update({ position: v || null }).eq("id", a.id)); };
   const toggleAthlete = (a) => guard(() => supabase.from("athletes").update({ active: !a.active }).eq("id", a.id));
   const delAthlete = (a) => { if (window.confirm(`Eliminare "${a.identifier}"? Verranno rimossi anche i suoi rilevamenti.`)) guard(() => supabase.from("athletes").delete().eq("id", a.id)); };
+  // Staff e direzione entrano solo così: link monouso, 30 giorni, lo genera l'admin.
+  const [staffInvite, setStaffInvite] = useState({ category: "staff", url: "" });
+  const genStaffInvite = async () => {
+    setError(null);
+    if (!confermaRuolo("chi userà questo link", staffInvite.category)) return;
+    const { data, error: err } = await supabase.rpc("create_invite_link", { p_athlete_identifier: null, p_category: staffInvite.category });
+    if (err) { setError(err.message); return; }
+    setStaffInvite((v) => ({ ...v, url: `${window.location.origin}/?invite=${data}` }));
+  };
   const genInvite = async (a) => {
     setError(null);
     const { data, error: err } = await supabase.rpc("create_invite_link", { p_athlete_identifier: a.identifier, p_category: "atleta" });
@@ -164,6 +184,22 @@ export default function AdminPanel({ onChange }) {
 
       {tab === "persone" && (
       <>
+      {/* INVITO STAFF / DIREZIONE */}
+      <Card title="Invita staff o direzione" subtitle="Dalla registrazione si entra solo come atleta: per lo staff serve un link. Vale una volta sola, per 30 giorni.">
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <select value={staffInvite.category} onChange={(e) => setStaffInvite({ category: e.target.value, url: "" })} style={{ ...inp, cursor: "pointer" }}>
+            <option value="staff">Staff</option><option value="direzione">Direzione</option>
+          </select>
+          <button onClick={genStaffInvite} style={btn(C.navy2)}><Link2 size={15} /> Genera link</button>
+        </div>
+        {staffInvite.url && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, background: C.surface, borderRadius: 9, padding: "7px 10px" }}>
+            <span style={{ ...font, fontSize: 12, color: C.ink, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{staffInvite.url}</span>
+            <button onClick={() => navigator.clipboard?.writeText(staffInvite.url)} title="Copia" style={{ ...iconBtn(C.navy2), width: 26, height: 26 }}><Copy size={13} /></button>
+          </div>
+        )}
+      </Card>
+
       {/* RICHIESTE IN ATTESA */}
       <Card title="Richieste in attesa" subtitle={pending.length ? `${pending.length} da valutare` : "Nessuna richiesta in attesa"}>
         {pending.length === 0 ? (
@@ -221,7 +257,7 @@ export default function AdminPanel({ onChange }) {
                     ⏱ {fmtLastSeen(r.last_seen_at)}
                   </span>
                   <StatusBadges profile={r} hasPush={pushIds.has(r.id)} />
-                  <select value={r.category || "atleta"} onChange={(e) => setCategory(r.id, e.target.value)} style={{ ...inp, cursor: "pointer", fontSize: 12.5 }}>
+                  <select value={r.category || "atleta"} onChange={(e) => setCategory(r, e.target.value)} style={{ ...inp, cursor: "pointer", fontSize: 12.5 }}>
                     <option value="atleta">Atleta</option><option value="staff">Staff</option><option value="direzione">Direzione</option>
                   </select>
                   <select value={r.athlete_id || ""} onChange={(e) => setAthleteLink(r.id, e.target.value)} title="Collega alla scheda atleta"

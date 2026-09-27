@@ -156,7 +156,7 @@ function ErrorBox({ children }) {
 export default function AuthScreen() {
   const { signIn, signUp, resetPassword } = useAuth();
   const [mode, setMode] = useState("login"); // "login" | "register" | "forgot"
-  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", password: "", category: "atleta" });
+  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", password: "" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [done, setDone] = useState(false);
@@ -283,17 +283,6 @@ export default function AuthScreen() {
           <>
             <Field label="Nome" icon={User} value={form.firstName} onChange={upd("firstName")} autoComplete="given-name" />
             <Field label="Cognome" icon={User} value={form.lastName} onChange={upd("lastName")} autoComplete="family-name" />
-            <div style={{ marginBottom: 12 }}>
-              <label style={labelStyle}>Ruolo</label>
-              <div style={inputWrap(false)}>
-                <select value={form.category} onChange={upd("category")}
-                  style={{ ...inputStyle, cursor: "pointer", appearance: "none", WebkitAppearance: "none" }}>
-                  <option value="atleta">Atleta</option>
-                  <option value="staff">Staff</option>
-                  <option value="direzione">Direzione</option>
-                </select>
-              </div>
-            </div>
           </>
         )}
 
