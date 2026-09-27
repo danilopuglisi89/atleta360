@@ -1,14 +1,40 @@
 -- ============================================================
--- ATLETA360 DEMO — COLLEGA I DUE UTENTI DEMO (27/09/2026)
+-- ATLETA360 DEMO — CREA E COLLEGA I DUE UTENTI DEMO (27/09/2026)
 --
--- Prima, in Supabase → Authentication → Users → "Add user" → "Create new
--- user", crea questi due utenti con "Auto Confirm User" spuntato:
+-- Crea da solo i due utenti (già confermati) con le credenziali pubbliche
+-- scritte in src/demoMode.js, poi li collega alla squadra inventata:
 --   demo.atleta@atleta-360.com    password: Atleta360!
 --   demo.societa@atleta-360.com   password: Atleta360!
--- (sono le credenziali pubbliche già scritte in src/demoMode.js)
 --
--- Poi esegui questo script, dopo 01 e 02. Solo nel progetto demo.
+-- Esegui dopo 01 e 02. SOLO nel progetto demo, mai su Oasi.
+-- Sicuro da rieseguire: se un utente esiste già non lo tocca.
 -- ============================================================
+
+do $$
+declare
+  v_email text;
+  v_id uuid;
+begin
+  foreach v_email in array array['demo.atleta@atleta-360.com', 'demo.societa@atleta-360.com'] loop
+    if not exists (select 1 from auth.users where email = v_email) then
+      v_id := gen_random_uuid();
+      insert into auth.users (
+        instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+        raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+        confirmation_token, recovery_token, email_change, email_change_token_new
+      ) values (
+        '00000000-0000-0000-0000-000000000000', v_id, 'authenticated', 'authenticated', v_email,
+        extensions.crypt('Atleta360!', extensions.gen_salt('bf')), now(),
+        '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb, now(), now(),
+        '', '', '', ''
+      );
+      insert into auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+      values (gen_random_uuid(), v_id, v_id::text,
+              jsonb_build_object('sub', v_id::text, 'email', v_email, 'email_verified', true),
+              'email', now(), now(), now());
+    end if;
+  end loop;
+end $$;
 
 -- L'atleta della demo: "Sofia Bianchi", già con avatar, autovalutazione,
 -- profilo completo e questionario fatto, così chi prova la demo entra
