@@ -795,8 +795,17 @@ committati** (repository pubblico). Claude implementa solo dopo il via libera di
   automatico `ops/controllo-demo.mjs` dal cron del VPS ogni 3 ore (log in
   `/var/log/atleta360-controllo-demo.log`): apre la demo, legge dal bundle a quale Supabase
   punta, prova l'accesso demo; se fallisce notifica l'admin nell'app, massimo una volta al giorno.
-  Manca il progetto Supabase nuovo (lo crea Danilo), poi schema, dati inventati, utenti demo e
-  aggiornamento delle due variabili su Vercel.
+  **Progetto demo nuovo**: Supabase `bobzagfajbwivqdaojxz` (creato da Danilo il 27/09), separato da
+  Oasi; variabili Vercel di `atleta360-demo` aggiornate. Tre script in `supabase/demo/`:
+  `01-schema-completo.sql` (generato da `ops/genera-schema-demo.mjs`: tutti gli script di
+  `supabase/` in ordine di nascita; esclusi `notify-email` e `last-seen`; trigger push spento),
+  `02-dati-demo.sql` (12 atlete **inventate**, tre rilevamenti con andamento), `03-utenti-demo.sql`
+  (collega demo.atleta/demo.societa, credenziali pubbliche di `demoMode.js`). ⚠️ Aggiungendo uno
+  script SQL nuovo in `supabase/`, aggiungerlo anche a `ORDINE` nel generatore e rigenerare.
+- ⚠️ **Segreto del relay push nel repository pubblico**: `push.sql` contiene il valore di
+  `x-push-secret` (= `PUSH_SECRET` in `.env.coach`). Criticità bassa (protegge solo il relay, che
+  senza gli endpoint privati delle iscrizioni non raggiunge nessuno), ma va cambiato: nuovo valore
+  in `.env.coach` + trigger aggiornato dal SQL Editor, **mai più scritto in un file del repository**.
 
 ## Visibilità fra atlete — decisione presa (2026-09-21)
 
