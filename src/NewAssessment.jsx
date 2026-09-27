@@ -77,8 +77,21 @@ export default function NewAssessment({ onSaved, initialAthleteId }) {
     /* eslint-disable-next-line */
   }, [athleteId]);
 
+  // Stessi voti, stessa atleta, meno di 2 minuti: è la stessa cosa premuta due
+  // volte (il 25/09 è successo 7 volte su 21). Il database fa lo stesso controllo.
+  const stessiVoti = (a, b) => {
+    const ka = Object.keys(a || {}), kb = Object.keys(b || {});
+    return ka.length === kb.length && ka.every((k) => Number(a[k]) === Number(b[k]));
+  };
+
   const save = async () => {
     if (!athleteId) { setError("Scegli un'atleta."); return; }
+    const ultimo = history[0];
+    if (!editingId && ultimo && stessiVoti(ultimo.scores, scores) && Date.now() - new Date(ultimo.created_at).getTime() < 120000) {
+      setFlash("Già salvato: non serve premere di nuovo.");
+      setTimeout(() => setFlash(null), 5000);
+      return;
+    }
     setBusy(true); setError(null);
     const { data: u } = await supabase.auth.getUser();
     const payload = { note: note.trim() || null, scores };
@@ -95,11 +108,19 @@ export default function NewAssessment({ onSaved, initialAthleteId }) {
     }
     setBusy(false);
     if (res.error) { setError(res.error.message); return; }
-    setFlash(editingId ? "Rilevamento aggiornato." : "Rilevamento salvato.");
     const data = await loadHistory(athleteId);
     resetForm(data?.[0]?.scores);
     onSaved && onSaved();
-    setTimeout(() => setFlash(null), 4000);
+    if (editingId) {
+      setFlash("Rilevamento aggiornato.");
+    } else {
+      // Avanti con la prossima: il mister non deve chiedersi se è andato.
+      const i = athletes.findIndex((a) => a.id === athleteId);
+      const next = i >= 0 ? athletes[i + 1] : null;
+      setFlash(next ? `Salvato ✓ Ora: ${next.identifier}.` : "Salvato ✓ Era l'ultima della lista.");
+      if (next) { setAthleteId(next.id); window.scrollTo({ top: 0, behavior: "smooth" }); }
+    }
+    setTimeout(() => setFlash(null), 6000);
   };
 
   const startEdit = (a) => {
@@ -240,6 +261,11 @@ export default function NewAssessment({ onSaved, initialAthleteId }) {
             style={{ ...font, display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 18px", borderRadius: 11, border: "none", background: C.orange, color: "#fff", fontSize: 15, fontWeight: 600, cursor: busy ? "default" : "pointer", opacity: busy ? 0.7 : 1 }}>
             <Save size={17} /> {busy ? "Salvo…" : editingId ? "Aggiorna rilevamento" : "Salva rilevamento"}
           </button>
+          {flash && (
+            <span style={{ ...font, display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13.5, fontWeight: 600, color: "#0F7A4E" }}>
+              <CheckCircle2 size={16} /> {flash}
+            </span>
+          )}
           {editingId && (
             <button onClick={resetForm} style={{ ...font, display: "inline-flex", alignItems: "center", gap: 7, padding: "12px 16px", borderRadius: 11, border: `1px solid ${C.grid}`, background: C.card, color: C.muted, fontSize: 14, cursor: "pointer" }}>
               <X size={16} /> Annulla modifica
