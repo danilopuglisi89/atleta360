@@ -17,10 +17,15 @@ create index if not exists self_assessments_athlete_idx on public.self_assessmen
 
 alter table public.self_assessments enable row level security;
 
--- Lettura: chiunque abbia un account approvato (stesso criterio di assessments,
--- il filtro per "solo la mia" è lato app per chi è un'atleta semplice).
+-- Lettura: la propria atleta e lo staff (dal 27/09/2026, autovalutazioni-private.sql).
+-- Prima era "chiunque approvato": le compagne potevano leggerla dal database.
 drop policy if exists "self_assessments read" on public.self_assessments;
-create policy "self_assessments read" on public.self_assessments for select using (public.is_approved());
+create policy "self_assessments read" on public.self_assessments for select using (
+  public.is_staff() or exists (
+    select 1 from public.profiles p join public.athletes a on a.identifier = p.athlete_id
+    where p.id = auth.uid() and p.status = 'approved' and a.id = self_assessments.athlete_id
+  )
+);
 
 -- Scrittura: solo l'atleta collegata a quel athlete_id (via profiles.athlete_id),
 -- oppure lo staff. Un'atleta autovaluta solo se stessa.
