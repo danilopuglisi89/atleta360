@@ -153,7 +153,10 @@ function ErrorBox({ children }) {
   );
 }
 
-export default function AuthScreen() {
+// `demoFallita`: la demo di atleta-360.com non è riuscita ad accedere. Prima
+// si tornava al login senza una parola, proprio nel momento della prova
+// commerciale (segnalazione di Codex, 27/09/2026).
+export default function AuthScreen({ demoFallita = false }) {
   const { signIn, signUp, resetPassword } = useAuth();
   const [mode, setMode] = useState("login"); // "login" | "register" | "forgot"
   const [form, setForm] = useState({ firstName: "", lastName: "", email: "", password: "" });
@@ -272,6 +275,12 @@ export default function AuthScreen() {
       )}
 
       <form onSubmit={submit}>
+        {demoFallita && mode === "login" && (
+          <div role="alert" style={{ display: "flex", gap: 8, alignItems: "flex-start", background: "#FFF3E6", color: "#8A4B00",
+            borderRadius: 12, padding: "11px 13px", ...font, fontSize: 13, lineHeight: 1.5, marginBottom: 14 }}>
+            <span>La demo di Atleta360 in questo momento non è raggiungibile. Riprova tra qualche minuto, oppure scrivici da <a href="https://atleta-360.com" style={{ color: "inherit", fontWeight: 600 }}>atleta-360.com</a>.</span>
+          </div>
+        )}
         {mode === "register" && invited && (
           <div style={{ display: "flex", gap: 8, alignItems: "flex-start", background: "#DDF3E7", color: "#0F7A4E",
             borderRadius: 12, padding: "11px 13px", ...font, fontSize: 13, lineHeight: 1.5, marginBottom: 14 }}>

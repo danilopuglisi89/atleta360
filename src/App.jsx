@@ -553,7 +553,7 @@ function Root() {
   if (demoKind && !session && !demoFailed) {
     return <GateScreen title="Un attimo…" message="Sto preparando la demo di Atleta360…" />;
   }
-  if (!session) return <AuthScreen />;
+  if (!session) return <AuthScreen demoFallita={!!demoKind && demoFailed} />;
 
   const status = profile?.status;
   if (!profile || status === "pending") {
