@@ -773,6 +773,31 @@ committati** (repository pubblico). Claude implementa solo dopo il via libera di
   il salvataggio il modulo ripartiva dagli stessi voti con la nota vuota → il secondo "Salva"
   creava un doppione **senza nota**. I 7 doppioni restano finché Danilo non conferma.
 
+## Server e demo — fase 1, passi 5–6 (2026-09-27)
+
+- **Doppioni cancellati** con conferma di Danilo: 7 rilevamenti (i secondi salvataggi, senza
+  nota). Da 21 a 14. Copia di sicurezza completa fuori dal repository.
+- **nginx di oasi** (`/etc/nginx/sites-available/atleta360` + `snippets/atleta360-sicurezza.conf`,
+  copia della vecchia configurazione in `/root/nginx-backup-atleta360-*`): gzip (bundle da
+  1.006 KB a 275 KB), cache di un anno su `/assets/`, una settimana su `/avatars/`, `no-cache` su
+  index/sw/registerSW/manifest, manifest `application/manifest+json`, HSTS, nosniff,
+  Referrer-Policy, X-Frame-Options. ⚠️ Gli header stanno in uno snippet **incluso anche in ogni
+  location con `add_header` proprio**: nginx non li eredita lì. Aggiungendo una location con
+  `add_header`, includere lo snippet.
+- **CSP in prova** (`Content-Security-Policy-Report-Only`, stesso snippet): segnala, non blocca.
+  Le segnalazioni arrivano a `/api/csp-report` (`api/csp-report.js`, solo percorso e origine,
+  mai query: i link d'invito hanno il codice lì) → `pm2 logs atleta360-coach | grep csp`. Renderla
+  effettiva dopo qualche giorno senza segnalazioni vere.
+- **Demo** (`demo.atleta-360.com`): è il progetto Vercel `atleta360-demo`, collegato **a questo
+  stesso repository** (si aggiorna a ogni push) con due variabili sue, `VITE_SUPABASE_URL` e
+  `VITE_SUPABASE_ANON_KEY`, che puntavano a un progetto Supabase **cancellato**. Nel login, se
+  l'accesso demo fallisce ora compare un messaggio (`AuthScreen demoFallita`). Controllo
+  automatico `ops/controllo-demo.mjs` dal cron del VPS ogni 3 ore (log in
+  `/var/log/atleta360-controllo-demo.log`): apre la demo, legge dal bundle a quale Supabase
+  punta, prova l'accesso demo; se fallisce notifica l'admin nell'app, massimo una volta al giorno.
+  Manca il progetto Supabase nuovo (lo crea Danilo), poi schema, dati inventati, utenti demo e
+  aggiornamento delle due variabili su Vercel.
+
 ## Visibilità fra atlete — decisione presa (2026-09-21)
 
 ⚠️ `ConfrontoView`, `AndamentoView`, la classifica generale e il radar di squadra
