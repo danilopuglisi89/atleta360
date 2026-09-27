@@ -9,7 +9,9 @@ import { C, font, display } from "./theme";
  * - payload: oggetto unito al corpo della richiesta a /api/coach
  *   (es. { athlete, skills } per una singola atleta, oppure { team, skills }).
  */
-export default function CoachChat({ id, title = "Coach IA", subtitle, suggestions = [], payload = {}, autoPrompt, autoKey }) {
+// `showText`: come mostrare le risposte (es. rimettere i nomi al posto dei
+// segnaposto, vedi pseudonimi.js). La cronologia inviata all'IA resta intatta.
+export default function CoachChat({ id, title = "Coach IA", subtitle, suggestions = [], payload = {}, autoPrompt, autoKey, showText = (t) => t }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -91,7 +93,7 @@ export default function CoachChat({ id, title = "Coach IA", subtitle, suggestion
               color: m.role === "user" ? "#fff" : C.ink,
               borderBottomRightRadius: m.role === "user" ? 4 : 13,
               borderBottomLeftRadius: m.role === "user" ? 13 : 4 }}>
-              {m.content}
+              {m.role === "assistant" ? showText(m.content) : m.content}
             </div>
           </div>
         ))}

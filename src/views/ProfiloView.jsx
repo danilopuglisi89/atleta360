@@ -363,7 +363,7 @@ export default function ProfiloView({ d, auth, target, onOpenFullProfile, onRelo
           : undefined}
         payload={{
           athlete: {
-            id: sel, scores,
+            scores,   // niente nome verso l'IA (decisione del 27/09)
             goals: goals.map((g) => ({ skill: SHORT[g.skill_key] || g.skill_key, target: g.target, current: scores[g.skill_key] ?? 0 })),
           },
           skills: SKILL_META.map((s) => ({ title: s.title, desc: s.description })),

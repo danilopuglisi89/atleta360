@@ -13,6 +13,7 @@ import CoachChat from "../CoachChat";
 import GymMode from "../components/GymMode";
 import MondayInsightCard from "../components/MondayInsightCard";
 import SelfPeek from "../components/SelfPeek";
+import { pseudonimizzaSquadra, ripristinaNomi } from "../pseudonimi";
 import Tabs from "../components/Tabs";
 import { useReports } from "../reports";
 import { useAttendance } from "../attendance";
@@ -375,6 +376,9 @@ export default function StaffView({ d, auth, onOpenCard, onOpenFullProfile, onAs
     roster: RANK.map((n) => ({ id: n, overall: overall(n).toFixed(1) })),
   };
   const skills = SKILL_META.map((s) => ({ title: s.title, desc: s.description }));
+  // Verso l'IA niente nomi: segnaposto [[aN]], rimessi solo per chi legge.
+  const { team: teamIA, nomi: nomiIA } = pseudonimizzaSquadra(team);
+  const conNomi = (t) => ripristinaNomi(t, nomiIA);
 
   const genReport = async () => {
     setRepBusy(true); setRepErr(null);
@@ -383,13 +387,15 @@ export default function StaffView({ d, auth, onOpenCard, onOpenFullProfile, onAs
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [{ role: "user", content: "Genera un breve report di analisi della squadra: 1) punti di forza, 2) le competenze da allenare come priorità, 3) due o tre azioni concrete per il prossimo allenamento. Usa elenchi puntati e resta sintetico." }],
-          team, skills,
+          team: teamIA, skills,
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Report non disponibile.");
-      setReport(data.reply);
-      await saveReport(data.reply);
+      // Salvato già coi nomi: la classifica di domani non deve cambiare chi è chi.
+      const testo = conNomi(data.reply);
+      setReport(testo);
+      await saveReport(testo);
     } catch (e) { setRepErr(e.message); } finally { setRepBusy(false); }
   };
 
@@ -420,7 +426,7 @@ export default function StaffView({ d, auth, onOpenCard, onOpenFullProfile, onAs
         <>
           {auth?.canAssess && <SelfAssessmentsCard d={d} onAssess={onAssess} onOpenFullProfile={onOpenFullProfile} />}
 
-          <MondayInsightCard team={team} skills={skills} />
+          <MondayInsightCard team={teamIA} skills={skills} showText={conNomi} />
 
           {attentionAlerts.length > 0 && (
             <Card id="a360-attention" title="Da tenere d'occhio" subtitle="Segnali automatici calcolati dai dati esistenti" style={{ marginTop: 4 }} className="a360-noprint">
@@ -552,7 +558,8 @@ export default function StaffView({ d, auth, onOpenCard, onOpenFullProfile, onAs
               "Proponi una seduta di allenamento mentale di gruppo.",
               "Come far crescere le atlete più in difficoltà?",
             ]}
-            payload={{ team, skills }}
+            payload={{ team: teamIA, skills }}
+            showText={conNomi}
           />
         </>
       )}

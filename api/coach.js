@@ -93,32 +93,13 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Modalità "bozza nota rilevamento": niente chat, un solo testo pronto
-    // da incollare nel campo nota, a partire dagli appunti presi in palestra.
+    // "Bozza nota rilevamento" tolta il 27/09/2026 (decisione di Danilo):
+    // mandava all'IA gli appunti scritti dal mister su un'atleta minorenne.
+    // Si rifiuta anche la richiesta di un'app vecchia rimasta in memoria.
     if (noteDraft) {
-      const notesList = (noteDraft.notes || []).map((n) => `- ${n}`).join("\n") || "(nessun appunto)";
-      const scoreLines = noteDraft.scores
-        ? Object.entries(noteDraft.scores).map(([k, v]) => `- ${k}: ${v}/10`).join("\n")
-        : "(nessun punteggio)";
-      const sys = `Sei l'assistente del mister di una squadra di pallavolo femminile. Il mister ha preso appunti veloci in palestra su ${noteDraft.athleteName || "un'atleta"} nei giorni scorsi. Scrivi UNA bozza di nota (2-4 frasi, tono costruttivo e concreto, in italiano) da inserire nel rilevamento di oggi, basata su questi appunti e sui punteggi attuali. Restituisci SOLO il testo della nota, senza titoli né virgolette.
-
-Appunti raccolti in palestra:
-${notesList}
-
-Punteggi attuali (scala 1-10):
-${scoreLines}`;
-      const r = await anthropic.messages.create({
-        model: MODEL,
-        max_tokens: 300,
-        temperature: 0.6,
-        system: sys,
-        messages: [{ role: "user", content: "Scrivi la bozza." }],
-      });
-      const text = r.content.filter((b) => b.type === "text").map((b) => b.text).join("").trim();
-      res.status(200).json({ reply: text || "Non ho una bozza da proporre." });
+      res.status(410).json({ error: "Questa funzione non è più disponibile." });
       return;
     }
-
     const skillLines = (skills || []).map((s) => `- ${s.title}: ${s.desc}`).join("\n") || "(nessuna competenza fornita)";
 
     const regole = `Regole:
@@ -157,6 +138,8 @@ ${avgLines}
 Classifica (media complessiva per atleta):
 ${rosterLines}
 
+Le atlete sono indicate con segnaposto come [[a1]], [[a2]]: non conosci i loro nomi. Quando ne citi una, scrivi il segnaposto esattamente così, tra doppie parentesi quadre, senza cambiarlo e senza inventare nomi.
+
 ${regole}
 
 Rimandi: se ti chiedono del metodo Atleta360, dei dati raccolti o di come impostare il percorso, di' che è meglio sentire Danilo. Su infortuni e salute delle atlete non dare indicazioni.`;
@@ -180,7 +163,7 @@ Parli come si parla a bordo campo, non come si scrive un articolo: due o tre fra
 Competenze allenate (le UNICHE di cui puoi parlare):
 ${skillLines}
 
-Atleta selezionata: ${athlete?.id || "n/d"}. Punteggi attuali (scala 1-10):
+Punteggi attuali dell'atleta (scala 1-10):
 ${scoreLines}
 ${goalLines ? `\nObiettivi personali fissati dall'atleta (tienine conto nei consigli, quando pertinenti):\n${goalLines}\n` : ""}
 ${regole}`;

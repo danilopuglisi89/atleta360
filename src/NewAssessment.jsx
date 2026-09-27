@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { CheckCircle2, AlertCircle, Save, Pencil, Trash2, X, History, StickyNote, Sparkles, Trash } from "lucide-react";
+import { CheckCircle2, AlertCircle, Save, Pencil, Trash2, X, History, StickyNote, Trash } from "lucide-react";
 import { C, font, display } from "./theme";
 import { supabase } from "./supabaseClient";
 import { useAthleteNotes } from "./athleteNotes";
@@ -22,7 +22,6 @@ export default function NewAssessment({ onSaved, initialAthleteId }) {
   const [error, setError] = useState(null);
   const [flash, setFlash] = useState(null);
   const [quickNote, setQuickNote] = useState("");
-  const [draftBusy, setDraftBusy] = useState(false);
   const athleteNotes = useAthleteNotes(athleteId);
   const [selfLatest, setSelfLatest] = useState(null);   // come si è vista lei
   const athleteName = athletes?.find((a) => a.id === athleteId)?.identifier || "";
@@ -224,22 +223,7 @@ export default function NewAssessment({ onSaved, initialAthleteId }) {
         <div style={{ marginTop: 18 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
             <label style={{ ...font, fontSize: 12.5, color: C.muted, fontWeight: 500 }}>Nota riservata allo staff (facoltativa) · le atlete non la vedono</label>
-            {athleteNotes.notes.length > 0 && (
-              <button onClick={async () => {
-                setDraftBusy(true);
-                try {
-                  const res = await fetch("/api/coach", {
-                    method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ messages: [{ role: "user", content: "bozza" }], noteDraft: { athleteName, notes: athleteNotes.notes.map((n) => n.note), scores } }),
-                  });
-                  const data = await res.json().catch(() => ({}));
-                  if (res.ok && data.reply) setNote(data.reply);
-                } finally { setDraftBusy(false); }
-              }} disabled={draftBusy}
-                style={{ ...font, display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, padding: "6px 11px", borderRadius: 8, border: "none", background: C.orangeSoft, color: C.orange, cursor: draftBusy ? "default" : "pointer" }}>
-                <Sparkles size={13} /> {draftBusy ? "Scrivo…" : "Genera bozza con IA"}
-              </button>
-            )}
+            {/* "Genera bozza con IA" tolta il 27/09: mandava all'IA gli appunti scritti dal mister. */}
           </div>
           <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} placeholder="Osservazioni del mister: le leggete solo voi dello staff…"
             style={{ ...font, fontSize: 14, color: C.ink, background: C.card, border: `1px solid ${C.grid}`, borderRadius: 10, padding: "10px 12px", width: "100%", boxSizing: "border-box", resize: "vertical", outline: "none" }} />

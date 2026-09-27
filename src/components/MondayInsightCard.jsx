@@ -13,7 +13,7 @@ function weekKey() {
   return monday.toISOString().slice(0, 10);
 }
 
-export default function MondayInsightCard({ team, skills }) {
+export default function MondayInsightCard({ team, skills, showText = (t) => t }) {
   const [text, setText] = useState(null);
   const [busy, setBusy] = useState(false);
   const isMonday = new Date().getDay() === 1;
@@ -31,7 +31,8 @@ export default function MondayInsightCard({ team, skills }) {
         team, skills,
       }),
     }).then((r) => r.json()).then((data) => {
-      if (data.reply) { setText(data.reply); localStorage.setItem(key, data.reply); }
+      // Coi nomi già rimessi: in cache resta il testo da leggere, non i segnaposto.
+      if (data.reply) { const t = showText(data.reply); setText(t); localStorage.setItem(key, t); }
     }).catch(() => {}).finally(() => setBusy(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMonday, team?.count]);

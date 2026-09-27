@@ -109,7 +109,7 @@ export default function DirectMessages({ initialToId, initialToName, onConversat
   };
 
   return (
-    <Card title="Messaggi privati" subtitle="Le chat sono sicure e protette.">
+    <Card title="Messaggi privati" subtitle="Messaggi privati fra compagne.">
       <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
         <button onClick={() => setPickerOpen(true)} style={{ position: "relative", ...font, display: "inline-flex", alignItems: "center", gap: 8, padding: "11px 16px", borderRadius: 11, border: "none", background: C.orange, color: "#fff", fontSize: 14.5, fontWeight: 600, cursor: "pointer" }}>
           <Plus size={17} /> Nuovo messaggio privato
