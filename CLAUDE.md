@@ -749,6 +749,30 @@ Scoperto il 26/09 con 9 note del primo rilevamento già esposte.
   Restano rivolti alle atlete i **messaggi** (chat, promemoria dello staff): sono
   comunicazioni, non giudizi.
 
+## Consolidamento con Codex — fase 1, passi 1–4 (2026-09-27)
+
+Danilo fa valutare il progetto anche da Codex (ChatGPT): i documenti di confronto stanno nella
+cartella del progetto (`CONSIGLI-CODEX-PER-CLAUDE.md`, `RISPOSTA-*`, `AGGIORNAMENTO-*`), **non
+committati** (repository pubblico). Claude implementa solo dopo il via libera di Danilo.
+
+- **Ruoli** (`supabase/ruoli-inviti.sql`): la registrazione crea sempre `atleta` (il modulo non
+  offre più il ruolo, il trigger ignora i metadati); inviti per staff/direzione **solo dall'admin**
+  (card "Invita staff o direzione" in Admin → Persone; prima poteva farlo qualunque staff);
+  `redeem_invite_link` atomico (`update … where used_by is null returning`); dare un ruolo da
+  staff chiede conferma e dice cosa si concede.
+- **Autovalutazioni** (`supabase/autovalutazioni-private.sql`): lettura solo propria o staff. I
+  punteggi del mister restano condivisi (decisione di Danilo); allineato `self-assessments.sql`.
+- **Coach IA senza nomi** (`src/pseudonimi.js`): il profilo non manda più il nome; l'Area Staff
+  manda la squadra con segnaposto `[[aN]]` e l'app rimette i nomi solo per chi legge (segnaposto
+  storpiato → "un'atleta"). Report e osservazioni del lunedì si salvano già coi nomi. **Tolta** la
+  bozza di nota con IA (interfaccia e server: `noteDraft` risponde 410). Frase dei messaggi
+  privati: "Messaggi privati fra compagne" (non più "sicure e protette").
+- **Doppi salvataggi** (`supabase/rilevamenti-doppi.sql`): trigger che scarta un rilevamento
+  identico entro 2 minuti e mette in fila i salvataggi per atleta; nell'app stesso controllo,
+  conferma accanto al pulsante e passaggio automatico all'atleta successiva. Causa del 25/09: dopo
+  il salvataggio il modulo ripartiva dagli stessi voti con la nota vuota → il secondo "Salva"
+  creava un doppione **senza nota**. I 7 doppioni restano finché Danilo non conferma.
+
 ## Visibilità fra atlete — decisione presa (2026-09-21)
 
 ⚠️ `ConfrontoView`, `AndamentoView`, la classifica generale e il radar di squadra
