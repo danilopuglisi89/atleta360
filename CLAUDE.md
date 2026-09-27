@@ -802,6 +802,10 @@ committati** (repository pubblico). Claude implementa solo dopo il via libera di
   `02-dati-demo.sql` (12 atlete **inventate**, tre rilevamenti con andamento), `03-utenti-demo.sql`
   (collega demo.atleta/demo.societa, credenziali pubbliche di `demoMode.js`). ⚠️ Aggiungendo uno
   script SQL nuovo in `supabase/`, aggiungerlo anche a `ORDINE` nel generatore e rigenerare.
+  **Demo funzionante dal 27/09 sera** (controllo dal VPS: "demo ok"). `03-utenti-demo.sql` crea da
+  sé i due account in `auth.users`/`auth.identities` (nessun passaggio a mano nel pannello).
+  ⚠️ `data-model.sql` porta la prima importazione di giugno (3 atlete vere coi voti): il
+  generatore e `02` la cancellano, non va mai in una demo.
 - ⚠️ **Segreto del relay push nel repository pubblico**: `push.sql` contiene il valore di
   `x-push-secret` (= `PUSH_SECRET` in `.env.coach`). Criticità bassa (protegge solo il relay, che
   senza gli endpoint privati delle iscrizioni non raggiunge nessuno), ma va cambiato: nuovo valore
