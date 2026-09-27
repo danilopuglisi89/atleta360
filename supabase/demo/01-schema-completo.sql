@@ -4573,6 +4573,10 @@ select case when exists (select 1 from pg_trigger where tgname = 'skip_duplicate
 -- la demo non deve toccarlo. La campanella nell'app funziona lo stesso.
 drop trigger if exists on_notification_push on public.notifications;
 
+-- data-model.sql porta con sé la prima importazione di giugno dal foglio
+-- (tre atlete vere con i loro voti): in una demo pubblica non ci stanno.
+delete from public.athletes where identifier in ('Beatrice V.', 'Lorenza F.', 'Caterina S.');
+
 select 'schema completo installato' as esito,
        (select count(*) from information_schema.tables where table_schema = 'public') as tabelle,
        (select count(*) from pg_proc where pronamespace = 'public'::regnamespace) as funzioni;

@@ -23,6 +23,7 @@ insert into public.skills (key, title, short, description, sort_order, active) v
   on conflict (key) do update set title = excluded.title, short = excluded.short, description = excluded.description, sort_order = excluded.sort_order, active = true;
 
 -- Ripartenza pulita
+delete from public.athletes where identifier in ('Beatrice V.', 'Lorenza F.', 'Caterina S.');   -- prima importazione da data-model.sql, non da demo
 delete from public.athletes where identifier in ('Sofia Bianchi', 'Giulia Ferri', 'Martina Riva', 'Alice Conti', 'Emma Galli', 'Chiara Moretti', 'Anna Rossetti', 'Beatrice Villa', 'Elena Marchi', 'Viola Serra', 'Nina Fabbri', 'Irene Sala');
 delete from public.event_recurrences where location = 'Palestra comunale (demo)';
 
