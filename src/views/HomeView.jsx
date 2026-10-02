@@ -16,6 +16,7 @@ import DailyMomentCard from "../components/DailyMomentCard";
 import DailyPill from "../components/DailyPill";
 import TodayStrip from "../components/TodayStrip";
 import TeamFeedCard from "../components/TeamFeedCard";
+import LeagueTableCard from "../components/LeagueTableCard";
 import FigurineAlbumCard from "../components/FigurineAlbumCard";
 import SeasonCapsuleCard from "../components/SeasonCapsuleCard";
 import WeekSongCard from "../components/WeekSongCard";
@@ -149,6 +150,7 @@ export default function HomeView({ d, auth, onOpenCard, onOpenFullProfile, onGoV
       <Section title="La squadra">
         {flags.feature_teampet && <TeamPetCard />}
         {flags.feature_teamfeed && <TeamFeedCard onOpenCard={onOpenCard} />}
+        {!hidden.includes("league") && <LeagueTableCard />}
 
         {NOMI.length === 0 ? (
           <Card title="I numeri della squadra arrivano col primo rilevamento"

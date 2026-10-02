@@ -25,6 +25,7 @@ const TABELLE = [
   ["photos", "wave4.sql"],
   ["certificates", "wave5.sql"],
   ["athlete_study", "study.sql"],
+  ["league_tables", "fipav.sql"],
   ["participation_points", "gamify-a.sql"],
   ["quiz_scores", "gamify-b.sql"],
   ["photo_reactions", "gamify-c.sql"],

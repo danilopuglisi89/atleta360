@@ -6,7 +6,7 @@ import { CalendarDays, MapPin, Plus, Trash2, CheckCircle2, XCircle, Repeat, Trop
 import { C, font, display } from "../theme";
 import { Card } from "../components/ui";
 import { supabase } from "../supabaseClient";
-import { useCalendar } from "../calendar";
+import { useCalendar, matchOutcome } from "../calendar";
 import { downloadEventICS } from "../ics";
 import { ShareButton } from "../components/ShareSheet";
 import { useMatchWords } from "../rituals";
@@ -135,8 +135,9 @@ function EventCard({ ev, myRsvp, counts, names, isStaff, uid, mvp, roster, onOpe
         {ev.title && <span style={{ ...display, fontSize: 15, fontWeight: 700, color: C.ink }}>{ev.title}</span>}
         {ev.cancelled && <span style={{ ...font, fontSize: 12, fontWeight: 700, color: "#B4232A" }}>ANNULLATO</span>}
         {ev.result && (
-          <span style={{ ...display, fontSize: 13, fontWeight: 700, color: "#0F7A4E", display: "inline-flex", alignItems: "center", gap: 5 }}>
+          <span style={{ ...display, fontSize: 13, fontWeight: 700, color: matchOutcome(ev.result) === "loss" ? "#B4232A" : "#0F7A4E", display: "inline-flex", alignItems: "center", gap: 5 }}>
             <Trophy size={14} /> {ev.result}
+            {matchOutcome(ev.result) && <span style={{ ...font, fontSize: 11.5, fontWeight: 700 }}>{matchOutcome(ev.result) === "win" ? "· Vinta" : "· Persa"}</span>}
           </span>
         )}
         {ev.result && !ev.cancelled && (
@@ -159,6 +160,12 @@ function EventCard({ ev, myRsvp, counts, names, isStaff, uid, mvp, roster, onOpe
           <MapPin size={14} /> {ev.location}
         </a>
       )}
+      {ev.set_scores && (
+        <div style={{ ...font, fontSize: 12.5, color: C.ink, marginTop: 5 }}>
+          <b>Parziali:</b> {ev.set_scores}
+        </div>
+      )}
+      {ev.referees && <div style={{ ...font, fontSize: 12.5, color: C.ink, marginTop: 4 }}><b>Arbitri:</b> {ev.referees}</div>}
       {ev.notes && <div style={{ ...font, fontSize: 12.5, color: C.muted, marginTop: 5 }}>{ev.notes}</div>}
 
       {wordsOpen && uid && (

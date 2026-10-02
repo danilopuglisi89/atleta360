@@ -3,9 +3,9 @@
 // calendario non è ancora attivo (nessun errore mostrato qui: la vista
 // Calendario dedicata già spiega come attivarlo).
 import { useMemo, useState } from "react";
-import { CalendarDays, MapPin, CheckCircle2, XCircle, Wind } from "lucide-react";
+import { CalendarDays, MapPin, CheckCircle2, XCircle, Wind, Trophy } from "lucide-react";
 import { C, font, display } from "../theme";
-import { useCalendar } from "../calendar";
+import { useCalendar, matchOutcome } from "../calendar";
 import PreMatchRoutine from "./PreMatchRoutine";
 import { usePregameCheers } from "../rituals";
 
@@ -31,18 +31,28 @@ export default function NextEventCard({ uid, showPrematch = true }) {
     const now = new Date();
     return cal.events.find((e) => !e.cancelled && new Date(e.starts_at) >= now) || null;
   }, [cal.events]);
+  // L'ultima partita col risultato, per un giorno e mezzo dopo il fischio d'inizio.
+  const recent = useMemo(() => {
+    if (!cal.events) return null;
+    const now = Date.now();
+    return [...cal.events].reverse().find((e) => e.kind === "match" && e.result && !e.cancelled
+      && now - new Date(e.starts_at) >= 0 && now - new Date(e.starts_at) <= 36 * 3600e3) || null;
+  }, [cal.events]);
 
   // "Il grido pre-partita": spazio comune che si apre nelle 2 ore prima di
   // una partita — hook chiamato sempre (Rules of Hooks), attivo solo quando serve.
   const cheers = usePregameCheers(next?.id, uid);
   const isPregameWindow = showPrematch && next && next.kind === "match" && (new Date(next.starts_at) - new Date()) <= 2 * 3600e3;
 
-  if (cal.error || !next) return null;
+  if (cal.error || (!next && !recent)) return null;
+  if (!next) return <ResultCard ev={recent} />;
 
   const rs = cal.rsvps.filter((r) => r.event_id === next.id);
   const myRsvp = rs.find((r) => r.user_id === uid)?.status || null;
 
   return (
+    <>
+    {recent && <ResultCard ev={recent} />}
     <div id="a360-next-event" className="a360-reveal a360-noprint" style={{ background: `linear-gradient(120deg, ${C.navy2} 0%, ${C.navy} 100%)`, borderRadius: 16, padding: "18px 20px", marginBottom: 16, color: "#fff" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, ...font, fontSize: 11.5, color: C.orange, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase" }}>
         <CalendarDays size={14} /> Prossimo impegno
@@ -50,6 +60,9 @@ export default function NextEventCard({ uid, showPrematch = true }) {
       <div style={{ ...display, fontSize: 19, fontWeight: 700, marginTop: 6 }}>
         {KIND_LABEL[next.kind] || "Evento"}{next.title ? ` · ${next.title}` : ""}
       </div>
+      {next.fipav_round && (
+        <div style={{ ...font, fontSize: 12.5, marginTop: 3, opacity: 0.8 }}>Campionato · {next.fipav_round}ª giornata</div>
+      )}
       <div style={{ ...font, fontSize: 14, marginTop: 4, opacity: 0.92 }}>
         {countdownLabel(next.starts_at)} alle {fmtTime(next.starts_at)}
       </div>
@@ -58,6 +71,9 @@ export default function NextEventCard({ uid, showPrematch = true }) {
           style={{ ...font, fontSize: 13, color: "#fff", opacity: 0.85, display: "inline-flex", alignItems: "center", gap: 5, marginTop: 6, textDecoration: "none" }}>
           <MapPin size={13} /> {next.location}
         </a>
+      )}
+      {next.referees && (
+        <div style={{ ...font, fontSize: 12.5, marginTop: 4, opacity: 0.8 }}>Arbitri: {next.referees}</div>
       )}
       {uid && (
         <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
@@ -104,6 +120,25 @@ export default function NextEventCard({ uid, showPrematch = true }) {
       )}
 
       {routine && <PreMatchRoutine onClose={() => setRoutine(false)} />}
+    </div>
+    </>
+  );
+}
+
+// Risultato dell'ultima partita, preso dal sito FIPAV o scritto dallo staff.
+function ResultCard({ ev }) {
+  const esito = matchOutcome(ev.result);
+  const colore = esito === "loss" ? "#B4232A" : "#0F7A4E";
+  return (
+    <div className="a360-reveal a360-noprint" style={{ background: C.card, border: `1px solid ${C.grid}`, borderLeft: `4px solid ${colore}`, borderRadius: 16, padding: "16px 20px", marginBottom: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, ...font, fontSize: 11.5, color: colore, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase" }}>
+        <Trophy size={14} /> Ultima partita{esito ? (esito === "win" ? " · Vinta" : " · Persa") : ""}
+      </div>
+      <div style={{ ...display, fontSize: 19, fontWeight: 700, color: C.ink, marginTop: 6 }}>
+        Oasi {ev.result} <span style={{ fontWeight: 600, color: C.muted, fontSize: 15 }}>{ev.title || ""}</span>
+      </div>
+      {ev.set_scores && <div style={{ ...font, fontSize: 13, color: C.ink, marginTop: 4 }}>{ev.set_scores}</div>}
+      {ev.fipav_round && <div style={{ ...font, fontSize: 12, color: C.muted, marginTop: 4 }}>Campionato · {ev.fipav_round}ª giornata</div>}
     </div>
   );
 }

@@ -98,3 +98,11 @@ export function useCalendar(uid) {
 
   return { events, rsvps, recurrences, error, reload: load, addEvent, updateEvent, removeEvent, setRsvp, addRecurrence, updateRecurrence, removeRecurrence };
 }
+
+// Esito di una partita dal risultato scritto con Oasi prima ("3-1"):
+// "win", "loss" oppure null se il risultato non è nella forma set-set.
+export function matchOutcome(result) {
+  const m = String(result || "").match(/^\s*(\d)\s*[-–]\s*(\d)\s*$/);
+  if (!m || m[1] === m[2]) return null;
+  return +m[1] > +m[2] ? "win" : "loss";
+}

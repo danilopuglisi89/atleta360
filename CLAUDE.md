@@ -811,6 +811,26 @@ committati** (repository pubblico). Claude implementa solo dopo il via libera di
   senza gli endpoint privati delle iscrizioni non raggiunge nessuno), ma va cambiato: nuovo valore
   in `.env.coach` + trigger aggiornato dal SQL Editor, **mai più scritto in un file del repository**.
 
+## Campionato dal sito FIPAV (2026-10-02)
+
+Oasi U19 gioca nel **Girone B, Under 19 Femminile** (C.T. Appennino Toscano), girone FIPAV
+`63785`. Il sito `public.fipavonline.it` legge dati pubblici, senza account, da
+`https://data.fipavonline.it/api/v2/calendar/0/<girone>` e `/tables/<girone>`.
+
+- `supabase/partite-u19-2026.sql`: le 8 partite inserite a mano (il numero di gara è nelle note).
+- `supabase/fipav.sql`: colonne `fipav_gara`, `fipav_round`, `set_scores`, `referees`,
+  `fipav` (ultimo dato FIPAV applicato) su `events`; tabella `league_tables` (lettura
+  `is_approved()`, scrive solo il server).
+- `ops/sync-fipav.mjs` dal cron del VPS **ogni ora** (log `/var/log/atleta360-fipav.log`,
+  `--prova` non scrive): risultato e parziali **con Oasi prima** ("3-1"), arbitri, giornata,
+  classifica; data/ora/palestra cambiano solo se cambia la FIPAV (una correzione a mano resta),
+  e allora riparte anche il promemoria. Una gara nuova del girone viene inserita.
+- ⚠️ **Nessuna notifica** da questi dati, né per cambi d'orario né per i risultati: decisione di
+  Danilo del 02/10. Non aggiungerne senza chiedere.
+- App: `LeagueTableCard` in Home ("La squadra", nascondibile, id `league`), `ResultCard` in
+  `NextEventCard` per 36 ore dopo la partita, parziali/arbitri/Vinta-Persa nel Calendario
+  (`matchOutcome()` in `calendar.js`). Nuova stagione: cambiare `GIRONI` nello script.
+
 ## Visibilità fra atlete — decisione presa (2026-09-21)
 
 ⚠️ `ConfrontoView`, `AndamentoView`, la classifica generale e il radar di squadra

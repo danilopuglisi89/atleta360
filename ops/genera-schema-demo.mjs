@@ -15,7 +15,7 @@ const ORDINE = [
   "notifications-delete", "mvp", "settings", "wall", "profile-page", "social-links", "fix-last-seen",
   "members-directory", "season-metrics", "avatars-names", "chat-names", "evening-training-only", "study",
   "assessment-notes-private", "staff-texts-private", "ruoli-inviti", "autovalutazioni-private",
-  "rilevamenti-doppi",
+  "rilevamenti-doppi", "fipav",
 ];
 // Esclusi di proposito:
 //   notify-email.sql  → email a ogni iscrizione via Resend, con chiave: non serve fuori da Oasi

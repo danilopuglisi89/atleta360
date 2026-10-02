@@ -17,6 +17,7 @@ export const HOME_CARDS = [
   { id: "song", label: "Canzone della settimana" },
   { id: "quiz", label: "Quiz settimanale" },
   { id: "dailyMoment", label: "Momento del giorno" },
+  { id: "league", label: "Classifica del campionato" },
 ];
 
 export default function HomeCustomizer({ hidden, onToggle }) {
