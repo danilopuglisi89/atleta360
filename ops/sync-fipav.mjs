@@ -33,7 +33,8 @@ async function fipav(percorso) {
 async function db(percorso, opz = {}) {
   const r = await fetch(`${U}/rest/v1/${percorso}`, { ...opz, headers: { ...H, ...(opz.headers || {}) } });
   if (!r.ok) throw new Error(`database ${percorso.split("?")[0]}: ${r.status} ${(await r.text()).slice(0, 200)}`);
-  return r.status === 204 ? null : r.json();
+  const testo = await r.text();          // le scritture con return=minimal rispondono senza corpo
+  return testo ? JSON.parse(testo) : null;
 }
 
 let modifiche = 0;
