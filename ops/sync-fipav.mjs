@@ -109,7 +109,9 @@ for (const girone of GIRONI) {
     setsWon: +t.sv || 0, setsLost: +t.sp || 0, us: NOSTRA.test(t.title),
   })).sort((a, b) => a.pos - b.pos);
   const [attuale] = await db(`league_tables?select=teams&girone_id=eq.${girone}`);
-  if (JSON.stringify(attuale?.teams) !== JSON.stringify(squadre)) {
+  // Il database restituisce i campi in un altro ordine: si confronta a chiavi ordinate.
+  const pari = (v) => JSON.stringify(v, (k, x) => x && typeof x === "object" && !Array.isArray(x) ? Object.fromEntries(Object.entries(x).sort()) : x);
+  if (pari(attuale?.teams) !== pari(squadre)) {
     await scrivi(`classifica girone ${girone} aggiornata`, "league_tables", {
       method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
       body: JSON.stringify({ girone_id: girone, title: bello(tab.title), teams: squadre, updated_at: new Date().toISOString() }),
